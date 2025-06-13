@@ -19,7 +19,15 @@ class DatabaseSeeder extends Seeder
             'name' => 'root',
             'email' => 'root@example.com',
         ]);
-        $user = User::find(1);
-        $user->assignRole('root');
+        //$user = User::find(1);
+        //$user->assignRole('root');
+        $this->call([
+            PaisesSeeder::class,
+            DepartamentoSeeder::class,
+            MunicipioSeeder::class,
+            TipoEmpleadoSeeder::class,
+            //DepartamentoEmpleadoSeeder::class,
+            RolesAndPermissionsSeeder::class,
+        ]);
     }
 }
