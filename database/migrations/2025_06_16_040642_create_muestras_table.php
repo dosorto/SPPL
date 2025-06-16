@@ -17,7 +17,7 @@ return new class extends Migration
             $table->decimal('cantidad', 8, 2);
 
             // Clave foránea
-            $table->foreignId('unidades_id')->constrained('unidades_de_medidas');
+            $table->foreignId('unidades_id')->constrained('unidades_medidas');
 
             $table->decimal('temperatura', 5, 2);
             $table->date('fecha_muestra');

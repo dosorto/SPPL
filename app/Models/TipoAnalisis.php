@@ -9,4 +9,5 @@ class TipoAnalisis extends Model
 {
     /** @use HasFactory<\Database\Factories\TipoAnalisisFactory> */
     use HasFactory;
+     protected $table = 'tipos_analisis'; 
 }

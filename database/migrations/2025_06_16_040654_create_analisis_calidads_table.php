@@ -16,7 +16,7 @@ return new class extends Migration
 
             // Claves foráneas
             $table->foreignId('muestra_id')->constrained('muestras');
-            $table->foreignId('tipo_analisis_id')->constrained('tipo_analisis');
+            $table->foreignId('tipo_analisis_id')->constrained('tipos_analisis');
 
             $table->decimal('valor', 8, 2);
             $table->string('observaciones', 255)->nullable();

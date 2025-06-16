@@ -28,7 +28,8 @@ class DatabaseSeeder extends Seeder
             TipoEmpleadoSeeder::class,
             //DepartamentoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
-             CategoriaUnidadSeeder::class,
+            
+            CategoriaUnidadSeeder::class,
             UnidadMedidaSeeder::class,
             MantenimientoEquipoSeeder::class,
             TipoAnalisisSeeder::class,

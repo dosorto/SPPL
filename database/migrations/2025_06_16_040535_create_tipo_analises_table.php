@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('nombre_analisis', 255);
 
             // Clave foránea
-            $table->foreignId('unidad_id')->constrained('unidades_de_medidas');
+            $table->foreignId('unidad_id')->constrained('unidades_medidas');
 
             $table->decimal('rango_min', 8, 2);
             $table->decimal('rango_max', 8, 2);

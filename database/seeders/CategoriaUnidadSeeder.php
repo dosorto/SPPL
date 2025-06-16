@@ -2,19 +2,18 @@
 
 namespace Database\Seeders;
 
-use App\Models\UnidadMedida;
-use App\Models\CategoriaUnidad;
 use Illuminate\Database\Seeder;
+use App\Models\CategoriaUnidad;
 
-class UnidadMedidaSeeder extends Seeder
+class CategoriaUnidadSeeder extends Seeder
 {
     public function run(): void
     {
-        CategoriaUnidad::all()->each(function ($categoria) {
-            UnidadMedida::factory(2)->create([
-                'categoria_id' => $categoria->id
-            ]);
-        });
+        $categorias = ['Masa', 'Volumen', 'Temperatura', 'Concentración'];
+
+        foreach ($categorias as $nombre) {
+            CategoriaUnidad::firstOrCreate(['nombre' => $nombre]);
+        }
     }
 }
 
