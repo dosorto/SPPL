@@ -1056,6 +1056,7 @@
         },
         {
             "name": "laravel/framework",
+<<<<<<< HEAD
             "version": "v12.19.0",
             "source": {
                 "type": "git",
@@ -1066,6 +1067,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/laravel/framework/zipball/dc96bb635385a7f139afe39b339a36e87ec72770",
                 "reference": "dc96bb635385a7f139afe39b339a36e87ec72770",
+=======
+            "version": "v12.18.0",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/laravel/framework.git",
+                "reference": "7d264a0dad2bfc5c154240b38e8ce9b2c4cdd14d"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/laravel/framework/zipball/7d264a0dad2bfc5c154240b38e8ce9b2c4cdd14d",
+                "reference": "7d264a0dad2bfc5c154240b38e8ce9b2c4cdd14d",
+>>>>>>> origin/Test
                 "shasum": ""
             },
             "require": {
@@ -1267,7 +1280,11 @@
                 "issues": "https://github.com/laravel/framework/issues",
                 "source": "https://github.com/laravel/framework"
             },
+<<<<<<< HEAD
             "time": "2025-06-17T17:02:22+00:00"
+=======
+            "time": "2025-06-10T14:48:34+00:00"
+>>>>>>> origin/Test
         },
         {
             "name": "laravel/prompts",
@@ -5928,6 +5945,7 @@
         },
         {
             "name": "filp/whoops",
+<<<<<<< HEAD
             "version": "2.18.3",
             "source": {
                 "type": "git",
@@ -5938,6 +5956,18 @@
                 "type": "zip",
                 "url": "https://api.github.com/repos/filp/whoops/zipball/59a123a3d459c5a23055802237cb317f609867e5",
                 "reference": "59a123a3d459c5a23055802237cb317f609867e5",
+=======
+            "version": "2.18.2",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/filp/whoops.git",
+                "reference": "89dabca1490bc77dbcab41c2b20968c7e44bf7c3"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/filp/whoops/zipball/89dabca1490bc77dbcab41c2b20968c7e44bf7c3",
+                "reference": "89dabca1490bc77dbcab41c2b20968c7e44bf7c3",
+>>>>>>> origin/Test
                 "shasum": ""
             },
             "require": {
@@ -5987,7 +6017,11 @@
             ],
             "support": {
                 "issues": "https://github.com/filp/whoops/issues",
+<<<<<<< HEAD
                 "source": "https://github.com/filp/whoops/tree/2.18.3"
+=======
+                "source": "https://github.com/filp/whoops/tree/2.18.2"
+>>>>>>> origin/Test
             },
             "funding": [
                 {
@@ -5995,7 +6029,11 @@
                     "type": "github"
                 }
             ],
+<<<<<<< HEAD
             "time": "2025-06-16T00:02:10+00:00"
+=======
+            "time": "2025-06-11T20:42:19+00:00"
+>>>>>>> origin/Test
         },
         {
             "name": "hamcrest/hamcrest-php",
@@ -8163,12 +8201,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }

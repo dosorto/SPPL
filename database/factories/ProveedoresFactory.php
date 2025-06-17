@@ -5,6 +5,7 @@ namespace Database\Factories;
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Municipio;
 use App\Models\Empresa;
+use App\Models\Proveedores;
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Proveedores>
  */
