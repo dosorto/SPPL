@@ -29,15 +29,6 @@ class DatabaseSeeder extends Seeder
             //DepartamentoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
             
-            CategoriaUnidadSeeder::class,
-            UnidadMedidaSeeder::class,
-            MantenimientoEquipoSeeder::class,
-            TipoAnalisisSeeder::class,
-            MuestraSeeder::class,
-            AnalisisCalidadSeeder::class,
-
-            //ProveedoresSeaeder::class,
-            TipoOrdenComprasSeeder::class,
         ]);
     }
 }
