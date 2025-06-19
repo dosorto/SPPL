@@ -11,6 +11,16 @@ class OrdenCompras extends Model
     /** @use HasFactory<\Database\Factories\OrdenComprasFactory> */
     use HasFactory;
 
+    protected $fillable = [
+    'tipo_orden_compra_id',  
+    'proveedor_id',         
+    'empresa_id',            
+    'fecha_realizada',
+    'created_by',
+    'updated_by',
+    'deleted_by',
+];
+
     public function tipoOrdenCompra()
     {
         return $this->belongsTo(TipoOrdenCompras::class);
