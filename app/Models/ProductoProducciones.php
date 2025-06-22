@@ -6,31 +6,29 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Lote extends Model
+class ProductoProducciones extends Model
 {
-    /** @use HasFactory<\Database\Factories\LoteFactory> */
+    /** @use HasFactory<\Database\Factories\ProductoProduccionesFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $table = 'lotes';
+    protected $table = 'producto_produccion';
 
     protected $fillable = [
-        'fecha_elaboracion',
-        'fecha_vencimiento',
-        'cantidad',
-        'producto_id',
-        'producto_producciones_id',
+        'rendimientos_id',
+        'unidades_id',
+        'estado',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
-    public function productos()
+    public function rendimiento()
     {
-        return $this->belongsTo(Producto::class, 'producto_id');
+        return $this->belongsTo(Rendimiento::class);
     }
 
-    public function productoProducciones()
+    public function unidadMedida()
     {
-        return $this->belongsTo(ProductoProducciones::class, 'producto_produccion_id');
+        return $this->belongsTo(UnidadMedida::class);
     }
 }
