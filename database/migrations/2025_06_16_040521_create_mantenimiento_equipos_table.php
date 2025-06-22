@@ -9,22 +9,32 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::create('mantenimiento_equipos', function (Blueprint $table) {
-            $table->id();
-            $table->string('nombre_equipo', 255);
-            $table->date('fecha_mantenimiento');
-            $table->text('descripcion')->nullable();
+   public function up(): void
+{
+    Schema::create('mantenimiento_equipos', function (Blueprint $table) {
+        $table->id();
+        $table->unsignedBigInteger('tipo_tarea_id');
+        $table->unsignedBigInteger('productos_id')->nullable();
+        $table->text('descripcion_tarea');
+        $table->dateTime('fecha_hora_programada');
+        $table->dateTime('fecha_hora_realizada');
+        $table->enum('estado', ['PENDIENTE', 'EN_PROCESO', 'REALIZADO', 'NO_REALIZADO']);
+        $table->unsignedBigInteger('empleado_id');
+        $table->text('observaciones')->nullable();
 
-            // Auditoría
-            $table->timestamps();
-            $table->softDeletes();
-            $table->integer('created_by')->nullable();
-            $table->integer('updated_by')->nullable();
-            $table->integer('deleted_by')->nullable();
-            });
-    }
+        // Auditoría
+        $table->timestamps();
+        $table->softDeletes();
+        $table->integer('created_by')->nullable();
+        $table->integer('updated_by')->nullable();
+        $table->integer('deleted_by')->nullable();
+
+        // Llaves foráneas
+        $table->foreign('tipo_tarea_id')->references('id')->on('tipo_tarea_limpieza_mantenimiento');
+        $table->foreign('productos_id')->references('id')->on('productos');
+        $table->foreign('empleado_id')->references('id')->on('empleados');
+    });
+}
 
     /**
      * Reverse the migrations.

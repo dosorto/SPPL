@@ -2,14 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\MantenimientoEquipo;
 use Illuminate\Database\Seeder;
+use App\Models\MantenimientoEquipo;
 
 class MantenimientoEquipoSeeder extends Seeder
 {
     public function run(): void
     {
-        MantenimientoEquipo::factory(10)->create();
+        MantenimientoEquipo::factory()->count(10)->create();
     }
 }
+
 
