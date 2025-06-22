@@ -13,10 +13,13 @@ return new class extends Migration
     {
         Schema::create('mantenimiento_equipos', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre_equipo', 255);
-            $table->date('fecha_mantenimiento');
+            $table->foreignId('producto_id')->constrained('productos');
             $table->text('descripcion')->nullable();
-
+            $table->date('fecha_programada');
+            $table->date('fecha_realizada');
+            $table->enum('estado', ['PENDIENTE', 'EN_PROCESO', 'REALIZADO', 'NO_REALIZADO']);
+            $table->foreignId('empleado_id')->constrained('empleados');
+            $table->text('observaciones');
             // Auditoría
             $table->timestamps();
             $table->softDeletes();

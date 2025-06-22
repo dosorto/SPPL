@@ -19,7 +19,7 @@ return new class extends Migration
             $table->foreignId('tipo_analisis_id')->constrained('tipos_analisis');
 
             $table->decimal('valor', 8, 2);
-            $table->string('observaciones', 255)->nullable();
+            $table->text('observaciones', 255)->nullable();
 
             // Auditoría
             $table->timestamps();

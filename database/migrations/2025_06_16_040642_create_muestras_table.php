@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('muestras', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('inventario_productos_id')->constrained('inventario_productos');
             $table->string('nombre_muestra', 255);
             $table->decimal('cantidad', 8, 2);
 
