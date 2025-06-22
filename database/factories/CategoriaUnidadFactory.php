@@ -1,24 +1,21 @@
 <?php
 
-
 namespace Database\Factories;
 
-use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\CategoriaUnidad;
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\CategoriaUnidad>
- */
+use Illuminate\Database\Eloquent\Factories\Factory;
+
 class CategoriaUnidadFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = CategoriaUnidad::class;
+
     public function definition(): array
     {
         return [
-               'nombre' => $this->faker->word,
+            'nombre' => $this->faker->word(),
+            'created_by' => 1,
+            'updated_by' => 1,
+            'deleted_by' => null,
         ];
     }
 }

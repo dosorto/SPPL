@@ -9,11 +9,7 @@ class CategoriaUnidadSeeder extends Seeder
 {
     public function run(): void
     {
-        $categorias = ['Masa', 'Volumen', 'Temperatura', 'Concentración'];
-
-        foreach ($categorias as $nombre) {
-            CategoriaUnidad::firstOrCreate(['nombre' => $nombre]);
-        }
+        CategoriaUnidad::factory()->count(5)->create();
     }
 }
 
