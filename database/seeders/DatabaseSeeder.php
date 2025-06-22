@@ -28,6 +28,8 @@ class DatabaseSeeder extends Seeder
             TipoEmpleadoSeeder::class,
             //DepartamentoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
+
+            TipoOrdenComprasSeeder::class,
             
         ]);
     }
