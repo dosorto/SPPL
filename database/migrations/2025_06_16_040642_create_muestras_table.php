@@ -13,22 +13,19 @@ return new class extends Migration
     {
         Schema::create('muestras', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre_muestra', 255);
+            $table->foreignId('inventario_producto')->constrained('inventario_productos')->onDelete('restrict');
+            $table->string('nombre_muestra')->comment('Nombre o identificación de la muestra');
             $table->decimal('cantidad', 8, 2);
-
-            // Clave foránea
-            $table->foreignId('unidades_id')->constrained('unidades_medidas');
-
-            $table->decimal('temperatura', 5, 2);
-            $table->date('fecha_muestra');
-
-            // Auditoría
+            $table->foreignId('unidades_id')->constrained('unidades_medidas')->onDelete('restrict');
+            $table->decimal('temperatura', 5, 2)->nullable()->comment('Temperatura de la muestra');
+            $table->date('fecha_muestra')->comment('Fecha de toma de la muestra');
             $table->timestamps();
             $table->softDeletes();
             $table->integer('created_by')->nullable();
             $table->integer('updated_by')->nullable();
             $table->integer('deleted_by')->nullable();
         });
+
     }
 
     /**

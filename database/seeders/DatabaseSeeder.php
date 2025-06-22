@@ -35,6 +35,10 @@ class DatabaseSeeder extends Seeder
             TipoAnalisisSeeder::class,
             MuestraSeeder::class,
             AnalisisCalidadSeeder::class,
+            RecepcionLecheSeeder::class,
+
+            //ProveedoresSeaeder::class,
+            TipoOrdenComprasSeeder::class,
         ]);
     }
 }

@@ -3,27 +3,25 @@
 namespace Database\Factories;
 
 use App\Models\Muestra;
+use App\Models\InventarioProducto;
 use App\Models\UnidadMedida;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Muestra>
- */
 class MuestraFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
+    protected $model = Muestra::class;
+
     public function definition(): array
     {
         return [
-             'nombre_muestra' => $this->faker->word,
-            'cantidad' => $this->faker->randomFloat(2, 1, 100),
+            'inventario_producto' => InventarioProducto::factory(),
+            'nombre_muestra' => $this->faker->word(),
+            'cantidad' => $this->faker->randomFloat(2, 1, 10),
             'unidades_id' => UnidadMedida::factory(),
-            'temperatura' => $this->faker->randomFloat(2, 15, 30),
+            'temperatura' => $this->faker->randomFloat(1, 3, 10),
             'fecha_muestra' => $this->faker->date(),
+            'created_by' => 1,
+            'updated_by' => 1,
         ];
     }
 }

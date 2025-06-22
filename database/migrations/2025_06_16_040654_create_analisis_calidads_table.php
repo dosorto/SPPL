@@ -11,17 +11,12 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('analisis_calidad', function (Blueprint $table) {
-             $table->id();
-
-            // Claves foráneas
-            $table->foreignId('muestra_id')->constrained('muestras');
-            $table->foreignId('tipo_analisis_id')->constrained('tipos_analisis');
-
-            $table->decimal('valor', 8, 2);
-            $table->string('observaciones', 255)->nullable();
-
-            // Auditoría
+           Schema::create('analisis_calidad', function (Blueprint $table) {
+            $table->id();
+            $table->foreignId('muestra_id')->constrained('muestras')->onDelete('restrict');
+            $table->foreignId('tipo_analisis_id')->constrained('tipo_analisis')->onDelete('restrict');
+            $table->decimal('valor', 8, 2)->comment('Resultado del análisis');
+            $table->string('observaciones')->nullable();
             $table->timestamps();
             $table->softDeletes();
             $table->integer('created_by')->nullable();

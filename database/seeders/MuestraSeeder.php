@@ -2,19 +2,15 @@
 
 namespace Database\Seeders;
 
-use App\Models\Muestra;
-use App\Models\UnidadMedida;
 use Illuminate\Database\Seeder;
+use App\Models\Muestra;
 
 class MuestraSeeder extends Seeder
 {
     public function run(): void
     {
-        UnidadMedida::all()->each(function ($unidad) {
-            Muestra::factory(3)->create([
-                'unidades_id' => $unidad->id
-            ]);
-        });
+        Muestra::factory()->count(10)->create();
     }
 }
+
 
