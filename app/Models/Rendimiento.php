@@ -1,41 +1,40 @@
 <?php
 
-use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
+namespace App\Models;
 
-return new class extends Migration
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\SoftDeletes;
+
+class Rendimiento extends Model
 {
-    /**
-     * Run the migrations.
-     */
-    public function up(): void
+    /** @use HasFactory<\Database\Factories\RendimientoFactory> */
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'rendimientos';
+
+    protected $fillable = [
+        'orden_produccion_id',
+        'cantidad_mp',
+        'precio_mp',
+        'precio_otros_mp',
+        'margen_ganancia',
+        'created_by',
+        'updated_by',
+        'deleted_by',
+
+    ];
+
+
+    public function ordenProducciones()
     {
-        Schema::create('rendimientos', function (Blueprint $table) {
-            $table->id();
-            // Clave foránea hacia orden_produccion
-            $table->foreignId('orden_produccion_id')->constrained('orden_producciones');
-            // Campos principales
-            $table->decimal('cantidad_mp', 10, 2);
-            $table->decimal('precio_mp', 10, 2);
-            $table->decimal('precio_otros_mp', 10, 2);
-            $table->float('margen_ganancia');
-
-            // Campos de auditoría
-            $table->timestamps(); 
-            $table->softDeletes();
-
-            $table->integer('created_by')->nullable();
-            $table->integer('updated_by')->nullable();
-            $table->integer('deleted_by')->nullable();
-        });
+        return $this->belongsTo(OrdenProduccion::class);
     }
 
-    /**
-     * Reverse the migrations.
-     */
-    public function down(): void
+
+    public function productoProduccion()
     {
-        Schema::dropIfExists('rendimientos');
+        return $this->hasOne(ProductoProduccion::class);
     }
-};
+
+}
