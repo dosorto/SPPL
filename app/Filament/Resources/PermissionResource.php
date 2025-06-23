@@ -32,7 +32,7 @@ class PermissionResource extends Resource
                     ->minLength(2)
                     ->maxLength(255)
                     ->required()
-                    ->uniqid(ignoreRecord: true),
+                    ->unique(ignoreRecord: true),
             ]);
     }
 
