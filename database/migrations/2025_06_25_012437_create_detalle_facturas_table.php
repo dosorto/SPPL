@@ -11,19 +11,16 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('lotes', function (Blueprint $table) {
+        Schema::create('detalle_factura', function (Blueprint $table) {
             $table->id();
-
-            $table->date('fecha_elaboracion');
-            $table->date('fecha_vencimiento');
+            $table->foreignId('factura_id')->constrained('facturas')->onDelete('cascade');
+            $table->foreignId('producto_id')->constrained('inventario_productos')->onDelete('cascade');
             $table->decimal('cantidad', 10, 2);
-
-            $table->foreignId('producto_id')->constrained('inventario_productos');
-            $table->foreignId('producto_produccion_id')->constrained('producto_producciones');
-
+            $table->decimal('precio_unitario', 10, 2);
+            $table->decimal('sub_total', 10, 2);
+            $table->decimal('total_factura', 10, 2);
             $table->timestamps();
             $table->softDeletes();
-
             $table->integer('created_by')->nullable();
             $table->integer('updated_by')->nullable();
             $table->integer('deleted_by')->nullable();
@@ -35,6 +32,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('lotes');
+        Schema::dropIfExists('detalle_facturas');
     }
 };
