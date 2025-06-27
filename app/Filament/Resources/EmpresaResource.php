@@ -29,7 +29,11 @@ class EmpresaResource extends Resource
                 Forms\Components\TextInput::make('nombre')
                     ->label('Nombre de la empresa')
                     ->required()
-                    ->maxLength(255),
+                    ->maxLength(255)
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages([
+                        'unique' => 'El nombre de la empresa ya está registrado.',
+                    ]),
                 Forms\Components\Select::make('municipio_id')
                     ->label('Municipio')
                     ->relationship('municipio', 'nombre_municipio')
@@ -44,7 +48,11 @@ class EmpresaResource extends Resource
                 Forms\Components\TextInput::make('rtn')
                     ->label('RTN')
                     ->required()
-                    ->maxLength(20),
+                    ->maxLength(20)
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages([
+                        'unique' => 'El RTN ya está registrado.',
+                    ]),
             ]);
     }
 
@@ -55,7 +63,9 @@ class EmpresaResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
-                    ->label('Nombre'),
+                    ->label('Nombre')
+                    ->badge()
+                    ->color('primary'),
                 Tables\Columns\TextColumn::make('municipio.nombre_municipio')
                     ->label('Municipio'),
                 Tables\Columns\TextColumn::make('direccion')
@@ -64,13 +74,13 @@ class EmpresaResource extends Resource
                     ->label('Teléfono'),
                 Tables\Columns\TextColumn::make('rtn')
                     ->label('RTN'),
-            
             ])
             ->filters([
                 //
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

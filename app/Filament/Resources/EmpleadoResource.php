@@ -26,7 +26,11 @@ class EmpleadoResource extends Resource
             ->schema([
                 Forms\Components\TextInput::make('numero_empleado')
                     ->label('Número de empleado')
-                    ->required(),
+                    ->required()
+                    ->unique(ignoreRecord: true)
+                    ->validationMessages([
+                        'unique' => 'El número de empleado ya está registrado.',
+                    ]),
                 Forms\Components\DatePicker::make('fecha_ingreso')
                     ->label('Fecha de ingreso')
                     ->required(),
@@ -65,29 +69,47 @@ class EmpleadoResource extends Resource
 
     public static function table(Table $table): Table
     {
-        // cambio jessuri: Muestra correctamente el nombre del departamento y tipo de empleado en la tabla usando las relaciones.
+        // cambio jessuri: Mejora visual de la tabla empleados con formatos, badges y búsqueda.
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('numero_empleado')
-                    ->label('Número'),
-                Tables\Columns\TextColumn::make('fecha_ingreso')
-                    ->label('Ingreso'),
-                Tables\Columns\TextColumn::make('salario')
-                    ->label('Salario'),
+                    ->label('Número')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('persona.nombre')
-                    ->label('Persona'),
+                    ->label('Persona'), // No searchable, es accesor
                 Tables\Columns\TextColumn::make('departamento.nombre_departamento_empleado')
-                    ->label('Departamento'),
+                    ->label('Departamento')
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('empresa.nombre')
-                    ->label('Empresa'),
+                    ->label('Empresa')
+                    ->badge()
+                    ->color('success'),
                 Tables\Columns\TextColumn::make('tipoEmpleado.nombre_tipo')
-                    ->label('Tipo'),
+                    ->label('Tipo')
+                    ->badge()
+                    ->color(fn ($record) => $record->tipoEmpleado->nombre_tipo === 'Administrativo' ? 'primary' : 'warning'),
+                Tables\Columns\TextColumn::make('salario')
+                    ->label('Salario')
+                    ->money('HNL', true),
+                Tables\Columns\TextColumn::make('fecha_ingreso')
+                    ->label('Ingreso')
+                    ->date('d/m/Y'),
             ])
             ->filters([
-                //
+                Tables\Filters\SelectFilter::make('empresa_id')
+                    ->label('Empresa')
+                    ->relationship('empresa', 'nombre'),
+                Tables\Filters\SelectFilter::make('departamento_empleado_id')
+                    ->label('Departamento')
+                    ->relationship('departamento', 'nombre_departamento_empleado'),
+                Tables\Filters\SelectFilter::make('tipo_empleado_id')
+                    ->label('Tipo')
+                    ->relationship('tipoEmpleado', 'nombre_tipo'),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
