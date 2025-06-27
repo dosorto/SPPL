@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Empresa;
 
 
-class departamentoempleado extends Model
+class DepartamentoEmpleado extends Model
 {
     /** @use HasFactory<\Database\Factories\DepartementoempleadoFactory> */
     use HasFactory, SoftDeletes;

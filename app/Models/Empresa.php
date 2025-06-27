@@ -43,11 +43,37 @@ class Empresa extends Model
     {
         return $this->hasMany(Cliente::class);
     }
-/**
+
+    /**
      * Una empresa puede tener muchos empleados asociados (relación inversa de empleado.empresa_id).
      */
     public function empleados()
     {
         return $this->hasMany(Empleado::class);
+    }
+
+    /**
+     * Cambio jessuri: Esta función booted() asigna automáticamente los campos de auditoría (created_by, updated_by, deleted_by)
+     * con el ID del usuario autenticado al crear, actualizar o eliminar una empresa.
+     * Así, estos campos se llenan sin intervención manual desde el formulario.
+     */
+    protected static function booted()
+    {
+        static::creating(function ($empresa) {
+            if (auth()->check()) {
+                $empresa->created_by = auth()->id();
+            }
+        });
+        static::updating(function ($empresa) {
+            if (auth()->check()) {
+                $empresa->updated_by = auth()->id();
+            }
+        });
+        static::deleting(function ($empresa) {
+            if (auth()->check()) {
+                $empresa->deleted_by = auth()->id();
+                $empresa->save();
+            }
+        });
     }
 }

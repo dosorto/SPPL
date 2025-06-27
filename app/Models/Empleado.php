@@ -46,7 +46,7 @@ class Empleado extends Model
      */
     public function departamento()
     {
-        return $this->belongsTo(DepartamentoEmpleado::class); // Asegura la FK
+        return $this->belongsTo(DepartamentoEmpleado::class, 'departamento_empleado_id'); // Asegura la FK
     }
 
     /**
