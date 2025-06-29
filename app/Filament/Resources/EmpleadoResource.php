@@ -17,7 +17,8 @@ class EmpleadoResource extends Resource
 {
     protected static ?string $model = Empleado::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $navigationGroup = 'Recursos Humanos';
 
     // cambio jessuri: Personaliza el formulario y la tabla para empleados mostrando los campos principales y relaciones.
     public static function form(Form $form): Form

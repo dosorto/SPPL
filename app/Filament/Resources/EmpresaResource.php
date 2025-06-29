@@ -17,7 +17,7 @@ class EmpresaResource extends Resource
 {
     protected static ?string $model = Empresa::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-building-office';
 
 
     //Cambio Jessuri
@@ -65,15 +65,19 @@ class EmpresaResource extends Resource
                 Tables\Columns\TextColumn::make('nombre')
                     ->label('Nombre')
                     ->badge()
-                    ->color('primary'),
+                    ->color('primary')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('municipio.nombre_municipio')
-                    ->label('Municipio'),
+                    ->label('Municipio')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('direccion')
-                    ->label('Dirección'),
+                    ->label('Dirección')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('telefono')
                     ->label('Teléfono'),
                 Tables\Columns\TextColumn::make('rtn')
-                    ->label('RTN'),
+                    ->label('RTN')
+                    ->searchable(),
             ])
             ->filters([
                 //
