@@ -37,11 +37,10 @@ class DatabaseSeeder extends Seeder
             TipoEmpleadoSeeder::class,
             //DepartamentoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
-
             TipoOrdenComprasSeeder::class,
             CategoriaUnidadesSeeder::class,
             UnidadDeMedidasSeeder::class,
-            
+            PersonaSeeder::class, // cambio jessuri: se agregan personas de ejemplo
         ]);
     }
 }
