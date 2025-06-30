@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Paises extends Model
 {
     /** @use HasFactory<\Database\Factories\PaiseFactory> */
-    use HasFactory;
+    use HasFactory, SoftDeletes;
     /**
      * The table associated with the model.
      *
