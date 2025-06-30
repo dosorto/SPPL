@@ -35,13 +35,14 @@ class DatabaseSeeder extends Seeder
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
             TipoEmpleadoSeeder::class,
+            CategoriaUnidadesSeeder::class,
+            UnidadDeMedidasSeeder::class,
             EmpresaSeeder::class,
-            //DepartamentoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
-            OrdenComprasSeeder::class,
             TipoOrdenComprasSeeder::class,
+            OrdenComprasSeeder::class,
             ProductosSeeder::class,
-            
+            ProveedoresSeeder::class,
         ]);
     }
 }
