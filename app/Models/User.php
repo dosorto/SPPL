@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Spatie\Permission\Traits\HasRoles;
+use Spatie\Permission\Models\Permission;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 
@@ -52,11 +53,26 @@ class User extends Authenticatable implements FilamentUser
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return $this->hasRole('admin');
+        return $this->hasRole(['admin', 'super_admin', 'editor', 'viewer']);
     }
 
     public function getFilamentAvatarUrl(): ?string
     {
         return null;
+    }
+
+    public function creadoPor()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function actualizadoPor()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function eliminadoPor()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
     }
 }

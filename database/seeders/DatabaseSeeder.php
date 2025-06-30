@@ -39,6 +39,8 @@ class DatabaseSeeder extends Seeder
             RolesAndPermissionsSeeder::class,
 
             TipoOrdenComprasSeeder::class,
+            CategoriaUnidadesSeeder::class,
+            UnidadDeMedidasSeeder::class,
             
         ]);
     }
