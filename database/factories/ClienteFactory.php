@@ -11,7 +11,7 @@ class ClienteFactory extends Factory
 {
     protected $model = Cliente::class;
 
-    public function definition(): array
+    public function definition(): array // Define los campos que quieres generar para el modelo Cliente
     {
         return [
             'num_cliente' => $this->faker->unique()->randomNumber(6),
