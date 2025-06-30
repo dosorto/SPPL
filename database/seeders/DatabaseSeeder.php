@@ -43,6 +43,8 @@ class DatabaseSeeder extends Seeder
             CategoriaUnidadesSeeder::class,
             UnidadDeMedidasSeeder::class,
             PersonaSeeder::class, // cambio jessuri: se agregan personas de ejemplo
+            OrdenComprasSeeder::class,
+            ProductosSeeder::class,
         ]);
     }
 }
