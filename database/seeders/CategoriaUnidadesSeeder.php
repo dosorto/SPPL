@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Facades\DB; 
 
 class CategoriaUnidadesSeeder extends Seeder
-class CategoriaUnidadesSeeder extends Seeder
+
 {
     public function run(): void
     {
