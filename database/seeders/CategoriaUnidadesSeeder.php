@@ -5,11 +5,10 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use App\Models\CategoriaUnidades;
 
-class CategoriaUnidadSeeder extends Seeder
+class CategoriaUnidadesSeeder extends Seeder
 {
     public function run(): void
     {
-        CategoriaUnidad::factory()->count(5)->create();
+        CategoriaUnidades::factory()->count(5)->create();
     }
 }
-   
