@@ -24,6 +24,8 @@ return new class extends Migration
             $table->integer('created_by')->nullable();
             $table->integer('updated_by')->nullable();
             $table->integer('deleted_by')->nullable();
+
+            $table->unique(['nombre_departamento_empleado', 'empresa_id'], 'departamento_empresa_unique');
         });
     }
 
@@ -32,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('departemento_empleados');
+        Schema::dropIfExists('departamento_empleados');
     }
 };

@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Empresa;
 
 
-class departamentoempleado extends Model
+class DepartamentoEmpleado extends Model
 {
     /** @use HasFactory<\Database\Factories\DepartementoempleadoFactory> */
     use HasFactory, SoftDeletes;
@@ -34,5 +34,30 @@ class departamentoempleado extends Model
     public function empleados()
     {
         return $this->hasMany(Empleado::class);
+    }
+
+    /**
+     * Cambio jessuri: Esta función booted() asigna automáticamente los campos de auditoría (created_by, updated_by, deleted_by)
+     * con el ID del usuario autenticado al crear, actualizar o eliminar un departamento interno.
+     * Así, estos campos se llenan sin intervención manual desde el formulario.
+     */
+    protected static function booted()
+    {
+        static::creating(function ($departamentoEmpleado) {
+            if (auth()->check()) {
+                $departamentoEmpleado->created_by = auth()->id();
+            }
+        });
+        static::updating(function ($departamentoEmpleado) {
+            if (auth()->check()) {
+                $departamentoEmpleado->updated_by = auth()->id();
+            }
+        });
+        static::deleting(function ($departamentoEmpleado) {
+            if (auth()->check()) {
+                $departamentoEmpleado->deleted_by = auth()->id();
+                $departamentoEmpleado->save();
+            }
+        });
     }
 }
