@@ -59,4 +59,19 @@ class User extends Authenticatable implements FilamentUser
     {
         return null;
     }
+
+    public function creadoPor()
+    {
+        return $this->belongsTo(User::class, 'created_by');
+    }
+
+    public function actualizadoPor()
+    {
+        return $this->belongsTo(User::class, 'updated_by');
+    }
+
+    public function eliminadoPor()
+    {
+        return $this->belongsTo(User::class, 'deleted_by');
+    }
 }
