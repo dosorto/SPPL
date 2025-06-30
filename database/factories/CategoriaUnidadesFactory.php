@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
+use App\Models\CategoriaUnidades;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\CategoriaUnidades>

@@ -99,3 +99,4 @@ class UnidadDeMedidasSeeder extends Seeder
         DB::table('unidad_de_medidas')->insertOrIgnore($dataToInsert);
     }
 }
+

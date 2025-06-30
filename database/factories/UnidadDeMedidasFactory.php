@@ -6,7 +6,7 @@ use App\Models\UnidadDeMedidas;
 use App\Models\CategoriaUnidades;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-class UnidadMedidaFactory extends Factory
+class UnidadDeMedidasFactory extends Factory
 {
     protected $model = UnidadDeMedidas::class;
 
