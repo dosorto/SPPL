@@ -37,8 +37,9 @@ class DatabaseSeeder extends Seeder
             TipoEmpleadoSeeder::class,
             //DepartamentoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
-
+            OrdenComprasSeeder::class,
             TipoOrdenComprasSeeder::class,
+            ProductosSeeder::class,
             
         ]);
     }

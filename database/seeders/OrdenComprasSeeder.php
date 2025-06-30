@@ -2,16 +2,14 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use App\Models\OrdenCompras;
 
 class OrdenComprasSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
-    public function run(): void
+    public function run()
     {
-        //
+        // Crea 20 registros de OrdenCompras con factory
+        OrdenCompras::factory()->count(20)->create();
     }
 }

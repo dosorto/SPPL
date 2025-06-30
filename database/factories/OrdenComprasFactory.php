@@ -2,22 +2,26 @@
 
 namespace Database\Factories;
 
+use App\Models\OrdenCompras;
+use App\Models\TipoOrdenCompras;
+use App\Models\Proveedores;
+use App\Models\Empresa;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\OrdenCompras>
- */
 class OrdenComprasFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    protected $model = OrdenCompras::class;
+
+    public function definition()
     {
         return [
-            //
+            'tipo_orden_compra_id' => TipoOrdenCompras::inRandomOrder()->first()->id ?? TipoOrdenCompras::factory(),
+            'proveedor_id' => Proveedores::inRandomOrder()->first()->id ?? Proveedores::factory(),
+            'empresa_id' => Empresa::inRandomOrder()->first()->id ?? Empresa::factory(),
+            'fecha_realizada' => $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
+            'created_by' => 1,  // Cambia según usuarios existentes
+            'updated_by' => 1,
+            'deleted_by' => null,
         ];
     }
 }
