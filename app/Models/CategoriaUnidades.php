@@ -15,12 +15,12 @@ class CategoriaUnidades extends Model
 
     protected $table = 'categoria_unidades';
 
-   /* protected $fillable = [
+   protected $fillable = [
         'nombre',
         'created_by',
         'updated_by',
         'deleted_by',
-    ];*/
+    ];
 
     protected $dates = ['deleted_at'];
 

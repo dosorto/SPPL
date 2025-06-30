@@ -51,16 +51,18 @@ class CategoriaUnidadesResource extends Resource
 
                 Tables\Columns\TextColumn::make('creadoPor.name')
                     ->label('Creado por')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('actualizadoPor.name')
                     ->label('Actualizado por')
-                    ->sortable(),
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('eliminadoPor.name')
                     ->label('Eliminado por')
                     ->sortable()
-                    ->hidden(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Creado el')

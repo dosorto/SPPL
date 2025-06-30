@@ -49,16 +49,16 @@ class TipoOrdenComprasResource extends Resource
 
                 Tables\Columns\TextColumn::make('creadoPor.name')
                     ->label('Creado por')
-                    ->sortable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('actualizadoPor.name')
                     ->label('Actualizado por')
-                    ->sortable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('eliminadoPor.name')
                     ->label('Eliminado por')
                     ->sortable()
-                    ->hidden(),
+                    ->toggleable(isToggledHiddenByDefault: true),
                     
 
                 Tables\Columns\TextColumn::make('created_at')
