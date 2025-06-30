@@ -64,4 +64,29 @@ class Empleado extends Model
     {
         return $this->belongsTo(TipoEmpleado::class);
     }
+
+    /**
+     * Cambio jessuri: Esta función booted() asigna automáticamente los campos de auditoría (created_by, updated_by, deleted_by)
+     * con el ID del usuario autenticado al crear, actualizar o eliminar un empleado.
+     * Así, estos campos se llenan sin intervención manual desde el formulario.
+     */
+    protected static function booted()
+    {
+        static::creating(function ($empleado) {
+            if (auth()->check()) {
+                $empleado->created_by = auth()->id();
+            }
+        });
+        static::updating(function ($empleado) {
+            if (auth()->check()) {
+                $empleado->updated_by = auth()->id();
+            }
+        });
+        static::deleting(function ($empleado) {
+            if (auth()->check()) {
+                $empleado->deleted_by = auth()->id();
+                $empleado->save();
+            }
+        });
+    }
 }
