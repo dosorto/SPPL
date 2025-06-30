@@ -2,22 +2,24 @@
 
 namespace Database\Factories;
 
+use App\Models\Empresa;
+use App\Models\Municipio;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
-/**
- * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Empresa>
- */
 class EmpresaFactory extends Factory
 {
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
-    public function definition(): array
+    protected $model = Empresa::class;
+
+    public function definition()
     {
         return [
-            //
+            'nombre' => $this->faker->company(),
+            'municipio_id' => Municipio::inRandomOrder()->first()->id ?? Municipio::factory(),
+            'direccion' => $this->faker->address(),
+            'telefono' => $this->faker->phoneNumber(),
+            'rtn' => $this->faker->numerify('##########'),
+            'created_by' => 1,
+            'updated_by' => 1,
         ];
     }
 }

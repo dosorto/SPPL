@@ -35,6 +35,7 @@ class DatabaseSeeder extends Seeder
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
             TipoEmpleadoSeeder::class,
+            EmpresaSeeder::class,
             //DepartamentoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
             OrdenComprasSeeder::class,
