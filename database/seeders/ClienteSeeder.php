@@ -2,16 +2,14 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Cliente;
 use Illuminate\Database\Seeder;
+use App\Models\Empresa;
 
 class ClienteSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        //
+        Cliente::factory()->count(15)->create(); // Crea 15 registros de ejemplo
     }
 }
