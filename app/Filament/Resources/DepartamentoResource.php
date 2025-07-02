@@ -16,7 +16,15 @@ use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Filters\TrashedFilter;
 use Filament\Tables\Filters\SelectFilter; // Para filtrar por relación
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletes; // Importa el trait para el query scope
+use Illuminate\Database\Eloquent\SoftDeletes; 
+use Filament\Tables\Actions\RestoreAction;
+use Filament\Tables\Actions\ForceDeleteAction;
+use Filament\Tables\Actions\DeleteBulkAction;
+use Filament\Tables\Actions\RestoreBulkAction;
+use Filament\Tables\Actions\ForceDeleteBulkAction;
+use Filament\Tables\Actions\BulkActionGroup;
+use Filament\Tables\Actions\EditAction as TablesEditAction; // Importa Edit
+// Importa el trait para el query scope
 
 class DepartamentoResource extends Resource
 {
@@ -109,17 +117,23 @@ class DepartamentoResource extends Resource
                 TrashedFilter::make(), // Filtro para soft deletes
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
+                EditAction::make()->label('Editar'),
+                ViewAction::make()->label('Ver'),
+                DeleteAction::make()
+                    ->label('Eliminar')
+                    ->modalHeading('Eliminar Departamento')
+                    ->modalDescription('¿Está seguro de que desea eliminar este departamento?')
+                    ->modalSubmitActionLabel('Sí, eliminar')
+                    ->modalCancelActionLabel('Cancelar'),
+                ForceDeleteAction::make()->label('Eliminar Permanentemente'),
+                RestoreAction::make()->label('Restaurar'),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
-                ]),
+                BulkActionGroup::make([
+                    DeleteBulkAction::make()->label('Eliminar Seleccionados'),
+                    RestoreBulkAction::make()->label('Restaurar Seleccionados'),
+                    ForceDeleteBulkAction::make()->label('Eliminar Permanentemente'),
+                ])->label('Acciones en Lote'),
             ]);
     }
 

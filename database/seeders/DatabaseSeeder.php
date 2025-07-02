@@ -9,6 +9,7 @@ use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
 
 
+
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -19,17 +20,7 @@ class DatabaseSeeder extends Seeder
         // User::factory(10)->create();
         
 
-        $user = User::factory()->create([
-            'name' => 'admin',
-            'email' => 'admin@example.com',
-        ]);
-
-        $role = Role::create(['name' => 'admin']);
         
-
-        $user->assignRole($role);
-        //$user = User::find(1);
-        //$user->assignRole('root');
         $this->call([
             PaisesSeeder::class,
             DepartamentoSeeder::class,
@@ -41,5 +32,15 @@ class DatabaseSeeder extends Seeder
             TipoOrdenComprasSeeder::class,
             
         ]);
+
+        $user = User::factory()->create([
+            'name' => 'admin',
+            'email' => 'admin@example.com',
+        ]);
+
+        //$role = Role::create(['name' => 'admin']);
+        //$user->assignRole($role);
+        $user = User::find(1);
+        $user->assignRole('admin');
     }
 }

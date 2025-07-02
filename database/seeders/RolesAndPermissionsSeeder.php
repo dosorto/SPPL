@@ -17,16 +17,39 @@ class RolesAndPermissionsSeeder extends Seeder
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
         // Crear permisos
-        Permission::create(['name' => 'edit articles']);
-        Permission::create(['name' => 'delete articles']);
-        Permission::create(['name' => 'publish articles']);
-        Permission::create(['name' => 'unpublish articles']);
+         $models = [
+            'users',
+            'roles',
+            'paises',
+            'departamentos',
+            'municipios',
+        ];
 
-        // Crear roles y asignar permisos
-        $roleAdmin = Role::create(['name' => 'root']);
-        $roleAdmin->givePermissionTo(['edit articles', 'delete articles', 'publish articles', 'unpublish articles']);
+        // Acciones comunes de las políticas
+        $actions = [
+            'view_any',
+            'view',
+            'create',
+            'update',
+            'delete',
+            'restore',
+            'force_delete',
+        ];
+
+        // Crear permisos para cada modelo y acción
+        foreach ($models as $model) {
+            foreach ($actions as $action) {
+                Permission::create(['name' => "{$action}_{$model}"]);
+            }
+        }
+
+        // Crear rol de Administrador
+        $adminRole = Role::create(['name' => 'admin']);
+
+        // Asignar TODOS los permisos al rol de Administrador
+        $adminRole->givePermissionTo(Permission::all());
 
         $roleEditor = Role::create(['name' => 'editor']);
-        $roleEditor->givePermissionTo(['edit articles', 'publish articles']);
+        $roleEditor->givePermissionTo(['view_paises',]);
     }
 }

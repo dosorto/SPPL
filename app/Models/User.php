@@ -12,7 +12,7 @@ use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
 
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable //implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles;  
@@ -51,10 +51,10 @@ class User extends Authenticatable implements FilamentUser
         ];
     }
 
-    public function canAccessPanel(Panel $panel): bool
+    /*public function canAccessPanel(Panel $panel): bool
     {
         return $this->hasRole(['admin', 'super_admin', 'editor', 'viewer']);
-    }
+    }*/
 
     public function getFilamentAvatarUrl(): ?string
     {
