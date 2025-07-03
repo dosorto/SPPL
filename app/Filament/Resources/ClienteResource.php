@@ -55,12 +55,6 @@ class ClienteResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('rtn')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('persona_id')
-                    ->numeric()
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('empresa_id')
-                    ->numeric()
-                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
