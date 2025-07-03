@@ -15,7 +15,7 @@ class RolePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_users');
+        return $user->can('view_any_roles');
         //return $user->can('view_any_role');
     }
 
@@ -24,7 +24,7 @@ class RolePolicy
      */
     public function view(User $user, Role $role): bool
     {
-        return $user->can('view_users');
+        return $user->can('view_roles');
        // return $user->can('view_role');
     }
 
@@ -33,7 +33,7 @@ class RolePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('view_users');
+        return $user->can('create_roles');
         //return $user->can('create_role');
     }
 
@@ -42,7 +42,7 @@ class RolePolicy
      */
     public function update(User $user, Role $role): bool
     {
-        return $user->can('update_role');
+        return $user->can('update_roles');
     }
 
     /**
@@ -50,7 +50,7 @@ class RolePolicy
      */
     public function delete(User $user, Role $role): bool
     {
-        return $user->can('delete_role');
+        return $user->can('delete_roles');
     }
 
     /**
@@ -74,7 +74,7 @@ class RolePolicy
      */
     public function forceDeleteAny(User $user): bool
     {
-        return $user->can('force_delete_any_role');
+        return $user->can('force_delete_any_roles');
     }
 
     /**
@@ -82,7 +82,7 @@ class RolePolicy
      */
     public function restore(User $user, Role $role): bool
     {
-        return $user->can('restore_role');
+        return $user->can('restore_roles');
     }
 
     /**
@@ -90,7 +90,7 @@ class RolePolicy
      */
     public function restoreAny(User $user): bool
     {
-        return $user->can('restore_any_role');
+        return $user->can('restore_any_roles');
     }
 
     /**
@@ -98,7 +98,7 @@ class RolePolicy
      */
     public function replicate(User $user, Role $role): bool
     {
-        return $user->can('replicate_role');
+        return $user->can('replicate_roles');
     }
 
     /**
@@ -106,6 +106,6 @@ class RolePolicy
      */
     public function reorder(User $user): bool
     {
-        return $user->can('reorder_role');
+        return $user->can('reorder_roles');
     }
 }
