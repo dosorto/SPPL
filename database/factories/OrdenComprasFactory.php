@@ -6,6 +6,7 @@ use App\Models\OrdenCompras;
 use App\Models\TipoOrdenCompras;
 use App\Models\Proveedores;
 use App\Models\Empresa;
+use App\Models\Productos;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
 class OrdenComprasFactory extends Factory
@@ -14,12 +15,19 @@ class OrdenComprasFactory extends Factory
 
     public function definition()
     {
+        // Obtener un producto aleatorio o null
+        $producto = Productos::inRandomOrder()->first();
+
         return [
             'tipo_orden_compra_id' => TipoOrdenCompras::inRandomOrder()->first()->id ?? TipoOrdenCompras::factory(),
             'proveedor_id' => Proveedores::inRandomOrder()->first()->id ?? Proveedores::factory(),
             'empresa_id' => Empresa::inRandomOrder()->first()->id ?? Empresa::factory(),
             'fecha_realizada' => $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
-            'created_by' => 1,  // Cambia según usuarios existentes
+            'producto_id' => $producto?->id,
+            'descripcion' => $producto
+                ? ($producto->descripcion_corta ?: $producto->descripcion ?: $this->faker->sentence())
+                : $this->faker->sentence(),
+            'created_by' => 1,  // Ajustar según usuarios existentes
             'updated_by' => 1,
             'deleted_by' => null,
         ];
