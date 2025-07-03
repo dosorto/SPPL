@@ -11,6 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Filters\TrashedFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -106,18 +107,19 @@ class UnidadDeMedidasResource extends Resource
                 TrashedFilter::make(),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make() ->label('Editar'),
+                ViewAction::make() ->label('ver'),
+                DeleteAction::make() ->label('Eliminar'),
                 Tables\Actions\RestoreAction::make(),
                 Tables\Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()->label('Eliminar'),
+                Tables\Actions\RestoreBulkAction::make()->label('Restaurar'),
+                Tables\Actions\ForceDeleteBulkAction::make()->label('Eliminar Definitivamente'),
                 ]),
-            ]);
+            ]);;
     }
 
     public static function getRelations(): array
