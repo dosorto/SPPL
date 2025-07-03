@@ -27,8 +27,17 @@ class Productos extends Model
     'deleted_by',
 ];
 
+   
+    public function unidadDeMedida()
+    {
+        return $this->belongsTo(UnidadDeMedidas::class, 'unidad_de_medida_id');
+    }
+    // En App\Models\Productos.php
+
     public function unidadMedida()
     {
-        return $this->hasMany(UnidadDeMedidas::class, 'unidad_de_medida_id');
+        return $this->belongsTo(UnidadDeMedidas::class, 'unidad_de_medida_id', 'id');
     }
+
+
 }
