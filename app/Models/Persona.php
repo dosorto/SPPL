@@ -39,6 +39,8 @@ class Persona extends Model
         return $this->belongsTo(Municipio::class);
     }
 
+
+
     /**
      * Define la relación: una persona pertenece a un país.
      */
@@ -70,15 +72,5 @@ class Persona extends Model
     {
         return $this->belongsTo(Empresa::class);
     }
-
-    // cambio jessuri: Accesor para obtener el nombre completo de la persona concatenando nombres y apellidos.
-    public function getNombreAttribute()
-    {
-        return trim(
-            $this->primer_nombre . ' ' .
-            ($this->segundo_nombre ? $this->segundo_nombre . ' ' : '') .
-            $this->primer_apellido . ' ' .
-            ($this->segundo_apellido ? $this->segundo_apellido : '')
-        );
-    }
 }
+

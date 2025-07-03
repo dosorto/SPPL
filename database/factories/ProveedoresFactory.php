@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use Illuminate\Database\Eloquent\Factories\Factory;
 use App\Models\Proveedores;
+use App\Models\Empresa;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Proveedores>
@@ -17,19 +18,17 @@ class ProveedoresFactory extends Factory
      */
     public function definition(): array
     {
+        $empresa = \App\Models\Empresa::inRandomOrder()->first();
         return [
-            'nombre_proveedor' => $this->faker->company, 
-            'telefono' => $this->faker->phoneNumber,    
-            'rtn' => $this->faker->unique()->numerify('##########'), 
-            'direccion' => $this->faker->address,      
-            'municipio_id' => $this->faker->numberBetween(1,16),    
-            'persona_contacto' => $this->faker->name,   
-            'empresa_id' => $this->faker->numberBetween(1,10),                     
-            'created_at' => now(),
-            'updated_at' => now(),
-            'created_by' => 1, 
-            'updated_by' => 1, 
-            'deleted_by' => null, 
+            'nombre_proveedor' => $this->faker->company,
+            'telefono' => $this->faker->phoneNumber,
+            'rtn' => $this->faker->numerify('##########'),
+            'direccion' => $this->faker->address,
+            'municipio_id' => 1, // o el que corresponda
+            'persona_contacto' => $this->faker->name,
+            'empresa_id' => $empresa ? $empresa->id : Empresa::factory()->create()->id,
+            'created_by' => 1,
+            'updated_by' => 1,
         ];
     }
 }
