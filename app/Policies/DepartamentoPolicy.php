@@ -13,6 +13,7 @@ class DepartamentoPolicy
      */
     public function viewAny(User $user): bool
     {
+        //return $user->hasRole(['admin', 'super_admin']);
         return $user->hasRole(['admin', 'super_admin']);
     }
 

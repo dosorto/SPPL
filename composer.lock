@@ -5,8 +5,11 @@
         "This file is @generated automatically"
     ],
     "content-hash": "40ba374596343ff349260425c1d919dd",
+<<<<<<< HEAD
     "content-hash": "db87626b8c675e05d9ad4e2f4ba8d945",
+=======
     "content-hash": "889346da6dec7e79aa88ad5711543f9d",
+>>>>>>> AlejandroB
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
