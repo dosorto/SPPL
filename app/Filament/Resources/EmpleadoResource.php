@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Illuminate\Validation\Rule;
 
 class EmpleadoResource extends Resource
 {
@@ -21,50 +22,115 @@ class EmpleadoResource extends Resource
     protected static ?string $navigationGroup = 'Recursos Humanos';
 
     // cambio jessuri: Personaliza el formulario y la tabla para empleados mostrando los campos principales y relaciones.
+    // cambio jessuri: Wizard de 3 pasos para crear empleado y persona juntos
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('numero_empleado')
-                    ->label('Número de empleado')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->validationMessages([
-                        'unique' => 'El número de empleado ya está registrado.',
-                    ]),
-                Forms\Components\DatePicker::make('fecha_ingreso')
-                    ->label('Fecha de ingreso')
-                    ->required(),
-                Forms\Components\TextInput::make('salario')
-                    ->label('Salario')
-                    ->numeric()
-                    ->required(),
-                // cambio jessuri: Usamos getOptionLabelFromRecordUsing para que 
-                // Filament muestre el nombre completo generado por el accesor en Persona
-                Forms\Components\Select::make('persona_id')
-                    ->label('Persona')
-                    ->relationship('persona', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre)
-                    ->required(),
-                // cambio jessuri: Ajuste para que el select de departamento muestre correctamente los departamentos internos de empleados.
-                // Se usa la relación 'departamento' (que apunta a DepartamentoEmpleado) y el campo 'id', mostrando el nombre_departamento_empleado.
-                Forms\Components\Select::make('departamento_empleado_id')
-                    ->label('Departamento')
-                    ->relationship('departamento', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_departamento_empleado)
-                    //->searchable()
-                    ->required(),
-                Forms\Components\Select::make('empresa_id')
-                    ->label('Empresa')
-                    ->relationship('empresa', 'nombre')
-                    ->required(),
-                // cambio jessuri: Usamos getOptionLabelFromRecordUsing para mostrar 
-                // el nombre correcto del tipo de empleado en el select.
-                Forms\Components\Select::make('tipo_empleado_id')
-                    ->label('Tipo de empleado')
-                    ->relationship('tipoEmpleado', 'id')
-                    ->getOptionLabelFromRecordUsing(fn ($record) => $record->nombre_tipo)
-                    ->required(),
+                Forms\Components\Wizard::make([
+                    // cambio jessuri: Wizard con 3 pasos para crear empleado y persona juntos
+                    // Paso 1: Datos personales
+
+                    Forms\Components\Wizard\Step::make('Datos personales')
+                        ->schema([
+                            Forms\Components\TextInput::make('persona.dni')
+                                ->label('DNI')
+                                ->required()
+                                ->rules(function (callable $get, $record) {
+                                    return [
+                                        Rule::unique('personas', 'dni')
+                                            ->ignore($record?->persona_id)
+                                    ];
+                                })
+                                ->columnSpanFull(),
+                            Forms\Components\TextInput::make('persona.primer_nombre')->label('Primer nombre')->required()->columnSpanFull(),
+                            Forms\Components\TextInput::make('persona.segundo_nombre')->label('Segundo nombre')->columnSpanFull(),
+                            Forms\Components\TextInput::make('persona.primer_apellido')->label('Primer apellido')->required()->columnSpanFull(),
+                            Forms\Components\TextInput::make('persona.segundo_apellido')->label('Segundo apellido')->columnSpanFull(),
+
+                            // NUEVO: Select país
+                            Forms\Components\Select::make('persona.pais_id')
+                                ->label('País')
+                                ->options(\App\Models\Paises::pluck('nombre_pais', 'id'))
+                                ->reactive()
+                                ->required()
+                                ->columnSpanFull(),
+
+                            // NUEVO: Select departamento (filtrado por pais)
+                            Forms\Components\Select::make('persona.departamento_id')
+                                ->label('Departamento')
+                                ->options(function (callable $get) {
+                                    $paisId = $get('persona.pais_id');
+                                    return $paisId
+                                        ? \App\Models\Departamento::where('pais_id', $paisId)->pluck('nombre_departamento', 'id')
+                                        : [];
+                                })
+                                ->reactive()
+                                ->required()
+                                ->disabled(fn (callable $get) => !$get('persona.pais_id'))
+                                ->columnSpanFull(),
+
+                            // NUEVO: Select municipio (filtrado por departamento)
+                            Forms\Components\Select::make('persona.municipio_id')
+                                ->label('Municipio')
+                                ->options(function (callable $get) {
+                                    $departamentoId = $get('persona.departamento_id');
+                                    return $departamentoId
+                                        ? \App\Models\Municipio::where('departamento_id', $departamentoId)->pluck('nombre_municipio', 'id')
+                                        : [];
+                                })
+                                ->reactive()
+                                ->required()
+                                ->disabled(fn (callable $get) => !$get('persona.departamento_id'))
+                                ->columnSpanFull(),
+
+                            // Dirección al final
+                            Forms\Components\TextInput::make('persona.direccion')->label('Dirección')->required()->columnSpanFull(),
+
+                            Forms\Components\TextInput::make('persona.telefono')->label('Teléfono')->columnSpanFull(),
+                            Forms\Components\Select::make('persona.sexo')->label('Sexo')->options(['MASCULINO' => 'Masculino', 'FEMENINO' => 'Femenino'])->required()->columnSpanFull(),
+                            Forms\Components\DatePicker::make('persona.fecha_nacimiento')->label('Fecha de nacimiento')->required()->columnSpanFull(),
+                        ])->columns(2)->columnSpanFull(),
+
+                    // Paso 2: Datos de empleado
+                    Forms\Components\Wizard\Step::make('Datos de empleado')
+                        ->schema([
+                            Forms\Components\TextInput::make('numero_empleado')
+                                ->label('Número de empleado')
+                                ->default(fn ($record) => $record?->numero_empleado ?? 'Se asignará automáticamente')
+                                ->disabled()           // Lo hace solo lectura
+                                ->dehydrated(false)    // Evita que se mande desde el form
+                                ->columnSpanFull(),
+                            Forms\Components\DatePicker::make('fecha_ingreso')->label('Fecha de ingreso')->required()->columnSpanFull(),
+                            Forms\Components\TextInput::make('salario')
+                                ->label('Salario')
+                                ->numeric()
+                                ->required()
+                                ->live(onBlur: true)
+                                ->columnSpanFull(),
+                            Forms\Components\Select::make('tipo_empleado_id')->label('Tipo de empleado')->relationship('tipoEmpleado', 'nombre_tipo')->required()->columnSpanFull(),
+                        ])->columns(2)->columnSpanFull(),
+                    // Paso 3: Empresa y departamento
+                    Forms\Components\Wizard\Step::make('Empresa y departamento')
+                        ->schema([
+                            Forms\Components\Select::make('empresa_id')
+                                ->label('Empresa')
+                                ->relationship('empresa', 'nombre')
+                                ->required()
+                                ->reactive()
+                                ->columnSpanFull(),
+                            Forms\Components\Select::make('departamento_empleado_id')
+                                ->label('Departamento')
+                                ->options(function (callable $get) {
+                                    $empresaId = $get('empresa_id');
+                                    return $empresaId
+                                        ? \App\Models\DepartamentoEmpleado::where('empresa_id', $empresaId)->pluck('nombre_departamento_empleado', 'id')
+                                        : [];
+                                })
+                                ->required()
+                                ->columnSpanFull(),
+                        ])->columns(2)->columnSpanFull(),
+                ])->columnSpan('full'),
             ]);
     }
 
@@ -76,12 +142,12 @@ class EmpleadoResource extends Resource
                 Tables\Columns\TextColumn::make('numero_empleado')
                     ->label('Número')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('persona.nombre')
-                    ->label('Persona'), // No searchable, es accesor
-                Tables\Columns\TextColumn::make('departamento.nombre_departamento_empleado')
-                    ->label('Departamento')
-                    ->badge()
-                    ->color('info'),
+                Tables\Columns\TextColumn::make('persona.primer_nombre')
+                    ->label('Primer nombre')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('persona.primer_apellido')
+                    ->label('Primer apellido')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('empresa.nombre')
                     ->label('Empresa')
                     ->badge()
@@ -90,12 +156,6 @@ class EmpleadoResource extends Resource
                     ->label('Tipo')
                     ->badge()
                     ->color(fn ($record) => $record->tipoEmpleado->nombre_tipo === 'Administrativo' ? 'primary' : 'warning'),
-                Tables\Columns\TextColumn::make('salario')
-                    ->label('Salario')
-                    ->money('HNL', true),
-                Tables\Columns\TextColumn::make('fecha_ingreso')
-                    ->label('Ingreso')
-                    ->date('d/m/Y'),
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('empresa_id')
@@ -111,6 +171,8 @@ class EmpleadoResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make()
+                    ->url(fn ($record) => static::getUrl('view', ['record' => $record])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -132,6 +194,7 @@ class EmpleadoResource extends Resource
             'index' => Pages\ListEmpleados::route('/'),
             'create' => Pages\CreateEmpleado::route('/create'),
             'edit' => Pages\EditEmpleado::route('/{record}/edit'),
+            'view' => Pages\ViewEmpleado::route('/{record}'),
         ];
     }
 }

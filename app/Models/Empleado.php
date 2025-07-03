@@ -73,15 +73,22 @@ class Empleado extends Model
     protected static function booted()
     {
         static::creating(function ($empleado) {
+            // Generar número de empleado automáticamente
+            $max = static::max('id') + 1;
+            $empleado->numero_empleado = 'EMP-' . str_pad($max, 4, '0', STR_PAD_LEFT);
+
+            // Asignar created_by
             if (auth()->check()) {
                 $empleado->created_by = auth()->id();
             }
         });
+
         static::updating(function ($empleado) {
             if (auth()->check()) {
                 $empleado->updated_by = auth()->id();
             }
         });
+
         static::deleting(function ($empleado) {
             if (auth()->check()) {
                 $empleado->deleted_by = auth()->id();

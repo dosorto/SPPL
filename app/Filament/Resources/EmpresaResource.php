@@ -7,6 +7,10 @@ use App\Filament\Resources\EmpresaResource\RelationManagers;
 use App\Models\Empresa;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Components\Card;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -23,39 +27,84 @@ class EmpresaResource extends Resource
     //Cambio Jessuri
 
     public static function form(Form $form): Form
-    {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('nombre')
-                    ->label('Nombre de la empresa')
-                    ->required()
-                    ->maxLength(255)
-                    ->unique(ignoreRecord: true)
-                    ->validationMessages([
-                        'unique' => 'El nombre de la empresa ya está registrado.',
-                    ]),
-                Forms\Components\Select::make('municipio_id')
-                    ->label('Municipio')
-                    ->relationship('municipio', 'nombre_municipio')
-                    ->required(),
-                Forms\Components\TextInput::make('direccion')
-                    ->label('Dirección')
-                    ->required()
-                    ->maxLength(200),
-                Forms\Components\TextInput::make('telefono')
-                    ->label('Teléfono')
-                    ->maxLength(20),
-                Forms\Components\TextInput::make('rtn')
-                    ->label('RTN')
-                    ->required()
-                    ->maxLength(20)
-                    ->unique(ignoreRecord: true)
-                    ->validationMessages([
-                        'unique' => 'El RTN ya está registrado.',
-                    ]),
-            ]);
-    }
+{
+    return $form
+        ->schema([
+            Card::make()
+                ->schema([
+                    Grid::make(2)
+                        ->schema([
+                            TextInput::make('rtn')
+                                ->label('RTN')
+                                ->placeholder('Ej. 08011985123960')
+                                ->required()
+                                ->maxLength(20)
+                                ->unique(ignoreRecord: true)
+                                ->rules(['regex:/^\d{14}$/'])
+                                ->validationMessages([
+                                    'unique' => 'El RTN ya está registrado.',
+                                    'regex' => 'El RTN debe tener exactamente 14 dígitos numéricos.',
+                                ]),
+                            TextInput::make('nombre')
+                                ->label('Nombre de la empresa')
+                                ->required()
+                                ->maxLength(255)
+                                ->unique(ignoreRecord: true)
+                                ->validationMessages([
+                                    'unique' => 'El nombre de la empresa ya está registrado.',
+                                ]),
 
+                            Select::make('pais_id')
+                                ->label('País')
+                                ->options(\App\Models\Paises::pluck('nombre_pais', 'id'))
+                                ->reactive()
+                                ->required(),
+
+                            Select::make('departamento_id')
+                                ->label('Departamento')
+                                ->reactive()
+                                ->required()
+                                ->options(function (callable $get) {
+                                    $paisId = $get('pais_id');
+                                    if (!$paisId) return [];
+                                    return \App\Models\Departamento::where('pais_id', $paisId)
+                                        ->pluck('nombre_departamento', 'id');
+                                }),
+
+                            Select::make('municipio_id')
+                                ->label('Municipio')
+                                ->required()
+                                ->options(function (callable $get) {
+                                    $departamentoId = $get('departamento_id');
+                                    if (!$departamentoId) return [];
+                                    return \App\Models\Municipio::where('departamento_id', $departamentoId)
+                                        ->pluck('nombre_municipio', 'id');
+                                }),
+
+
+                            TextInput::make('telefono')
+                                ->label('Teléfono')
+                                ->placeholder('Ej. +504 9999-9999')
+                                ->tel()
+                                ->maxLength(20)
+                                ->rules(['regex:/^[0-9+\s-]{8,20}$/'])
+                                ->validationMessages([
+                                    'regex' => 'El formato del teléfono no es válido.',
+                                ]),
+
+                            Forms\Components\Textarea::make('direccion')
+                                ->label('Dirección')
+                                ->placeholder('Ej. Barrio El Centro, Ave. Principal #123')
+                                ->required()
+                                ->autosize()
+                                ->rows(4)
+                                ->maxLength(200)
+                                ->rules(['string', 'min:5']),
+
+                        ]),
+                ]),
+        ]);
+}
     public static function table(Table $table): Table
     {
         // cambio jessuri: Configura las columnas que se mostrarán en la tabla de empresas en el panel Filament.
@@ -85,6 +134,7 @@ class EmpresaResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+                Tables\Actions\ViewAction::make(), 
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

@@ -28,12 +28,11 @@ class DatabaseSeeder extends Seeder
             TipoEmpleadoSeeder::class,
             CategoriaUnidadesSeeder::class,
             UnidadDeMedidasSeeder::class,
-            EmpresaSeeder::class,
             RolesAndPermissionsSeeder::class,
             TipoOrdenComprasSeeder::class,
             CategoriaUnidadesSeeder::class,
             UnidadDeMedidasSeeder::class,
-            PersonaSeeder::class, // cambio jessuri: se agregan personas de ejemplo
+            PersonaSeeder::class, 
             ClienteSeeder::class,
             OrdenComprasSeeder::class,
             ProductosSeeder::class,
