@@ -179,6 +179,7 @@ class ProveedoresResource extends Resource
     {
         return [];
     }
+    
 
     public static function getPages(): array
     {
@@ -186,13 +187,16 @@ class ProveedoresResource extends Resource
             'index' => Pages\ListProveedores::route('/'),
             'create' => Pages\CreateProveedores::route('/create'),
             'edit' => Pages\EditProveedores::route('/{record}/edit'),
+            'view' => Pages\ViewProveedor::route('/{record}'),
         ];
     }
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withoutGlobalScopes([
-            SoftDeletes::class,
+        return parent::getEloquentQuery()
+            ->with(['municipio.departamento.pais', 'empresa'])
+            ->withoutGlobalScopes([
+                SoftDeletes::class,
         ]);
     }
 }
