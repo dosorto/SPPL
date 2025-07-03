@@ -14,7 +14,7 @@ class ClienteFactory extends Factory
     public function definition(): array // Define los campos que quieres generar para el modelo Cliente
     {
         return [
-            'num_cliente' => $this->faker->unique()->randomNumber(6),
+            'numero_cliente' => $this->faker->unique()->randomNumber(6),
             'rtn' => $this->faker->unique()->randomNumber(9),
             'persona_id' => Persona::factory(), // Asegúrate de tener un factory para Persona
             'empresa_id' => $this->faker->optional()->randomElement([Empresa::factory(), null]), // Genera null o un factory de Empresa

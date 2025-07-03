@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('clientes', function (Blueprint $table) {
             $table->id();
-            $table->string('num_cliente', 255)->unique(); // Número de cliente
+            $table->string('numero_cliente', 255)->unique(); // Número de cliente
             $table->string('rtn', 20)->nullable(); // RTN del cliente
 
             // Relación uno a uno con personas
