@@ -4,6 +4,9 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProveedoresResource\Pages;
 use App\Models\Proveedores;
+use App\Models\Paises;
+use App\Models\Departamento;
+use App\Models\Municipio;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -11,6 +14,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions\DeleteAction;
 use Filament\Tables\Actions\EditAction;
+use Filament\Tables\Actions\ViewAction;
 use Filament\Tables\Filters\TrashedFilter;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -30,40 +34,67 @@ class ProveedoresResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('nombre_proveedor')
-                    ->label('Nombre del Proveedor')
-                    ->required()
-                    ->maxLength(255),
+            Forms\Components\TextInput::make('nombre_proveedor')
+                ->label('Nombre del Proveedor')
+                ->required()
+                ->maxLength(255),
 
-                Forms\Components\TextInput::make('telefono')
-                    ->tel()
-                    ->maxLength(20),
+            Forms\Components\TextInput::make('telefono')
+                ->tel()
+                ->required()
+                ->maxLength(20),
 
-                Forms\Components\TextInput::make('rtn')
-                    ->maxLength(20),
+            Forms\Components\TextInput::make('rtn')
+                ->maxLength(20),
 
-                Forms\Components\Textarea::make('direccion')
-                    ->label('Dirección')
-                    ->columnSpanFull(),
+            Forms\Components\TextInput::make('persona_contacto')
+                ->label('Persona de Contacto')
+                ->maxLength(255),
 
-                Forms\Components\Select::make('municipio_id')
-                    ->label('Municipio')
-                    ->relationship('municipio', 'nombre_municipio')
-                    ->searchable()
-                    ->required(),
+            Forms\Components\Select::make('empresa_id')
+                ->label('Empresa')
+                ->relationship('empresa', 'nombre')
+                ->searchable()
+                ->required(),
 
-                Forms\Components\TextInput::make('persona_contacto')
-                    ->label('Persona de Contacto')
-                    ->maxLength(255),
+            Forms\Components\Select::make('pais_id')
+                ->label('País')
+                ->options(Paises::pluck('nombre_pais', 'id'))
+                ->placeholder('Seleccione un país')
+                ->reactive()
+                ->afterStateUpdated(fn (callable $set) => [
+                    $set('departamento_id', null),
+                    $set('municipio_id', null),
+                ]),
 
-                Forms\Components\Select::make('empresa_id')
-                    ->label('Empresa')
-                    ->relationship('empresa', 'nombre')
-                    ->searchable()
-                    ->required(),
+            Forms\Components\Select::make('departamento_id')
+                ->label('Departamento')
+                ->placeholder('Seleccione un Departamento')
+                ->options(fn (callable $get) => 
+                    Departamento::where('pais_id', $get('pais_id'))
+                        ->pluck('nombre_departamento', 'id')
+                )
+                ->reactive()
+                ->afterStateUpdated(fn (callable $set) => $set('municipio_id', null))
+                ->disabled(fn (callable $get) => !$get('pais_id')),
 
-                // Eliminamos los campos created_by, updated_by, deleted_by del formulario
-            ]);
+            Forms\Components\Select::make('municipio_id')
+                ->label('Municipio')
+                ->placeholder('Seleccione un Municipio')
+                ->options(fn (callable $get) =>
+                    Municipio::where('departamento_id', $get('departamento_id'))
+                        ->pluck('nombre_municipio', 'id')
+                )
+                ->required()
+                ->disabled(fn (callable $get) => !$get('departamento_id')),
+
+            Forms\Components\Textarea::make('direccion')
+                ->label('Dirección')
+                ->columnSpanFull(),
+
+
+            // Eliminamos los campos created_by, updated_by, deleted_by del formulario
+        ]);
     }
 
     public static function table(Table $table): Table
@@ -82,12 +113,18 @@ class ProveedoresResource extends Resource
                 Tables\Columns\TextColumn::make('rtn')
                     ->label('RTN')
                     ->searchable(),
+    
 
                 Tables\Columns\TextColumn::make('municipio.nombre_municipio')
                     ->label('Municipio')
                     ->searchable()
                     ->sortable(),
-
+                
+                Tables\Columns\TextColumn::make('direccion')
+                    ->label('Direccion')
+                    ->searchable()
+                    ->sortable(),
+                
                 Tables\Columns\TextColumn::make('empresa.nombre')
                     ->label('Empresa')
                     ->searchable()
@@ -97,20 +134,6 @@ class ProveedoresResource extends Resource
                     ->label('Contacto')
                     ->searchable(),
 
-                Tables\Columns\TextColumn::make('creadoPor.name')
-                    ->label('Creado por')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('actualizadoPor.name')
-                    ->label('Actualizado por')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('eliminadoPor.name')
-                    ->label('Eliminado por')
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Creado el')
@@ -131,19 +154,23 @@ class ProveedoresResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                TrashedFilter::make(),
+                TrashedFilter::make()
+                    ->label('Buscar'),
             ])
             ->actions([
-                EditAction::make(),
-                DeleteAction::make(),
+                EditAction::make()
+                    ->label('Editar'),
+                Tables\Actions\ViewAction::make()->label('Ver'),
+                DeleteAction::make()
+                    ->label('Eliminar'),
                 Tables\Actions\RestoreAction::make(),
                 Tables\Actions\ForceDeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
-                    Tables\Actions\RestoreBulkAction::make(),
-                    Tables\Actions\ForceDeleteBulkAction::make(),
+                Tables\Actions\DeleteBulkAction::make()->label('Eliminar'),
+                Tables\Actions\RestoreBulkAction::make()->label('Restaurar'),
+                Tables\Actions\ForceDeleteBulkAction::make()->label('Eliminar Definitivamente'),
                 ]),
             ]);
     }
