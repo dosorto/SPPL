@@ -9,4 +9,14 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateProveedores extends CreateRecord
 {
     protected static string $resource = ProveedoresResource::class;
+
+    protected function getCreateButtonLabel(): string
+    {
+        return 'Guardar Proveedor';
+    }
+
+    public function getTitle(): string
+    {
+        return 'Registrar Proveedor'; // Cambia el título principal
+    }
 }
