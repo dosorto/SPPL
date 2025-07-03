@@ -35,4 +35,9 @@ class OrdenCompras extends Model
     {
         return $this->belongsTo(Empresa::class);
     }
+    public function producto()
+    {
+        return $this->belongsTo(Productos::class, 'producto_id');
+    }
+
 }
