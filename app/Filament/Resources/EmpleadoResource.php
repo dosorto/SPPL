@@ -97,6 +97,7 @@ class EmpleadoResource extends Resource
                         ->schema([
                             Forms\Components\TextInput::make('numero_empleado')
                                 ->label('Número de empleado')
+                                ->default(fn ($record) => $record?->numero_empleado ?? 'Se asignará automáticamente')
                                 ->disabled()           // Lo hace solo lectura
                                 ->dehydrated(false)    // Evita que se mande desde el form
                                 ->columnSpanFull(),

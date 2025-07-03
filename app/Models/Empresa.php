@@ -15,6 +15,8 @@ class Empresa extends Model
 
     protected $fillable = [
         'nombre',
+        'pais_id', 
+        'departamento_id', 
         'municipio_id',
         'direccion',
         'telefono',
@@ -23,6 +25,17 @@ class Empresa extends Model
         'updated_by',
     ];
 
+    public function pais()
+    {
+        return $this->belongsTo(Paises::class);
+    }
+    /**
+     * Define la relación inversa: una empresa pertenece a un departamento.
+     */
+    public function departamento()
+    {
+        return $this->belongsTo(Departamento::class);
+    }
     /**
      * Define la relación inversa: una empresa pertenece a un municipio.
      */
