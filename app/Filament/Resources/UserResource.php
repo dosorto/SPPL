@@ -96,7 +96,8 @@ class UserResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Tables\Actions\EditAction::make()
+                    ->label('Ver'),
                 Tables\Actions\ViewAction::make()
                     ->icon('heroicon-o-eye')
                     ->label('Ver'),
