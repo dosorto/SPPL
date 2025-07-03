@@ -76,4 +76,6 @@ class Proveedores extends Model
         });
 
     }
+    
+
 }
