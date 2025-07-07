@@ -129,12 +129,14 @@ class ProductosResource extends Resource
         return [];
     }
 
-    public static function getPages(): array
+        public static function getPages(): array
     {
         return [
             'index' => Pages\ListProductos::route('/'),
             'create' => Pages\CreateProductos::route('/create'),
             'edit' => Pages\EditProductos::route('/{record}/edit'),
+            'view' => Pages\ViewProductos::route('/{record}'),
         ];
     }
+
 }

@@ -23,10 +23,6 @@ class OrdenComprasFactory extends Factory
             'proveedor_id' => Proveedores::inRandomOrder()->first()->id ?? Proveedores::factory(),
             'empresa_id' => Empresa::inRandomOrder()->first()->id ?? Empresa::factory(),
             'fecha_realizada' => $this->faker->dateTimeBetween('-1 year', 'now')->format('Y-m-d'),
-            'producto_id' => $producto?->id,
-            'descripcion' => $producto
-                ? ($producto->descripcion_corta ?: $producto->descripcion ?: $this->faker->sentence())
-                : $this->faker->sentence(),
             'created_by' => 1,  // Ajustar según usuarios existentes
             'updated_by' => 1,
             'deleted_by' => null,

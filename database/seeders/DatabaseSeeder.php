@@ -37,6 +37,7 @@ class DatabaseSeeder extends Seeder
             ClienteSeeder::class,
             OrdenComprasSeeder::class,
             ProductosSeeder::class,
+            OrdenComprasDetalleSeeder::class,
         ]);
 
         $user = User::factory()->create([
