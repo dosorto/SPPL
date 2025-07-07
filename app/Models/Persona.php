@@ -20,6 +20,7 @@ class Persona extends Model
         'segundo_apellido',
         'dni',
         'direccion',
+        'departamento_id',
         'municipio_id',
         'telefono',
         'sexo',
@@ -38,7 +39,10 @@ class Persona extends Model
         return $this->belongsTo(Municipio::class);
     }
 
-
+    public function departamento()
+    {
+    return $this->belongsTo(Departamento::class);
+    }
 
     /**
      * Define la relación: una persona pertenece a un país.
