@@ -10,6 +10,8 @@ use Spatie\Permission\Traits\HasRoles;
 use Spatie\Permission\Models\Permission;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
 
 
 class User extends Authenticatable //implements FilamentUser
@@ -26,6 +28,7 @@ class User extends Authenticatable //implements FilamentUser
         'name',
         'email',
         'password',
+        'empresa_id',
     ];
 
     /**
@@ -75,4 +78,10 @@ class User extends Authenticatable //implements FilamentUser
     {
         return $this->belongsTo(User::class, 'deleted_by');
     }
+
+    public function empresa(): BelongsTo
+    {
+        return $this->belongsTo(Empresa::class);
+    }
+
 }

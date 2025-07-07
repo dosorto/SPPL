@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
+use App\Models\Empresa;
 use Spatie\Permission\Models\Role;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs\Tab;
@@ -39,36 +40,54 @@ class UserResource extends Resource
                     ->email()
                     ->required()
                     ->maxLength(255),
+
+                // Campo para asignar la Empresa (solo visible para el 'root')
+                Forms\Components\Select::make('empresa_id')
+                    ->label('Empresa')
+                    ->options(Empresa::all()->pluck('nombre', 'id'))
+                    ->searchable()
+                    ->visible(fn () => auth()->user()->hasRole('root')),
+
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                     ->dehydrated(fn ($state) => filled($state))
                     ->required(fn (Page $livewire) => ($livewire instanceof CreateRecord))
                     ->maxLength(255),
+                
+                // --- CAMPO DE ROLES CON EL ARREGLO DE SEGURIDAD ---
                 Forms\Components\Select::make('Roles')
                     ->label('Roles')
                     ->multiple()
-                    ->relationship('roles', 'name')
+                    ->relationship(
+                        'roles',
+                        'name',
+                        // Se modifica la consulta para cargar los roles
+                        function (Builder $query) {
+                            // Si el usuario actual NO es 'root', se excluye el rol 'root' de la lista.
+                            if (!auth()->user()->hasRole('root')) {
+                                $query->where('name', '!=', 'root');
+                            }
+                        }
+                    )
                     ->preload()
                     ->reactive()
                     ->afterStateUpdated(function (callable $set, $state) {
-                    // Obtener todos los permisos de los roles seleccionados
-                    $permissions = Role::whereIn('id', $state)
-                    ->with('permissions')
-                    ->get()
-                    ->pluck('permissions')
-                    ->flatten()
-                    ->pluck('id')
-                    ->unique()
-                    ->toArray();
-
-                    // Establecer los permisos en el otro campo
-                    $set('Permisos', $permissions);
-}),
+                        $permissions = Role::whereIn('id', $state)
+                        ->with('permissions')
+                        ->get()
+                        ->pluck('permissions')
+                        ->flatten()
+                        ->pluck('id')
+                        ->unique()
+                        ->toArray();
+                        $set('Permisos', $permissions);
+                    }),
+                    
                 Forms\Components\Select::make('Permisos')
                     ->multiple()
                     ->relationship('permissions', 'name')->preload()
-                
+
             ]);
     }
 
@@ -80,6 +99,12 @@ class UserResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
+                
+                Tables\Columns\TextColumn::make('empresa.nombre')
+                    ->label('Empresa')
+                    ->sortable()
+                    ->searchable(),
+                
                 Tables\Columns\TextColumn::make('email_verified_at')
                     ->dateTime()
                     ->sortable(),
@@ -97,7 +122,7 @@ class UserResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make()
-                    ->label('Ver'),
+                    ->label('Editar'),
                 Tables\Actions\ViewAction::make()
                     ->icon('heroicon-o-eye')
                     ->label('Ver'),
@@ -107,13 +132,28 @@ class UserResource extends Resource
                     ->requiresConfirmation()
                     ->successNotificationTitle('Usuario eliminado con éxito')
                     ->color('danger'),
-                    
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+    
+    /**
+     * Filtra la consulta principal del recurso.
+     * El 'root' ve a todos los usuarios.
+     * Los demás roles solo ven usuarios de su propia empresa.
+     */
+    public static function getEloquentQuery(): Builder
+    {
+        $user = auth()->user();
+
+        if ($user->hasRole('root')) {
+            return parent::getEloquentQuery();
+        }
+
+        return parent::getEloquentQuery()->where('empresa_id', $user->empresa_id);
     }
 
     public static function getRelations(): array
