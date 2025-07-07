@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProveedoresResource\Pages;
 use App\Models\Proveedores;
+use Filament\Facades\Filament;
 use App\Models\Paises;
 use App\Models\Departamento;
 use App\Models\Municipio;
@@ -55,7 +56,11 @@ class ProveedoresResource extends Resource
                 ->label('Empresa')
                 ->relationship('empresa', 'nombre')
                 ->searchable()
-                ->required(),
+                ->required()
+                ->default(fn () => Filament::auth()->user()?->empresa_id)
+                ->disabled(fn () => true) // visualmente no editable
+                ->dehydrated(true)        // asegura que se envíe el valor en el form
+                ->suffix(null),    
 
             Forms\Components\Select::make('pais_id')
                 ->label('País')

@@ -27,6 +27,7 @@ class Persona extends Model
         'fecha_nacimiento',
         'pais_id',
         'fotografia', // Campo para la ruta de la fotografía
+        'empresa_id', // Nueva relación
         'created_by',
         'updated_by',
     ];
@@ -43,6 +44,8 @@ class Persona extends Model
     {
     return $this->belongsTo(Departamento::class);
     }
+
+
 
     /**
      * Define la relación: una persona pertenece a un país.
@@ -68,4 +71,12 @@ class Persona extends Model
         return $this->hasOne(Empleado::class);
     }
 
+    /**
+     * Una persona pertenece a una empresa (relación 1:1).
+     */
+    public function empresa()
+    {
+        return $this->belongsTo(Empresa::class);
+    }
 }
+

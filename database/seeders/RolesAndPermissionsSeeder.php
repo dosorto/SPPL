@@ -44,10 +44,12 @@ class RolesAndPermissionsSeeder extends Seeder
         }
 
         // Crear rol de Administrador
-        $adminRole = Role::create(['name' => 'admin']);
+        $adminRole = Role::create(['name' => 'root']);
+        $adminRole1 = Role::create(['name' => 'admin']);
 
         // Asignar TODOS los permisos al rol de Administrador
         $adminRole->givePermissionTo(Permission::all());
+        $adminRole1->givePermissionTo(Permission::all());
 
         $roleEditor = Role::create(['name' => 'editor']);
         $roleEditor->givePermissionTo(['view_paises',]);

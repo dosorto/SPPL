@@ -15,8 +15,9 @@ return new class extends Migration
             $table->id(); 
             $table->string('nombre_municipio', 100); 
             $table->foreignId('departamento_id')
-            ->constrained('departamentos')
-            ->onDelete('cascade');
+                ->constrained('departamentos')
+                ->onDelete('cascade');
+            $table->foreignId('pais_id')->nullable(); // Relación con país, nullable
             $table->timestamps(); 
             $table->softDeletes(); 
             $table->integer('created_by')->nullable(); 
