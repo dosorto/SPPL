@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\User;
+use App\Models\Empresa;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Spatie\Permission\Models\Role;
@@ -38,10 +39,23 @@ class DatabaseSeeder extends Seeder
             ProductosSeeder::class,
             OrdenComprasDetalleSeeder::class,
         ]);
+         
+       $empresa = Empresa::create([
+            'nombre' => 'GRUPO B',
+            'pais_id' => 80,
+            'departamento_id' => 8,
+            'municipio_id' => 131,
+            'direccion' => 'Colonia Palmira, Tegucigalpa',
+            'telefono' => '2233-4455',
+            'rtn' => '0801199900012',
+            'created_by' => 1,
+            'updated_by' => 1,
+        ]);
 
         $user = User::factory()->create([
-            'name' => 'admin',
-            'email' => 'admin@example.com',
+            'name' => 'root',
+            'email' => 'root@example.com',
+            'empresa_id' => $empresa->id,
         ]);
 
         //$role = Role::create(['name' => 'admin']);
