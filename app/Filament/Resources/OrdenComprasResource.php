@@ -49,80 +49,51 @@ class OrdenComprasResource extends Resource
                                 ->label('Fecha Realizada')
                                 ->required(),
                         ]),
-
-                    Forms\Components\Wizard\Step::make('Producto o manual')
-                        ->schema([
-                            Forms\Components\Toggle::make('sin_producto')
-                                ->label('¿Registrar compra sin producto del inventario?')
-                                ->default(false)
-                                ->reactive(),
-
-                            Forms\Components\Select::make('producto_id')
-                                ->label('Producto del Inventario')
-                                ->relationship('producto', 'nombre')
-                                ->searchable()
-                                ->required(fn (callable $get) => !$get('sin_producto'))
-                                ->hidden(fn (callable $get) => $get('sin_producto')),
-
-                            Forms\Components\TextInput::make('nombre_producto_manual')
-                                ->label('Nombre del Producto')
-                                ->maxLength(255)
-                                ->required(fn (callable $get) => $get('sin_producto'))
-                                ->hidden(fn (callable $get) => !$get('sin_producto')),
-                        ]),
                 ]),
             ]);
     }
 
     public static function table(Table $table): Table
-{
-    return $table
-        ->columns([
-            Tables\Columns\TextColumn::make('tipoOrdenCompra.nombre')
-                ->label('Tipo Orden')
-                ->sortable()
-                ->searchable(),
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('tipoOrdenCompra.nombre')
+                    ->label('Tipo Orden')
+                    ->sortable()
+                    ->searchable(),
 
-            Tables\Columns\TextColumn::make('proveedor.nombre_proveedor')
-                ->label('Proveedor')
-                ->sortable()
-                ->searchable(),
+                Tables\Columns\TextColumn::make('proveedor.nombre_proveedor')
+                    ->label('Proveedor')
+                    ->sortable()
+                    ->searchable(),
 
-            Tables\Columns\TextColumn::make('empresa.nombre')
-                ->label('Empresa')
-                ->sortable()
-                ->searchable(),
+                Tables\Columns\TextColumn::make('empresa.nombre')
+                    ->label('Empresa')
+                    ->sortable()
+                    ->searchable(),
 
-            Tables\Columns\TextColumn::make('producto_id')
-                ->label('Producto')
-                ->formatStateUsing(function ($state, $record) {
-                    return $record->producto->nombre ?? $record->nombre_producto_manual ?? '-';
-                })
-                ->sortable()
-                ->searchable(),
-
-            Tables\Columns\TextColumn::make('fecha_realizada')
-                ->label('Fecha')
-                ->date()
-                ->sortable(),
-        ])
-        ->actions([
-            Tables\Actions\ActionGroup::make([
-                Tables\Actions\ViewAction::make()
-                    ->label('Ver'),
-                Tables\Actions\EditAction::make()
-                    ->label('Editar'),
-                Tables\Actions\DeleteAction::make()
-                    ->label('Eliminar'),
-            ]),
-        ])
-        ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make()
-                    ->label('Eliminar seleccionados'),
-            ]),
-        ]);
-}
+                Tables\Columns\TextColumn::make('fecha_realizada')
+                    ->label('Fecha')
+                    ->date()
+                    ->sortable(),
+            ])
+            ->actions([
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->label('Ver'),
+                    Tables\Actions\EditAction::make()
+                        ->label('Editar'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Eliminar'),
+                ]),
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Eliminar seleccionados'),
+                ]),
+            ]);
+    }
 
     public static function getRelations(): array
     {

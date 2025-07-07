@@ -40,4 +40,10 @@ class OrdenCompras extends Model
         return $this->belongsTo(Productos::class, 'producto_id');
     }
 
+    public function getTipoOrdenNombreAttribute()
+    {
+        return $this->tipoOrdenCompra ? $this->tipoOrdenCompra->nombre : 'N/A';
+    }
+
+
 }
