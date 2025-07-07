@@ -45,6 +45,7 @@ class DatabaseSeeder extends Seeder
             PersonaSeeder::class, // cambio jessuri: se agregan personas de ejemplo
             OrdenComprasSeeder::class,
             ProductosSeeder::class,
+            OrdenComprasDetalleSeeder::class,
         ]);
     }
 }
