@@ -35,8 +35,11 @@ class ProductosResource extends Resource
                             Forms\Components\Select::make('unidad_de_medida_id')
                                 ->label('Unidad de medida')
                                 ->relationship('unidadDeMedida', 'nombre')
+                                ->required()
                                 ->searchable()
-                                ->required(),
+                                ->preload()
+                                ->optionsLimit(100),
+                           
 
                             Forms\Components\TextInput::make('sku')
                                 ->label('SKU')

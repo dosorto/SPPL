@@ -21,11 +21,15 @@ class Productos extends Model
     'sku',
     'codigo',
     'color',
+    'fotos',
     'isv',
     'created_by',
     'updated_by',
     'deleted_by',
 ];
+protected $casts = [
+        'fotos' => 'array', // Convierte el campo JSON a un arreglo en PHP
+    ];
 
    
     public function unidadDeMedida()
