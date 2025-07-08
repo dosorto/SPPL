@@ -35,14 +35,7 @@ class DepartamentoEmpleadoResource extends Resource
                 Forms\Components\Textarea::make('descripcion')
                     ->label('Descripción')
                     ->rows(2),
-                // cambio jessuri: Selección de la empresa a la que pertenece el departamento
-                //Forms\Components\Select::make('empresa_id')
-                 //   ->label('Empresa')
-                 //   ->relationship('empresa', 'nombre')
-                  //  ->required()
-                  //  ->validationMessages([
-                   //     'required' => 'La empresa es obligatoria.',
-                   // ]),
+  
             ]);
     }
 
@@ -57,20 +50,10 @@ class DepartamentoEmpleadoResource extends Resource
                     ->badge()
                     ->color('info')
                     ->searchable(),
-                // cambio jessuri: Columna para la empresa, con badge y color
-                Tables\Columns\TextColumn::make('empresa.nombre')
-                    ->label('Empresa')
-                    ->badge()
-                    ->color('success'),
+
                 Tables\Columns\TextColumn::make('descripcion')
                     ->label('Descripción')
                     ->limit(30),
-            ])
-            // cambio jessuri: Filtro por empresa
-            ->filters([
-                Tables\Filters\SelectFilter::make('empresa_id')
-                    ->label('Empresa')
-                    ->relationship('empresa', 'nombre'),
             ])
             // cambio jessuri: Acciones de editar y eliminar
             ->actions([

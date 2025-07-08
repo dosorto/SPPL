@@ -26,6 +26,7 @@ class Empleado extends Model
     ];
 
     protected $casts = [
+        'fecha_nacimiento' => 'datetime',
         'fecha_ingreso' => 'date',
         'salario' => 'decimal:2',
         // 'created_at' => 'datetime',

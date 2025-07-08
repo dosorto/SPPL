@@ -22,6 +22,7 @@ return new class extends Migration
             $table->text('direccion', 200); 
             $table->string('telefono', 20)->nullable(); 
             $table->string('rtn', 20)->unique(); 
+            $table->json('fotos')->nullable();
             $table->timestamps(); // created_at y updated_at
             $table->softDeletes(); // deleted_at
 

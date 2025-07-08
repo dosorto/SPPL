@@ -22,8 +22,13 @@ class Empresa extends Model
         'direccion',
         'telefono',
         'rtn',
+        'fotos',
         'created_by',
         'updated_by',
+    ];
+
+    protected $casts = [
+    'fotos' => 'array',
     ];
 
     public function pais()

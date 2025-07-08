@@ -16,6 +16,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Filament\Forms\Components\FileUpload;
 
 class EmpresaResource extends Resource
 {
@@ -101,6 +102,16 @@ class EmpresaResource extends Resource
                                 ->maxLength(200)
                                 ->rules(['string', 'min:5']),
 
+                            FileUpload::make('fotos')
+                                ->label('Fotos de la empresa')
+                                ->multiple()
+                                ->directory('empresas/fotos')
+                                ->image()
+                                ->maxSize(2048)
+                                ->enableDownload()
+                                ->enableOpen()
+                                ->reorderable(),
+                            
                         ]),
                 ]),
         ]);
@@ -118,9 +129,6 @@ class EmpresaResource extends Resource
                     ->searchable(),
                 Tables\Columns\TextColumn::make('municipio.nombre_municipio')
                     ->label('Municipio')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('direccion')
-                    ->label('Dirección')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('telefono')
                     ->label('Teléfono'),
@@ -156,6 +164,7 @@ class EmpresaResource extends Resource
             'index' => Pages\ListEmpresas::route('/'),
             'create' => Pages\CreateEmpresa::route('/create'),
             'edit' => Pages\EditEmpresa::route('/{record}/edit'),
+            'view' => Pages\ViewEmpresa::route('/{record}'), 
         ];
     }
 }

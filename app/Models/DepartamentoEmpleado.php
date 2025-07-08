@@ -18,17 +18,12 @@ class DepartamentoEmpleado extends Model
     protected $fillable = [
         'nombre_departamento_empleado',
         'descripcion',
-        'empresa_id',
         'created_by',
         'updated_by',
     ];
     
 
 
-    public function empresa()
-    {
-        return $this->belongsTo(Empresa::class);
-    }
 
 
     public function empleados()

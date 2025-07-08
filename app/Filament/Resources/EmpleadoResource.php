@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Validation\Rule;
 use Filament\Facades\Filament;
+use Filament\Tables\Columns\TextColumn;
 
 class EmpleadoResource extends Resource
 {
@@ -44,15 +45,48 @@ class EmpleadoResource extends Resource
                                     ];
                                 })
                                 ->columnSpanFull(),
-                            Forms\Components\TextInput::make('persona.primer_nombre')->label('Primer nombre')->required()->columnSpanFull(),
-                            Forms\Components\TextInput::make('persona.segundo_nombre')->label('Segundo nombre')->columnSpanFull(),
-                            Forms\Components\TextInput::make('persona.primer_apellido')->label('Primer apellido')->required()->columnSpanFull(),
-                            Forms\Components\TextInput::make('persona.segundo_apellido')->label('Segundo apellido')->columnSpanFull(),
+                            Forms\Components\TextInput::make('persona.primer_nombre')
+                                ->label('Primer nombre')
+                                ->placeholder('Ingrese el primer nombre')
+                                ->required()
+                                ->maxLength(50)
+                                ->minLength(2)
+                                ->regex('/^[\pL\s\-]+$/u') // solo letras, espacios y guiones
+                                ->extraAttributes(['autocomplete' => 'given-name'])
+                                ->columnSpanFull(),
+
+                            Forms\Components\TextInput::make('persona.segundo_nombre')
+                                ->label('Segundo nombre')
+                                ->placeholder('Ingrese el segundo nombre (opcional)')
+                                ->maxLength(50)
+                                ->regex('/^[\pL\s\-]+$/u')
+                                ->extraAttributes(['autocomplete' => 'additional-name'])
+                                ->columnSpanFull(),
+
+                            Forms\Components\TextInput::make('persona.primer_apellido')
+                                ->label('Primer apellido')
+                                ->placeholder('Ingrese el primer apellido')
+                                ->required()
+                                ->maxLength(50)
+                                ->minLength(2)
+                                ->regex('/^[\pL\s\-]+$/u')
+                                ->extraAttributes(['autocomplete' => 'family-name'])
+                                ->columnSpanFull(),
+
+                            Forms\Components\TextInput::make('persona.segundo_apellido')
+                                ->label('Segundo apellido')
+                                ->placeholder('Ingrese el segundo apellido (opcional)')
+                                ->maxLength(50)
+                                ->regex('/^[\pL\s\-]+$/u')
+                                ->extraAttributes(['autocomplete' => 'family-name'])
+                                ->columnSpanFull(),
+
 
                             // NUEVO: Select país
                             Forms\Components\Select::make('persona.pais_id')
                                 ->label('País')
                                 ->options(\App\Models\Paises::pluck('nombre_pais', 'id'))
+                                ->searchable()
                                 ->reactive()
                                 ->required()
                                 ->columnSpanFull(),
@@ -66,6 +100,7 @@ class EmpleadoResource extends Resource
                                         ? \App\Models\Departamento::where('pais_id', $paisId)->pluck('nombre_departamento', 'id')
                                         : [];
                                 })
+                                ->searchable()
                                 ->reactive()
                                 ->required()
                                 ->disabled(fn (callable $get) => !$get('persona.pais_id'))
@@ -80,6 +115,7 @@ class EmpleadoResource extends Resource
                                         ? \App\Models\Municipio::where('departamento_id', $departamentoId)->pluck('nombre_municipio', 'id')
                                         : [];
                                 })
+                                ->searchable()
                                 ->reactive()
                                 ->required()
                                 ->disabled(fn (callable $get) => !$get('persona.departamento_id'))
@@ -96,12 +132,6 @@ class EmpleadoResource extends Resource
                     // Paso 2: Datos de empleado
                     Forms\Components\Wizard\Step::make('Datos de empleado')
                         ->schema([
-                            Forms\Components\TextInput::make('numero_empleado')
-                                ->label('Número de empleado')
-                                ->default(fn ($record) => $record?->numero_empleado ?? 'Se asignará automáticamente')
-                                ->disabled()           // Lo hace solo lectura
-                                ->dehydrated(false)    // Evita que se mande desde el form
-                                ->columnSpanFull(),
                             Forms\Components\DatePicker::make('fecha_ingreso')->label('Fecha de ingreso')->required()->columnSpanFull(),
                             Forms\Components\TextInput::make('salario')
                                 ->label('Salario')
@@ -109,7 +139,10 @@ class EmpleadoResource extends Resource
                                 ->required()
                                 ->live(onBlur: true)
                                 ->columnSpanFull(),
-                            Forms\Components\Select::make('tipo_empleado_id')->label('Tipo de empleado')->relationship('tipoEmpleado', 'nombre_tipo')->required()->columnSpanFull(),
+                            Forms\Components\Select::make('tipo_empleado_id')
+                            ->label('Tipo de empleado')
+                            ->relationship('tipoEmpleado', 'nombre_tipo')
+                            ->required()->columnSpanFull(),
                         ])->columns(2)->columnSpanFull(),
                     // Paso 3: Empresa y departamento
                     Forms\Components\Wizard\Step::make('Empresa y departamento')
@@ -123,20 +156,15 @@ class EmpleadoResource extends Resource
                                 ->dehydrated(true)                                        // envía el valor aunque esté deshabilitado
                                 ->reactive()
                                 ->columnSpanFull(),
-                            Forms\Components\Select::make('departamento_empleado_id')
-                                ->label('Departamento')
-                                ->options(function (callable $get) {
-                                    $empresaId = $get('empresa_id');
-                                    return $empresaId
-                                        ? \App\Models\DepartamentoEmpleado::where('empresa_id', $empresaId)->pluck('nombre_departamento_empleado', 'id')
-                                        : [];
-                                })
-                                ->required()
-                                ->columnSpanFull(),
-                        ])->columns(2)->columnSpanFull(),
-                ])->columnSpan('full'),
-            ]);
-    }
+                    Forms\Components\Select::make('departamento_empleado_id')
+                        ->label('Departamento')
+                        ->options(\App\Models\DepartamentoEmpleado::pluck('nombre_departamento_empleado', 'id'))
+                        ->required()
+                        ->columnSpanFull(),
+                ])->columns(2)->columnSpanFull(),
+                            ])->columnSpan('full'),
+                        ]);
+                }
 
     public static function table(Table $table): Table
     {
@@ -145,15 +173,17 @@ class EmpleadoResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('numero_empleado')
                     ->label('Número')
-                    ->searchable(),
+                    ->searchable()
+                    ->badge()
+                    ->color('success'),
                 Tables\Columns\TextColumn::make('persona.primer_nombre')
                     ->label('Primer nombre')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('persona.primer_apellido')
                     ->label('Primer apellido')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('empresa.nombre')
-                    ->label('Empresa')
+                Tables\Columns\TextColumn::make('departamento.nombre_departamento_empleado')
+                    ->label('Departamento')
                     ->badge()
                     ->color('success'),
                 Tables\Columns\TextColumn::make('tipoEmpleado.nombre_tipo')

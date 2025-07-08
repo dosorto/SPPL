@@ -15,9 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('nombre_departamento_empleado', 100); 
             $table->text('descripcion', 200)->nullable(); 
-            $table->foreignId('empresa_id')
-                  ->constrained('empresas')
-                  ->onDelete('cascade');
+
             $table->timestamps(); // created_at y updated_at
             $table->softDeletes(); // deleted_at
 
@@ -25,7 +23,7 @@ return new class extends Migration
             $table->integer('updated_by')->nullable();
             $table->integer('deleted_by')->nullable();
 
-            $table->unique(['nombre_departamento_empleado', 'empresa_id'], 'departamento_empresa_unique');
+            $table->unique(['nombre_departamento_empleado'], 'departamento_unique');
         });
     }
 
