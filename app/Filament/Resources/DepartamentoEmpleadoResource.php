@@ -36,13 +36,13 @@ class DepartamentoEmpleadoResource extends Resource
                     ->label('Descripción')
                     ->rows(2),
                 // cambio jessuri: Selección de la empresa a la que pertenece el departamento
-                Forms\Components\Select::make('empresa_id')
-                    ->label('Empresa')
-                    ->relationship('empresa', 'nombre')
-                    ->required()
-                    ->validationMessages([
-                        'required' => 'La empresa es obligatoria.',
-                    ]),
+                //Forms\Components\Select::make('empresa_id')
+                 //   ->label('Empresa')
+                 //   ->relationship('empresa', 'nombre')
+                  //  ->required()
+                  //  ->validationMessages([
+                   //     'required' => 'La empresa es obligatoria.',
+                   // ]),
             ]);
     }
 

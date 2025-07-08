@@ -13,6 +13,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Validation\Rule;
+use Filament\Facades\Filament;
 
 class EmpleadoResource extends Resource
 {
@@ -117,6 +118,9 @@ class EmpleadoResource extends Resource
                                 ->label('Empresa')
                                 ->relationship('empresa', 'nombre')
                                 ->required()
+                                ->default(fn () => Filament::auth()->user()?->empresa_id) // asigna por defecto la empresa del usuario autenticado
+                                ->disabled(fn () => true)                                 // evita que el usuario la cambie
+                                ->dehydrated(true)                                        // envía el valor aunque esté deshabilitado
                                 ->reactive()
                                 ->columnSpanFull(),
                             Forms\Components\Select::make('departamento_empleado_id')
