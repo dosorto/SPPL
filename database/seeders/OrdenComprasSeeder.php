@@ -9,7 +9,6 @@ class OrdenComprasSeeder extends Seeder
 {
     public function run()
     {
-        // Crea 20 registros de OrdenCompras con factory
-        OrdenCompras::factory()->count(20)->create();
+        OrdenCompras::factory()->count(5)->create();
     }
 }
