@@ -23,24 +23,52 @@ class PersonaResource extends Resource
     {
         return $form
             ->schema([
-                 TextInput::make('primer_nombre')->required(),
-    TextInput::make('segundo_nombre'),
-    TextInput::make('primer_apellido')->required(),
-    TextInput::make('segundo_apellido'),
-    TextInput::make('dni')->required()->unique(),
-    Textarea::make('direccion')->required(),
-    Select::make('municipio_id')
-        ->relationship('municipio', 'nombre')->required(),
-    Select::make('pais_id')
-        ->relationship('pais', 'nombre'),
-    TextInput::make('telefono'),
-    Select::make('sexo')
-        ->options([
-            'MASCULINO' => 'Masculino',
-            'FEMENINO' => 'Femenino',
-        ])->required(),
-    DatePicker::make('fecha_nacimiento')->required(),
-    FileUpload::make('fotografia'),
+                Forms\Components\Select::make('tipo_persona')
+                    ->label('Tipo de Persona')
+                    ->options([
+                        'natural' => 'Persona Natural',
+                        'juridica' => 'Persona Jurídica',
+                    ])
+                    ->required()
+                    ->reactive(),
+                Forms\Components\TextInput::make('primer_nombre')
+                    ->label('Primer Nombre')
+                    ->required()
+                    ->visible(fn (callable $get) => $get('tipo_persona') !== 'juridica'),
+                Forms\Components\TextInput::make('segundo_nombre')
+                    ->label('Segundo Nombre')
+                    ->visible(fn (callable $get) => $get('tipo_persona') !== 'juridica'),
+                Forms\Components\TextInput::make('primer_apellido')
+                    ->label('Primer Apellido')
+                    ->required()
+                    ->visible(fn (callable $get) => $get('tipo_persona') !== 'juridica'),
+                Forms\Components\TextInput::make('segundo_apellido')
+                    ->label('Segundo Apellido')
+                    ->visible(fn (callable $get) => $get('tipo_persona') !== 'juridica'),
+                Forms\Components\TextInput::make('razon_social')
+                    ->label('Razón Social')
+                    ->required()
+                    ->visible(fn (callable $get) => $get('tipo_persona') === 'juridica'),
+                Forms\Components\TextInput::make('dni')
+                    ->label('DNI / RTN')
+                    ->required(),
+                Forms\Components\Textarea::make('direccion')->required(),
+                Forms\Components\Select::make('municipio_id')
+                    ->relationship('municipio', 'nombre')->required(),
+                Forms\Components\Select::make('pais_id')
+                    ->relationship('pais', 'nombre'),
+                Forms\Components\TextInput::make('telefono'),
+                Forms\Components\Select::make('sexo')
+                    ->options([
+                        'MASCULINO' => 'Masculino',
+                        'FEMENINO' => 'Femenino',
+                    ])
+                    ->required()
+                    ->visible(fn (callable $get) => $get('tipo_persona') !== 'juridica'),
+                Forms\Components\DatePicker::make('fecha_nacimiento')
+                    ->required()
+                    ->visible(fn (callable $get) => $get('tipo_persona') !== 'juridica'),
+                Forms\Components\FileUpload::make('fotografia'),
             ]);
     }
 
