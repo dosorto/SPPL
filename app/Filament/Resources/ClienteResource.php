@@ -25,14 +25,58 @@ class ClienteResource extends Resource
         return $form
             ->schema([
                 Wizard::make([
-                    Wizard\Step::make('Datos de la Persona')
+                    Wizard\Step::make('Datos Generales')
                         ->schema([
-                            Forms\Components\TextInput::make('persona.primer_nombre')->label('Primer nombre')->required(),
-                            Forms\Components\TextInput::make('persona.segundo_nombre')->label('Segundo nombre'),
-                            Forms\Components\TextInput::make('persona.primer_apellido')->label('Primer apellido')->required(),
-                            Forms\Components\TextInput::make('persona.segundo_apellido')->label('Segundo apellido'),
-                            Forms\Components\TextInput::make('persona.dni')->label('DNI')->required(),
-                            Forms\Components\Textarea::make('persona.direccion')->label('Dirección')->required(),
+                            Forms\Components\Select::make('persona.tipo_persona')
+                                ->label('Tipo de Persona')
+                                ->options([
+                                    'natural' => 'Persona Natural',
+                                    'juridica' => 'Persona Jurídica',
+                                ])
+                                ->required()
+                                ->reactive(),
+                            Forms\Components\TextInput::make('persona.primer_nombre')
+                                ->label('Primer Nombre')
+                                ->required()
+                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
+                            Forms\Components\TextInput::make('persona.segundo_nombre')
+                                ->label('Segundo Nombre')
+                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
+                            Forms\Components\TextInput::make('persona.primer_apellido')
+                                ->label('Primer apellido')
+                                ->required()
+                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
+                            Forms\Components\TextInput::make('persona.segundo_apellido')
+                                ->label('Segundo apellido')
+                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
+                            Forms\Components\TextInput::make('persona.razon_social')
+                                ->label('Razón Social')
+                                ->required()
+                                ->visible(fn (callable $get) => $get('persona.tipo_persona') === 'juridica'),
+                            Forms\Components\TextInput::make('persona.dni')
+                                ->label('DNI / RTN')
+                                ->required(),
+                            Forms\Components\Select::make('persona.sexo')
+                                ->label('Sexo')
+                                ->options([
+                                    'MASCULINO' => 'Masculino',
+                                    'FEMENINO' => 'Femenino',
+                                    'OTRO' => 'Otro',
+                                ])
+                                ->required()
+                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
+                            Forms\Components\DatePicker::make('persona.fecha_nacimiento')
+                                ->label('Fecha de nacimiento')
+                                ->required()
+                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
+                            Forms\Components\FileUpload::make('persona.fotografia')
+                                ->label('Fotografía')
+                                ->image()
+                                ->directory('fotografias')
+                                ->nullable(),
+                        ]),
+                    Wizard\Step::make('Dirección')
+                        ->schema([
                             Forms\Components\Select::make('persona.pais_id')
                                 ->label('País')
                                 ->options(\App\Models\Paises::pluck('nombre_pais', 'id'))
@@ -60,29 +104,19 @@ class ClienteResource extends Resource
                                 ->searchable()
                                 ->required()
                                 ->disabled(fn (callable $get) => !$get('persona.departamento_id')),
+                            Forms\Components\Textarea::make('persona.direccion')->label('Dirección')->required(),
                             Forms\Components\TextInput::make('persona.telefono')->label('Teléfono'),
-                            Forms\Components\Select::make('persona.sexo')->label('Sexo')->options([
-                                'MASCULINO' => 'Masculino',
-                                'FEMENINO' => 'Femenino',
-                                'OTRO' => 'Otro',
-                            ])->required(),
-                            Forms\Components\DatePicker::make('persona.fecha_nacimiento')->label('Fecha de nacimiento')->required(),
-                            Forms\Components\FileUpload::make('persona.fotografia')->label('Fotografía')->image()->directory('fotografias')->nullable(),
-                            Forms\Components\Select::make('persona.empresa_id')->label('Empresa')
-                                ->options(\App\Models\Empresa::pluck('nombre', 'id'))
-                                ->searchable()->nullable(),
                         ]),
                     Wizard\Step::make('Datos de Cliente')
                         ->schema([
                             Forms\Components\TextInput::make('RTN')->label('RTN')->maxLength(20)->nullable(),
                             Forms\Components\Select::make('empresa_id')
                                 ->label('Empresa')
-                                ->options([])
+                                ->options(\App\Models\Empresa::pluck('nombre', 'id'))
                                 ->disabled()
-                                ->hidden()
-                                ->helperText('La empresa será la misma que la de la persona.'),
+                                ->visible(fn (callable $get) => !empty($get('persona.empresa_id'))),
                         ]),
-                ])
+                ])->columnSpanFull()
             ]);
     }
 
@@ -99,6 +133,12 @@ class ClienteResource extends Resource
                 Tables\Columns\TextColumn::make('persona.dni')
                     ->label('DNI Persona')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('persona.primer_nombre')
+                    ->label('Nombre')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('persona.primer_apellido')
+                    ->label('Apellido')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('empresa.nombre')
                     ->label('Empresa')
                     ->searchable(),
@@ -106,52 +146,15 @@ class ClienteResource extends Resource
                     ->dateTime()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('deleted_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\Filter::make('rtn')
-                    ->form([
-                        Forms\Components\TextInput::make('rtn')->label('RTN'),
-                    ])
-                    ->query(function ($query, $data) {
-                        if ($data['rtn']) {
-                            $query->where('rtn', 'like', '%'.$data['rtn'].'%');
-                        }
-                    }),
-                Tables\Filters\Filter::make('numero_cliente')
-                    ->form([
-                        Forms\Components\TextInput::make('numero_cliente')->label('Número de Cliente'),
-                    ])
-                    ->query(function ($query, $data) {
-                        if ($data['numero_cliente']) {
-                            $query->where('numero_cliente', 'like', '%'.$data['numero_cliente'].'%');
-                        }
-                    }),
                 Tables\Filters\SelectFilter::make('empresa_id')
                     ->label('Empresa')
                     ->options(\App\Models\Empresa::pluck('nombre', 'id')->toArray()),
-                Tables\Filters\Filter::make('persona_dni')
-                    ->form([
-                        Forms\Components\TextInput::make('persona_dni')->label('DNI Persona'),
-                    ])
-                    ->query(function ($query, $data) {
-                        if ($data['persona_dni']) {
-                            $query->whereHas('persona', function ($q) use ($data) {
-                                $q->where('dni', 'like', '%'.$data['persona_dni'].'%');
-                            });
-                        }
-                    }),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\ViewAction::make()->modal(true),
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
@@ -193,4 +196,6 @@ class ClienteResource extends Resource
             Forms\Components\TextInput::make('persona.empresa.nombre')->label('Empresa de la Persona')->disabled(),
         ]);
     }
+
+    // Eliminar el filtro manual por empresa_id, ya que el trait TenantScoped lo aplica automáticamente
 }

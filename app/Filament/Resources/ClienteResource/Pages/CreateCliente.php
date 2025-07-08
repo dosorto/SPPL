@@ -23,16 +23,22 @@ class CreateCliente extends CreateRecord
     {
         // Extraer datos de persona
         $personaData = $data['persona'];
-        // Crear la persona
         $persona = \App\Models\Persona::create($personaData);
+
         // Crear el cliente y asociar la persona y la empresa de la persona
         $clienteData = $data;
         $clienteData['persona_id'] = $persona->id;
-        $clienteData['empresa_id'] = $persona->empresa_id; // Siempre igual a la de persona
-        // Generar número de cliente automáticamente
+        $clienteData['empresa_id'] = $persona->empresa_id ?? 1; // fallback por si acaso
         $ultimo = \App\Models\Cliente::max('id') ?? 0;
         $clienteData['numero_cliente'] = 'C-' . str_pad($ultimo + 1, 5, '0', STR_PAD_LEFT);
         unset($clienteData['persona']);
-        return static::getModel()::create($clienteData);
+
+        $cliente = static::getModel()::create($clienteData);
+
+        if (!$cliente || !$cliente->id) {
+            throw new \Exception('No se pudo crear el cliente.');
+        }
+
+        return $cliente;
     }
 }
