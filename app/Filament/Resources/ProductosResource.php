@@ -35,8 +35,11 @@ class ProductosResource extends Resource
                             Forms\Components\Select::make('unidad_de_medida_id')
                                 ->label('Unidad de medida')
                                 ->relationship('unidadDeMedida', 'nombre')
+                                ->required()
                                 ->searchable()
-                                ->required(),
+                                ->preload()
+                                ->optionsLimit(100),
+                           
 
                             Forms\Components\TextInput::make('sku')
                                 ->label('SKU')
@@ -129,12 +132,14 @@ class ProductosResource extends Resource
         return [];
     }
 
-    public static function getPages(): array
+        public static function getPages(): array
     {
         return [
             'index' => Pages\ListProductos::route('/'),
             'create' => Pages\CreateProductos::route('/create'),
             'edit' => Pages\EditProductos::route('/{record}/edit'),
+            'view' => Pages\ViewProductos::route('/{record}'),
         ];
     }
+
 }

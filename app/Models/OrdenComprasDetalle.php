@@ -6,12 +6,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class OrdenCompraProductos extends Model
+class OrdenComprasDetalle extends Model
 {
     /** @use HasFactory<\Database\Factories\OrdenCompraProductosFactory> */
     use HasFactory, SoftDeletes;
 
-    protected $table = 'orden_compras_detalle';
+    protected $table = 'orden_compras_detalles';
 
     protected $fillable = [
     'producto_id',          
@@ -33,5 +33,6 @@ class OrdenCompraProductos extends Model
     {
         return $this->belongsTo(Productos::class);
     }
+    
 
 }
