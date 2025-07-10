@@ -46,14 +46,36 @@ class UserResource extends Resource
                     ->label('Empresa')
                     ->options(Empresa::all()->pluck('nombre', 'id'))
                     ->searchable()
+                    ->required()
                     ->visible(fn () => auth()->user()->hasRole('root')),
 
-                Forms\Components\TextInput::make('password')
+                Forms\Components\TextInput::make('password') // 1. Nombre del campo: 'password'
+                    ->label('Contraseña') // Esta es la etiqueta que ve el usuario
                     ->password()
+                    ->revealable() // Extra: Añade un botón para mostrar/ocultar la contraseña
+                    
+                    // 2. ¡LA CLAVE! Esta es la regla que valida la confirmación
+                    ->confirmed()
+                    
                     ->dehydrateStateUsing(fn ($state) => Hash::make($state))
                     ->dehydrated(fn ($state) => filled($state))
-                    ->required(fn (Page $livewire) => ($livewire instanceof CreateRecord))
+                    
+                    // 3. Requerido solo al crear, no al editar (versión más limpia)
+                    ->required(fn (string $context): bool => $context === 'create')
                     ->maxLength(255),
+
+                // CAMPO DE CONFIRMACIÓN DE CONTRASEÑA
+                Forms\Components\TextInput::make('password_confirmation') // 1. Nombre del campo: 'password_confirmation'
+                    ->label('Confirma tu contraseña') // Etiqueta para el usuario
+                    ->password()
+                    ->revealable()
+                    
+                    // 3. Requerido solo al crear
+                    ->required(fn (string $context): bool => $context === 'create')
+                    ->maxLength(255)
+                    
+                    // 4. Correcto: No se guarda en la base de datos
+                    ->dehydrated(false),
                 
                 // --- CAMPO DE ROLES CON EL ARREGLO DE SEGURIDAD ---
                 Forms\Components\Select::make('Roles')

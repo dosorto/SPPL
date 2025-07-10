@@ -118,7 +118,6 @@ class DepartamentoResource extends Resource
             ])
             ->actions([
                 EditAction::make()->label('Editar'),
-                ViewAction::make()->label('Ver'),
                 DeleteAction::make()
                     ->label('Eliminar')
                     ->modalHeading('Eliminar Departamento')

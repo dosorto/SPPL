@@ -2,26 +2,26 @@
 
 namespace App\Policies;
 
-use App\Models\Municipio;
+use App\Models\Cliente;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
-class MunicipioPolicy
+class ClientePolicy
 {
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_municipios');
+        return $user->can('view_any_clientes');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Municipio $municipio): bool
+    public function view(User $user, Cliente $cliente): bool
     {
-        return $user->can('view_municipios');
+        return $user->can('view_clientes');
     }
 
     /**
@@ -29,38 +29,38 @@ class MunicipioPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_municipios');
+        return $user->can('create_clientes');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Municipio $municipio): bool
+    public function update(User $user, Cliente $cliente): bool
     {
-        return $user->can('update_municipios');
+        return $user->can('update_clientes');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Municipio $municipio): bool
+    public function delete(User $user, Cliente $cliente): bool
     {
-        return $user->can('delete_municipios');
+        return $user->can('delete_clientes');
     }
 
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, Municipio $municipio): bool
+    public function restore(User $user, Cliente $cliente): bool
     {
-        return $user->can('restore_municipios');
+        return $user->can('restore_clientes');
     }
 
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, Municipio $municipio): bool
+    public function forceDelete(User $user, Cliente $cliente): bool
     {
-        return $user->can('force_delete_municipios');
+        return $user->can('force_delete_clientes');
     }
 }

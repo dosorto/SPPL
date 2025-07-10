@@ -13,7 +13,7 @@ class UserPolicy
     public function viewAny(User $user): bool
     {
         //return $user->hasRole(['admin', 'super_admin']);
-        return $user->can('view_users');
+        return $user->can('view_any_users');
     }
 
     /**
@@ -57,7 +57,7 @@ class UserPolicy
      */
     public function restore(User $user, User $model): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('restore_users');
     }
 
     /**
@@ -65,6 +65,6 @@ class UserPolicy
      */
     public function forceDelete(User $user, User $model): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('force_delete_users');
     }
 }

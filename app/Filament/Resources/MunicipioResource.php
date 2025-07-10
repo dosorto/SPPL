@@ -121,7 +121,6 @@ class MunicipioResource extends Resource
             // --- ACCIONES CON ORDEN Y ETIQUETAS EN ESPAÑOL ---
             ->actions([
                 EditAction::make()->label('Editar'),
-                ViewAction::make()->label('Ver'),
                 DeleteAction::make()
                     ->label('Eliminar')
                     ->modalHeading('Eliminar Municipio')

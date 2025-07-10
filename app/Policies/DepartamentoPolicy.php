@@ -14,7 +14,7 @@ class DepartamentoPolicy
     public function viewAny(User $user): bool
     {
         //return $user->hasRole(['admin', 'super_admin']);
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('view_any_departamentos');
     }
 
     /**
@@ -22,7 +22,7 @@ class DepartamentoPolicy
      */
     public function view(User $user, Departamento $departamento): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('view_departamentos');
     }
 
     /**
@@ -30,7 +30,7 @@ class DepartamentoPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('create_departamentos');
     }
 
     /**
@@ -38,7 +38,7 @@ class DepartamentoPolicy
      */
     public function update(User $user, Departamento $departamento): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('update_departamentos');
     }
 
     /**
@@ -46,7 +46,7 @@ class DepartamentoPolicy
      */
     public function delete(User $user, Departamento $departamento): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('delete_departamentos');
     }
 
     /**
@@ -54,7 +54,7 @@ class DepartamentoPolicy
      */
     public function restore(User $user, Departamento $departamento): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('restore_departamentos');
     }
 
     /**
@@ -62,6 +62,6 @@ class DepartamentoPolicy
      */
     public function forceDelete(User $user, Departamento $departamento): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('force_delete_departamentos');
     }
 }

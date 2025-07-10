@@ -25,7 +25,7 @@ trait TenantScoped
         // Nos aseguramos de que haya un usuario con sesión iniciada.
         if (Auth::check()) {
             
-            // --- INICIO DE LA CORRECCIÓN ---
+           
 
             /** @var \App\Models\User $user */ // Pista para el editor
             $user = Auth::user();

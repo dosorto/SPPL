@@ -2,26 +2,26 @@
 
 namespace App\Policies;
 
-use App\Models\Municipio;
+use App\Models\Proveedores;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
-class MunicipioPolicy
+class ProveedoresPolicy
 {
     /**
      * Determine whether the user can view any models.
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_municipios');
+        return $user->can('view_any_proveedores');
     }
 
     /**
      * Determine whether the user can view the model.
      */
-    public function view(User $user, Municipio $municipio): bool
+    public function view(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('view_municipios');
+        return $user->can('view_proveedores');
     }
 
     /**
@@ -29,38 +29,38 @@ class MunicipioPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_municipios');
+        return $user->can('create_proveedores');
     }
 
     /**
      * Determine whether the user can update the model.
      */
-    public function update(User $user, Municipio $municipio): bool
+    public function update(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('update_municipios');
+        return $user->can('update_proveedores');
     }
 
     /**
      * Determine whether the user can delete the model.
      */
-    public function delete(User $user, Municipio $municipio): bool
+    public function delete(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('delete_municipios');
+        return $user->can('delete_proveedores');
     }
 
     /**
      * Determine whether the user can restore the model.
      */
-    public function restore(User $user, Municipio $municipio): bool
+    public function restore(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('restore_municipios');
+        return $user->can('restore_proveedores');
     }
 
     /**
      * Determine whether the user can permanently delete the model.
      */
-    public function forceDelete(User $user, Municipio $municipio): bool
+    public function forceDelete(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('force_delete_municipios');
+        return $user->can('force_delete_proveedores');
     }
 }

@@ -18,11 +18,23 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Crear permisos
          $models = [
-            'users',
-            'roles',
-            'paises',
-            'departamentos',
-            'municipios',
+            'users', //1
+            'roles', //2
+            'paises', //3
+            'departamentos', //4
+            'municipios', //5
+            'clientes', //6
+            'proveedores', //7
+            'departamento_empleados', //8
+            'empleados', //9
+            'categoria_unidades', //10
+            'orden_compras', //11
+            'personas', //12
+            'productos', //13
+            'tipo_empleados', //14
+            'tipo_orden_compras', //15
+            'unidad_de_medidas', //16
+            '', //17
         ];
 
         // Acciones comunes de las políticas

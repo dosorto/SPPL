@@ -13,7 +13,7 @@ class PaisesPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('view_any_paises');
     }
 
     /**
@@ -21,7 +21,7 @@ class PaisesPolicy
      */
     public function view(User $user, Paises $paises): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('view_paises');
     }
 
     /**
@@ -29,7 +29,7 @@ class PaisesPolicy
      */
     public function create(User $user): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('create_paises');
     }
 
     /**
@@ -37,7 +37,7 @@ class PaisesPolicy
      */
     public function update(User $user, Paises $paises): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('update_paises');
     }
 
     /**
@@ -45,7 +45,7 @@ class PaisesPolicy
      */
     public function delete(User $user, Paises $paises): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('delete_paises');
     }
 
     /**
@@ -53,7 +53,7 @@ class PaisesPolicy
      */
     public function restore(User $user, Paises $paises): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('restore_paises');
     }
 
     /**
@@ -61,6 +61,6 @@ class PaisesPolicy
      */
     public function forceDelete(User $user, Paises $paises): bool
     {
-        return $user->hasRole(['admin', 'super_admin']);
+        return $user->can('force_delete_paises');
     }
 }
