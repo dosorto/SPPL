@@ -17,6 +17,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Spatie\Permission\Models\Role as SpatieRole;
+use Illuminate\Validation\ValidationException;
 
 
 class RoleResource extends Resource
@@ -34,7 +35,17 @@ class RoleResource extends Resource
                 TextInput::make('name')
                     ->minLength(2)
                     ->maxLength(255)
-                    ->unique(ignoreRecord: true),
+                    ->unique(ignoreRecord: true)
+                    // Añadimos una validación personalizada para la creación del rol 'root'
+                    ->afterStateUpdated(function ($state, $set) {
+                    // Prevenir la creación del rol 'root' por no-roots
+                    if ($state === 'root' && !auth()->user()->hasRole('root')) {
+                        // Lanzamos una excepción de validación
+                        throw ValidationException::withMessages([
+                            'name' => 'No tiene permiso para crear un rol con este nombre.',
+                        ]);
+                    }
+                }),
                 Select::make('Permisos')
                     ->multiple()
                     ->relationship('permissions', 'name')->preload()
@@ -49,8 +60,12 @@ class RoleResource extends Resource
             ->columns([
                 
                 TextColumn::make('id')->sortable(),
-                TextColumn::make('name'),
+                TextColumn::make('name')
+                    ->label('Nombre del Rol')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('created_at')
+                    ->label('Fecha de Creación')
                     ->dateTime('d-M-Y')->sortable()
                     
                    
@@ -75,6 +90,22 @@ class RoleResource extends Resource
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
+    }
+
+        public static function getEloquentQuery(): Builder
+    {
+        // Obtenemos la consulta base de todos los roles.
+        $query = parent::getEloquentQuery();
+
+        // Verificamos si el usuario actual NO tiene el rol 'root'.
+        if (!auth()->user()->hasRole('root')) {
+            // Si no es root, añadimos una condición para excluir
+            // el rol cuyo nombre sea 'root'.
+            $query->where('name', '!=', 'root');
+        }
+
+        // Devolvemos la consulta (modificada o no).
+        return $query;
     }
 
     public static function getRelations(): array

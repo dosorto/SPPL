@@ -106,9 +106,16 @@ class UserResource extends Resource
                         $set('Permisos', $permissions);
                     }),
                     
-                Forms\Components\Select::make('Permisos')
-                    ->multiple()
-                    ->relationship('permissions', 'name')->preload()
+               Forms\Components\Section::make('Permisos que posee el Rol')
+                ->collapsible() // Esto hace que la sección se pueda abrir y cerrar
+                ->collapsed()   // Esto hace que empiece cerrada por defecto
+                ->schema([
+                    // 2. Metemos el campo de Permisos DENTRO de la sección
+                    Forms\Components\Select::make('Permisos')
+                        ->multiple()
+                        ->relationship('permissions', 'name')->preload()
+                        ->disabled(), // Lo deshabilitamos para que sea solo informativo
+                ]),
 
             ]);
     }
