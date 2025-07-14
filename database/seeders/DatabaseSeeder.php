@@ -38,6 +38,7 @@ class DatabaseSeeder extends Seeder
             OrdenComprasSeeder::class,
             ProductosSeeder::class,
             OrdenComprasDetalleSeeder::class,
+           // InventarioProductosSeeder::class,
         ]);
          
        $empresa = Empresa::create([
