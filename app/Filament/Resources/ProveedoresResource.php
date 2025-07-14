@@ -64,6 +64,7 @@ class ProveedoresResource extends Resource
 
             Forms\Components\Select::make('pais_id')
                 ->label('País')
+                ->searchable()
                 ->options(Paises::pluck('nombre_pais', 'id'))
                 ->placeholder('Seleccione un país')
                 ->reactive()
@@ -74,6 +75,7 @@ class ProveedoresResource extends Resource
 
             Forms\Components\Select::make('departamento_id')
                 ->label('Departamento')
+                ->searchable()
                 ->placeholder('Seleccione un Departamento')
                 ->options(fn (callable $get) => 
                     Departamento::where('pais_id', $get('pais_id'))
@@ -85,6 +87,7 @@ class ProveedoresResource extends Resource
 
             Forms\Components\Select::make('municipio_id')
                 ->label('Municipio')
+                ->searchable()
                 ->placeholder('Seleccione un Municipio')
                 ->options(fn (callable $get) =>
                     Municipio::where('departamento_id', $get('departamento_id'))
@@ -125,15 +128,7 @@ class ProveedoresResource extends Resource
                     ->searchable()
                     ->sortable(),
                 
-                Tables\Columns\TextColumn::make('direccion')
-                    ->label('Direccion')
-                    ->searchable()
-                    ->sortable(),
                 
-                Tables\Columns\TextColumn::make('empresa.nombre')
-                    ->label('Empresa')
-                    ->searchable()
-                    ->sortable(),
 
                 Tables\Columns\TextColumn::make('persona_contacto')
                     ->label('Contacto')

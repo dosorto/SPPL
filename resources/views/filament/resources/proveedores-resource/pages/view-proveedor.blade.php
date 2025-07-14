@@ -56,17 +56,7 @@
                         </div>
                     </div>
 
-                    <!-- Empresa -->
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700">
-                            Empresa
-                        </label>
-                        <div class="mt-1">
-                            <p class="text-sm text-gray-900 bg-gray-50 rounded-md px-3 py-2">
-                                {{ $record->empresa->nombre ?? 'No especificado' }}
-                            </p>
-                        </div>
-                    </div>
+                    
                 </div>
             </div>
         </div>
