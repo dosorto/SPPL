@@ -52,4 +52,8 @@ class OrdenCompras extends Model
     {
         return $this->tipoOrdenCompra ? $this->tipoOrdenCompra->nombre : 'N/A';
     }
+    public function proveedores()
+    {
+        return $this->belongsTo(\App\Models\Proveedores::class, 'proveedor_id');
+    }
 }
