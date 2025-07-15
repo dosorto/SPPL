@@ -35,6 +35,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'tipo_orden_compras', //15
             'unidad_de_medidas', //16
             '', //17
+            'inventario_productos',
         ];
 
         // Acciones comunes de las políticas
