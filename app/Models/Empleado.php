@@ -66,6 +66,24 @@ class Empleado extends Model
         return $this->belongsTo(TipoEmpleado::class);
     }
 
+    public function detalleNominas()
+    {
+        return $this->hasMany(DetalleNomina::class, 'empleado_id');
+    }
+
+    // Relación con empleado_deducciones (1 empleado puede tener muchas deducciones)
+    public function deduccionesAplicadas()
+    {
+        return $this->hasMany(EmpleadoDeducciones::class, 'empleado_id')->with('deduccion');
+    }
+
+    public function getNombreCompletoAttribute()
+    {
+        return optional($this->persona)->primer_nombre . ' ' .
+            optional($this->persona)->segundo_nombre . ' ' .
+            optional($this->persona)->primer_apellido . ' ' .
+            optional($this->persona)->segundo_apellido;
+    }
     /**
      * Cambio jessuri: Esta función booted() asigna automáticamente los campos de auditoría (created_by, updated_by, deleted_by)
      * con el ID del usuario autenticado al crear, actualizar o eliminar un empleado.
