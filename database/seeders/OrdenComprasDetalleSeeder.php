@@ -12,7 +12,7 @@ class OrdenComprasDetalleSeeder extends Seeder
     public function run()
     {
         $ordenCompras = OrdenCompras::all(); // Usa las 20 órdenes creadas por OrdenComprasSeeder
-        $productos = Productos::factory()->count(10)->create();
+        $productos = Productos::all();
 
         foreach ($ordenCompras as $ordenCompra) {
             for ($i = 0; $i < 4; $i++) {
