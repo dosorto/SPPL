@@ -23,6 +23,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'paises',
             'departamentos',
             'municipios',
+            'inventario_productos'
         ];
 
         // Acciones comunes de las políticas
