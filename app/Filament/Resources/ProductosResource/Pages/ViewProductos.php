@@ -3,30 +3,34 @@
 namespace App\Filament\Resources\ProductosResource\Pages;
 
 use App\Filament\Resources\ProductosResource;
+use Illuminate\Support\HtmlString;
 use Filament\Resources\Pages\ViewRecord;
-use Filament\Forms\Components\Card;
-use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
-use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\Grid;
 use Filament\Forms\Form;
 
 class ViewProductos extends ViewRecord
 {
     protected static string $resource = ProductosResource::class;
 
-    // Sobrescribe el formulario para asegurar que no use el wizard
+    public function mount($record): void
+    {
+        parent::mount($record);
+
+        $this->record->load('fotosRelacion');
+    }
+
     public function form(Form $form): Form
     {
         return $form
             ->schema($this->getFormSchema())
-            ->columns(2); // Diseño en dos columnas para todo el formulario
+            ->columns(2);
     }
 
-    // Define el esquema personalizado para la vista
     protected function getFormSchema(): array
     {
         return [
-            // Sección para información básica
             Section::make('Información Básica')
                 ->icon('heroicon-o-information-circle')
                 ->schema([
@@ -53,7 +57,6 @@ class ViewProductos extends ViewRecord
                 ->columns(2)
                 ->collapsible(),
 
-            // Sección para detalles fiscales y descripción
             Section::make('Detalles')
                 ->icon('heroicon-o-document-text')
                 ->schema([
@@ -80,23 +83,24 @@ class ViewProductos extends ViewRecord
                 ->columns(2)
                 ->collapsible(),
 
-            // Sección para la galería de imágenes
             Section::make('Galería de Imágenes')
                 ->icon('heroicon-o-photo')
                 ->schema([
-                    FileUpload::make('fotos')
-                        ->label('')
-                        ->multiple()
-                        ->directory('productos')
-                        ->image()
-                        ->disabled()
-                        ->imagePreviewHeight('200')
-                        ->extraAttributes(['class' => 'bg-gray-100 p-4 rounded-lg'])
-                        ->default(fn () => $this->record->fotos)
-                        ->enableOpen()
-                        ->panelLayout('grid'), // Mostrar imágenes en una cuadrícula
+                    Grid::make()
+                        ->columns(3)
+                        ->schema(
+                            $this->record->fotosRelacion?->map(function ($foto) {
+                                return Placeholder::make('foto_' . $foto->id)
+                                    ->label(false)
+                                    ->content(new HtmlString(
+                                        "<img src='" . asset("storage/" . $foto->url) . "' alt='Imagen' style='border-radius: 10px; max-width: 100%; max-height: 200px;' />"
+                                    ))
+                                    ->extraAttributes(['class' => 'p-2']);
+                            })->toArray() ?? []
+                        ),
                 ])
-                ->collapsible(),
+                ->collapsible()
+
         ];
     }
 }

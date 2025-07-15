@@ -22,7 +22,6 @@ return new class extends Migration
         $table->string('sku', 100)->nullable();
         $table->string('codigo', 100)->nullable();
         $table->string('color', 100)->nullable();
-        $table->json('fotos')->nullable(); // Campo para múltiples imágenes
         $table->float('isv')->nullable(); //15% ventas 0 18% bebidas alcolicas
 
         $table->timestamps(); // created_at y updated_at

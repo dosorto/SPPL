@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Database\Factories;
 
@@ -54,8 +54,6 @@ class ProductosFactory extends Factory
                 break;
         }
 
-        // database/factories/ProductosFactory.php
-
         return [
             'unidad_de_medida_id' => UnidadDeMedidas::inRandomOrder()->first()->id ?? UnidadDeMedidas::factory(),
             'nombre' => $nombreProducto,
@@ -64,18 +62,10 @@ class ProductosFactory extends Factory
             'sku' => strtoupper($this->faker->bothify('???-#####')),
             'codigo' => $this->faker->unique()->ean8(),
             'color' => $this->faker->safeColorName(),
-            'fotos' => $this->faker->randomElements([
-                'productos/foto1.jpg',
-                'productos/foto2.jpg',
-                'productos/foto3.jpg',
-                'productos/foto4.jpg',
-                'productos/foto5.jpg',
-            ], rand(1, 3)),
             'isv' => $this->faker->randomFloat(2, 0, 0.15),
             'created_by' => 1,
             'updated_by' => 1,
             'deleted_by' => null,
         ];
-
     }
 }

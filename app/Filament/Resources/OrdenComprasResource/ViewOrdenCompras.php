@@ -32,58 +32,34 @@ class ViewOrdenCompras extends ViewRecord
                         ->label('Tipo de Orden')
                         ->content(fn () => $this->record->tipoOrdenCompra?->nombre ?? 'N/A')
                         ->extraAttributes(['class' => 'text-lg font-semibold text-gray-800']),
-
                     Placeholder::make('proveedor_id')
                         ->label('Proveedor')
-                        ->content(fn () => $this->record->proveedor?->nombre_proveedor ?? 'N/A')
+                        ->content(fn () => $this->record->proveedores?->nombre_proveedor ?? 'N/A')
                         ->extraAttributes(['class' => 'text-gray-600']),
-
                     Placeholder::make('empresa_id')
                         ->label('Empresa')
                         ->content(fn () => $this->record->empresa?->nombre ?? 'N/A')
                         ->extraAttributes(['class' => 'text-gray-600']),
-
                     Placeholder::make('fecha_realizada')
                         ->label('Fecha Realizada')
                         ->content(fn () => $this->record->fecha_realizada ? Carbon::parse($this->record->fecha_realizada)->format('d/m/Y') : 'N/A')
                         ->extraAttributes(['class' => 'text-gray-600']),
                 ])
                 ->columns(2)
-                ->collapsible(),
-
-            Section::make('Auditoría')
-                ->icon('heroicon-o-document-text')
-                ->schema([
-                    Placeholder::make('created_by')
-                        ->label('Creado por')
-                        ->content(fn () => $this->record->created_by ? \App\Models\User::find($this->record->created_by)?->name ?? 'N/A' : 'N/A')
-                        ->extraAttributes(['class' => 'text-gray-600']),
-
-                    Placeholder::make('updated_by')
-                        ->label('Actualizado por')
-                        ->content(fn () => $this->record->updated_by ? \App\Models\User::find($this->record->updated_by)?->name ?? 'N/A' : 'N/A')
-                        ->extraAttributes(['class' => 'text-gray-600']),
-
-                    Placeholder::make('created_at')
-                        ->label('Fecha de Creación')
-                        ->content(fn () => $this->record->created_at ? $this->record->created_at->format('d/m/Y H:i') : 'N/A')
-                        ->extraAttributes(['class' => 'text-gray-600']),
-
-                    Placeholder::make('updated_at')
-                        ->label('Fecha de Actualización')
-                        ->content(fn () => $this->record->updated_at ? $this->record->updated_at->format('d/m/Y H:i') : 'N/A')
-                        ->extraAttributes(['class' => 'text-gray-600']),
-                ])
-                ->columns(2)
-                ->collapsible(),
+                ->collapsible()
+                ->extraAttributes(['class' => 'bg-white p-6 rounded-xl shadow-md border border-gray-200']),
         ];
     }
 
     protected function getHeaderActions(): array
     {
         return [
-            \Filament\Actions\EditAction::make()->label('Editar'),
-            \Filament\Actions\DeleteAction::make()->label('Eliminar'),
+            \Filament\Actions\EditAction::make()->label('Editar')
+                ->color('warning')
+                ->icon('heroicon-o-pencil'),
+            \Filament\Actions\DeleteAction::make()->label('Eliminar')
+                ->color('danger')
+                ->icon('heroicon-o-trash'),
         ];
     }
 }
