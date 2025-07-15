@@ -26,73 +26,116 @@ class OrdenComprasResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Wizard::make([
-                    Forms\Components\Wizard\Step::make('Datos principales')
-                        ->schema([
-                            Forms\Components\Select::make('tipo_orden_compra_id')
-                                ->label('Tipo de Orden')
-                                ->relationship('tipoOrdenCompra', 'nombre')
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->optionsLimit(100),
-                            Forms\Components\Select::make('proveedor_id')
-                                ->label('Proveedor')
-                                ->relationship('proveedor', 'nombre_proveedor')
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->optionsLimit(100),
-                            Forms\Components\Select::make('empresa_id')
-                                ->label('Empresa')
-                                ->relationship('empresa', 'nombre')
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->optionsLimit(100),
-                            Forms\Components\DatePicker::make('fecha_realizada')
-                                ->label('Fecha Realizada')
-                                ->required()
-                                ->default(now()),
-                            Forms\Components\Hidden::make('created_by')
-                                ->default(Auth::id()),
-                            Forms\Components\Hidden::make('updated_by')
-                                ->default(Auth::id()),
-                        ]),
-                    Forms\Components\Wizard\Step::make('Detalles de la Orden')
-                        ->schema([
-                            Forms\Components\Repeater::make('detalles')
-                                ->label('Productos')
-                                ->relationship('detalles')
-                                ->schema([
-                                    Forms\Components\Select::make('producto_id')
-                                        ->label('Producto')
-                                        ->relationship('producto', 'nombre')
-                                        ->searchable()
-                                        ->required()
-                                        ->preload()
-                                        ->optionsLimit(100),
-                                    Forms\Components\TextInput::make('cantidad')
-                                        ->label('Cantidad')
-                                        ->required()
-                                        ->numeric()
-                                        ->minValue(1),
-                                    Forms\Components\TextInput::make('precio')
-                                        ->label('Precio Unitario')
-                                        ->required()
-                                        ->numeric()
-                                        ->prefix('HNL'),
-                                    Forms\Components\Hidden::make('created_by')
-                                        ->default(Auth::id()),
-                                    Forms\Components\Hidden::make('updated_by')
-                                        ->default(Auth::id()),
-                                ])
-                                ->columns(3)
-                                ->required(),
-                        ]),
-                ])
-                ->statePath('data'),
-            ]);
+                Forms\Components\Section::make('Información Básica')
+                    ->icon('heroicon-o-information-circle')
+                    ->schema([
+                        Forms\Components\Select::make('tipo_orden_compra_id')
+                            ->label('Tipo de Orden')
+                            ->relationship('tipoOrdenCompra', 'nombre')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->optionsLimit(100),
+                        Forms\Components\Select::make('proveedor_id')
+                            ->label('Proveedor')
+                            ->relationship('proveedores', 'nombre_proveedor')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->optionsLimit(100)
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                try {
+                                    if (class_exists(\App\Models\Proveedores::class) && $state) {
+                                        $proveedor = \App\Models\Proveedores::find($state);
+                                        if ($proveedor && $proveedor->empresa_id) {
+                                            $set('empresa_id', $proveedor->empresa_id);
+                                        } else {
+                                            $set('empresa_id', null);
+                                        }
+                                    }
+                                } catch (\Exception $e) {
+                                    Notification::make()
+                                        ->title('Error')
+                                        ->body('No se pudo cargar la empresa asociada al proveedor.')
+                                        ->danger()
+                                        ->send();
+                                }
+                            }),
+                        Forms\Components\Hidden::make('empresa_id')
+                            ->required()
+                            ->dehydrated(true),
+                        Forms\Components\DatePicker::make('fecha_realizada')
+                            ->label('Fecha Realizada')
+                            ->required()
+                            ->default(now()),
+                        Forms\Components\Hidden::make('created_by')
+                            ->default(Auth::id()),
+                        Forms\Components\Hidden::make('updated_by')
+                            ->default(Auth::id()),
+                    ])
+                    ->columns(2)
+                    ->collapsible(),
+                Forms\Components\Section::make('Detalles de la Orden')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->schema([
+                        Forms\Components\Repeater::make('detalles')
+                            ->label('Productos')
+                            ->relationship('detalles')
+                            ->schema([
+                                Forms\Components\Select::make('producto_id')
+                                    ->label('Producto')
+                                    ->relationship('producto', 'nombre', function ($query) {
+                                        $query->where(function ($query) {
+                                            $search = request()->input('search');
+                                            if ($search) {
+                                                $query->where('nombre', 'like', "%{$search}%")
+                                                    ->orWhere('barcode', 'like', "%{$search}%")
+                                                    ->orWhere('sku', 'like', "%{$search}%");
+                                            }
+                                        });
+                                    })
+                                    ->searchable()
+                                    ->required()
+                                    ->preload()
+                                    ->optionsLimit(100)
+                                    ->getSearchResultsUsing(function (string $search) {
+                                        return \App\Models\Producto::where('nombre', 'like', "%{$search}%")
+                                            ->orWhere('barcode', 'like', "%{$search}%")
+                                            ->orWhere('sku', 'like', "%{$search}%")
+                                            ->limit(100)
+                                            ->pluck('nombre', 'id');
+                                    })
+                                    ->getOptionLabelFromRecordUsing(function ($record) {
+                                        return "{$record->nombre} (Barcode: {$record->barcode}, SKU: {$record->sku})";
+                                    }),
+                                Forms\Components\TextInput::make('cantidad')
+                                    ->label('Cantidad')
+                                    ->required()
+                                    ->numeric()
+                                    ->minValue(1),
+                                Forms\Components\TextInput::make('precio')
+                                    ->label('Precio Unitario')
+                                    ->required()
+                                    ->numeric()
+                                    ->prefix('HNL'),
+                                Forms\Components\Hidden::make('created_by')
+                                    ->default(Auth::id()),
+                                Forms\Components\Hidden::make('updated_by')
+                                    ->default(Auth::id()),
+                            ])
+                            ->columns(3)
+                            ->required()
+                            ->disabled(function ($get) {
+                                return !($get('tipo_orden_compra_id') &&
+                                        $get('proveedor_id') &&
+                                        $get('empresa_id') &&
+                                        $get('fecha_realizada'));
+                            }),
+                    ])
+                    ->collapsible(),
+            ])
+            ->columns(2);
     }
 
     public static function table(Table $table): Table
@@ -103,7 +146,7 @@ class OrdenComprasResource extends Resource
                     ->label('Tipo Orden')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('proveedor.nombre_proveedor')
+                Tables\Columns\TextColumn::make('proveedores.nombre_proveedor')
                     ->label('Proveedor')
                     ->sortable()
                     ->searchable(),
