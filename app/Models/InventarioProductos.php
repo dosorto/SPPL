@@ -19,6 +19,7 @@ class InventarioProductos extends Model
     'precio_costo',
     'precio_detalle',
     'precio_promocion',
+    'precio_mayorista',
     'created_by',
     'updated_by',
     'deleted_by',

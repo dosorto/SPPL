@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\OrdenComprasResource\Pages;
 use App\Models\OrdenCompras;
 use App\Models\OrdenComprasDetalle;
+use Filament\Tables\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,6 +13,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
+use App\Filament\Pages\RecibirOrdenCompra;
 
 class OrdenComprasResource extends Resource
 {
@@ -163,10 +165,21 @@ class OrdenComprasResource extends Resource
                     ->counts('detalles')
                     ->sortable(),
             ])
-            ->actions([
+           ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make()->label('Ver'),
                     Tables\Actions\EditAction::make()->label('Editar'),
+                    
+                    Action::make('recibirEnInventario')
+                        ->label('Recibir en Inventario')
+                        ->icon('heroicon-o-inbox-arrow-down')
+                        ->color('success')
+                        // Oculta el botón si la orden ya fue recibida
+                        ->hidden(fn (OrdenCompras $record): bool => $record->estado === 'Recibida')
+                        // Genera la URL a la página de recepción, pasando el ID de la orden
+                        ->url(fn (OrdenCompras $record): string => RecibirOrdenCompra::getUrl(['orden_id' => $record->id])),
+                    
+
                     Tables\Actions\DeleteAction::make()->label('Eliminar'),
                 ]),
             ])

@@ -60,6 +60,12 @@ class InventarioProductosResource extends Resource
                             ->numeric()
                             ->required()
                             ->prefix('HNL'),
+                        
+                        Forms\Components\TextInput::make('precio_mayorista')
+                            ->label('Precio de Mayorista')
+                            ->numeric()
+                            ->required()
+                            ->prefix('HNL'),
                     ])->columns(3),
             ]);
     }
@@ -70,13 +76,13 @@ class InventarioProductosResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('producto.nombre')
                     ->label('Producto')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('producto.sku')
-                    ->label('SKU')->searchable()->toggleable(),
                 Tables\Columns\TextColumn::make('cantidad')
                     ->numeric()->sortable(),
                 Tables\Columns\TextColumn::make('precio_costo')
                     ->numeric()->sortable()->money('HNL'),
                 Tables\Columns\TextColumn::make('precio_detalle')
+                    ->numeric()->sortable()->money('HNL'),
+                Tables\Columns\TextColumn::make('precio_mayorista')
                     ->numeric()->sortable()->money('HNL'),
                 Tables\Columns\TextColumn::make('precio_promocion')
                     ->numeric()->sortable()->money('HNL'),
@@ -85,12 +91,7 @@ class InventarioProductosResource extends Resource
                 //
             ])
             ->headerActions([
-                // --- BOTÓN DE ENCABEZADO RESTAURADO ---
-                Action::make('recibirOrden')
-                    ->label('Recibir por Orden de Compra')
-                    ->url(RecibirOrdenCompra::getUrl())
-                    ->icon('heroicon-o-inbox-arrow-down')
-                    ->color('primary'),
+                // 
             ])
             ->actions([
                 Tables\Actions\ViewAction::make(),

@@ -18,6 +18,7 @@ class ProductoObserver
             'precio_costo'     => 0,
             'precio_detalle'   => 0,
             'precio_promocion' => 0,
+            'precio_mayorista' => 0,
         ]);
     }
 
