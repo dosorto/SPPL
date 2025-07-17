@@ -24,7 +24,7 @@ class EmpresaFactory extends Factory
             'departamento_id' => $departamento ? $departamento->id : 1, // asignar un departamento válido
             'direccion' => $this->faker->address,
             'telefono' => $this->faker->phoneNumber,
-            'rtn' => $this->faker->numerify('##########'),
+            'rtn' => $this->faker->unique()->numerify('##########'),
             'created_by' => 1,
             'updated_by' => 1,
         ];

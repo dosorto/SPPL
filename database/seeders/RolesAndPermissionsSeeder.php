@@ -52,19 +52,31 @@ class RolesAndPermissionsSeeder extends Seeder
         // Crear permisos para cada modelo y acción
         foreach ($models as $model) {
             foreach ($actions as $action) {
-                Permission::create(['name' => "{$action}_{$model}"]);
+                $permName = "{$action}_{$model}";
+                if (!Permission::where('name', $permName)->exists()) {
+                    Permission::create(['name' => $permName]);
+                }
             }
         }
 
         // Crear rol de Administrador
-        $adminRole = Role::create(['name' => 'root']);
-        $adminRole1 = Role::create(['name' => 'admin']);
+        $adminRole = Role::where('name', 'root')->first();
+        if (!$adminRole) {
+            $adminRole = Role::create(['name' => 'root']);
+        }
+        $adminRole1 = Role::where('name', 'admin')->first();
+        if (!$adminRole1) {
+            $adminRole1 = Role::create(['name' => 'admin']);
+        }
 
         // Asignar TODOS los permisos al rol de Administrador
         $adminRole->givePermissionTo(Permission::all());
         $adminRole1->givePermissionTo(Permission::all());
 
-        $roleEditor = Role::create(['name' => 'editor']);
+        $roleEditor = Role::where('name', 'editor')->first();
+        if (!$roleEditor) {
+            $roleEditor = Role::create(['name' => 'editor']);
+        }
         $roleEditor->givePermissionTo(['view_paises',]);
     }
 }
