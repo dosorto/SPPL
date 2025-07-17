@@ -30,6 +30,14 @@ class Cliente extends Model
     ];
 
     /**
+     * Un cliente tiene muchas facturas (historial de compras).
+     */
+    public function facturas()
+    {
+        return $this->hasMany(\App\Models\Factura::class, 'cliente_id');
+    }
+
+    /**
      * Un cliente pertenece a una persona (relación uno a uno inversa).
      */
     public function persona()

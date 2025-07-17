@@ -16,6 +16,12 @@ use Filament\Forms\Components\Wizard;
 
 class ClienteResource extends Resource
 {
+    public static function getRelations(): array
+    {
+        return [
+            RelationManagers\ComprasRelationManager::class,
+        ];
+    }
     protected static ?string $model = Cliente::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
