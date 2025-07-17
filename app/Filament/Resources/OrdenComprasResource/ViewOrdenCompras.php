@@ -34,7 +34,7 @@ class ViewOrdenCompras extends ViewRecord
                         ->extraAttributes(['class' => 'text-lg font-semibold text-gray-800']),
                     Placeholder::make('proveedor_id')
                         ->label('Proveedor')
-                        ->content(fn () => $this->record->proveedores?->nombre_proveedor ?? 'N/A')
+                        ->content(fn () => $this->record->proveedor?->nombre_proveedor ?? 'N/A')
                         ->extraAttributes(['class' => 'text-gray-600']),
                     Placeholder::make('empresa_id')
                         ->label('Empresa')
@@ -44,22 +44,14 @@ class ViewOrdenCompras extends ViewRecord
                         ->label('Fecha Realizada')
                         ->content(fn () => $this->record->fecha_realizada ? Carbon::parse($this->record->fecha_realizada)->format('d/m/Y') : 'N/A')
                         ->extraAttributes(['class' => 'text-gray-600']),
+                    Placeholder::make('descripcion')
+                        ->label('Descripción')
+                        ->content(fn () => $this->record->descripcion ?? 'N/A')
+                        ->extraAttributes(['class' => 'text-gray-600']),
                 ])
                 ->columns(2)
                 ->collapsible()
                 ->extraAttributes(['class' => 'bg-white p-6 rounded-xl shadow-md border border-gray-200']),
-        ];
-    }
-
-    protected function getHeaderActions(): array
-    {
-        return [
-            \Filament\Actions\EditAction::make()->label('Editar')
-                ->color('warning')
-                ->icon('heroicon-o-pencil'),
-            \Filament\Actions\DeleteAction::make()->label('Eliminar')
-                ->color('danger')
-                ->icon('heroicon-o-trash'),
         ];
     }
 }

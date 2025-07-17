@@ -40,7 +40,7 @@ class OrdenComprasResource extends Resource
                             ->optionsLimit(100),
                         Forms\Components\Select::make('proveedor_id')
                             ->label('Proveedor')
-                            ->relationship('proveedores', 'nombre_proveedor')
+                            ->relationship('proveedor', 'nombre_proveedor')
                             ->required()
                             ->searchable()
                             ->preload()
@@ -71,6 +71,11 @@ class OrdenComprasResource extends Resource
                             ->label('Fecha Realizada')
                             ->required()
                             ->default(now()),
+                        Forms\Components\Textarea::make('descripcion')
+                            ->label('Descripción')
+                            ->nullable()
+                            ->maxLength(65535)
+                            ->rows(4),
                         Forms\Components\Hidden::make('created_by')
                             ->default(Auth::id()),
                         Forms\Components\Hidden::make('updated_by')
@@ -144,11 +149,15 @@ class OrdenComprasResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('id')
+                    ->label('ID')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('tipoOrdenCompra.nombre')
                     ->label('Tipo Orden')
                     ->sortable()
                     ->searchable(),
-                Tables\Columns\TextColumn::make('proveedores.nombre_proveedor')
+                Tables\Columns\TextColumn::make('proveedor.nombre_proveedor')
                     ->label('Proveedor')
                     ->sortable()
                     ->searchable(),
@@ -164,28 +173,36 @@ class OrdenComprasResource extends Resource
                     ->label('Productos')
                     ->counts('detalles')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('estado')
+                    ->label('Estado')
+                    ->sortable()
+                    ->searchable(),
+               
             ])
-           ->actions([
+            ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make()->label('Ver'),
-                    Tables\Actions\EditAction::make()->label('Editar'),
-                    
+                    Tables\Actions\EditAction::make()->label('Editar')
+                        ->disabled(fn (OrdenCompras $record): bool => $record->estado === 'Recibida'),
                     Action::make('recibirEnInventario')
                         ->label('Recibir en Inventario')
                         ->icon('heroicon-o-inbox-arrow-down')
                         ->color('success')
-                        // Oculta el botón si la orden ya fue recibida
                         ->hidden(fn (OrdenCompras $record): bool => $record->estado === 'Recibida')
-                        // Genera la URL a la página de recepción, pasando el ID de la orden
                         ->url(fn (OrdenCompras $record): string => RecibirOrdenCompra::getUrl(['orden_id' => $record->id])),
-                    
-
-                    Tables\Actions\DeleteAction::make()->label('Eliminar'),
+                    Tables\Actions\DeleteAction::make()->label('Eliminar')
+                        ->disabled(fn (OrdenCompras $record): bool => $record->estado === 'Recibida'),
                 ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('Eliminar seleccionados'),
+                    Tables\Actions\DeleteBulkAction::make()->label('Eliminar seleccionados')
+                        ->disabled(function ($records) {
+                            if (is_null($records) || !$records instanceof \Illuminate\Support\Collection) {
+                                return true;
+                            }
+                            return $records->contains(fn ($record) => $record->estado === 'Recibida');
+                        }),
                 ]),
             ]);
     }

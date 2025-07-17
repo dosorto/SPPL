@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductosResource extends Resource
 {
@@ -94,13 +95,38 @@ class ProductosResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('nombre')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('unidadDeMedida.nombre')->sortable(),
-                Tables\Columns\TextColumn::make('sku')->sortable(),
-                Tables\Columns\TextColumn::make('codigo')->sortable(),
-                Tables\Columns\ViewColumn::make('codigo')->view('filament.tables.columns.codigo-barra'),
-                Tables\Columns\TextColumn::make('isv')->sortable(),
+                Tables\Columns\TextColumn::make('nombre')
+                    ->label('Nombre')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('unidadDeMedida.nombre')
+                    ->label('Unidad de Medida')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('sku')
+                    ->label('SKU')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('codigo')
+                    ->label('Código de Barras')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\ViewColumn::make('codigo')
+                    ->label('Código de Barras')
+                    ->view('filament.tables.columns.codigo-barra'),
+                Tables\Columns\TextColumn::make('isv')
+                    ->label('ISV')
+                    ->sortable(),
             ])
+            ->modifyQueryUsing(function (Builder $query, Table $table) {
+                $search = $table->getLivewire()->tableSearch;
+                if ($search) {
+                    $query->where(function (Builder $subQuery) use ($search) {
+                        $subQuery->where('nombre', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%")
+                            ->orWhere('codigo', 'like', "%{$search}%");
+                    });
+                }
+            })
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\EditAction::make()->label('Editar'),
