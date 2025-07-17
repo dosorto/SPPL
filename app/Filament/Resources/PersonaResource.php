@@ -48,10 +48,6 @@ class PersonaResource extends Resource
                 Tables\Columns\TextColumn::make('dni')->label('DNI')->searchable(),
                 Tables\Columns\TextColumn::make('primer_nombre')->label('Primer Nombre')->searchable(),
                 Tables\Columns\TextColumn::make('primer_apellido')->label('Primer Apellido')->searchable(),
-                Tables\Columns\TextColumn::make('empresa.nombre')->label('Empresa')->sortable(),
-                Tables\Columns\TextColumn::make('pais.nombre_pais')->label('País')->sortable(),
-                Tables\Columns\TextColumn::make('departamento.nombre_departamento')->label('Departamento')->sortable(),
-                Tables\Columns\TextColumn::make('municipio.nombre_municipio')->label('Municipio')->sortable(),
                 Tables\Columns\TextColumn::make('telefono')->label('Teléfono'),
             ])
             ->filters([

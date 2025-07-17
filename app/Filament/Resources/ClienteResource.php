@@ -33,32 +33,6 @@ class ClienteResource extends Resource
                 Wizard::make([
                     Wizard\Step::make('Datos Generales')
                         ->schema([
-                            Forms\Components\Select::make('persona.tipo_persona')
-                                ->label('Tipo de Persona')
-                                ->options([
-                                    'natural' => 'Persona Natural',
-                                    'juridica' => 'Persona Jurídica',
-                                ])
-                                ->required()
-                                ->reactive(),
-                            Forms\Components\TextInput::make('persona.primer_nombre')
-                                ->label('Primer Nombre')
-                                ->required()
-                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
-                            Forms\Components\TextInput::make('persona.segundo_nombre')
-                                ->label('Segundo Nombre')
-                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
-                            Forms\Components\TextInput::make('persona.primer_apellido')
-                                ->label('Primer apellido')
-                                ->required()
-                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
-                            Forms\Components\TextInput::make('persona.segundo_apellido')
-                                ->label('Segundo apellido')
-                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
-                            Forms\Components\TextInput::make('persona.razon_social')
-                                ->label('Razón Social')
-                                ->required()
-                                ->visible(fn (callable $get) => $get('persona.tipo_persona') === 'juridica'),
                             Forms\Components\TextInput::make('persona.dni')
                                 ->label('DNI / RTN')
                                 ->required(),
