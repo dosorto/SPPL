@@ -11,6 +11,31 @@ class Persona extends Model
     /** @use HasFactory<\Database\Factories\PersonaFactory> */
     use HasFactory, SoftDeletes;
 
+
+    /**
+     * Define la relación: una persona pertenece a un municipio.
+     */
+
+    /**
+     * Define la relación: una persona pertenece a un país.
+     */
+
+    /**
+     * Una persona puede ser un cliente (relación uno a uno).
+     */
+
+    /**
+     * Una persona puede ser un empleado (relación uno a uno).
+     */
+
+    /**
+     * Una persona pertenece a una empresa (relación 1:1).
+     */
+
+    /**
+     * Define la relación: una persona pertenece a un departamento.
+     */
+
     protected $table = 'personas';
 
     protected $fillable = [
@@ -70,6 +95,13 @@ class Persona extends Model
     public function empresa()
     {
         return $this->belongsTo(Empresa::class);
+    }
+    /**
+     * Define la relación: una persona pertenece a un departamento.
+     */
+    public function departamento()
+    {
+        return $this->belongsTo(Departamento::class);
     }
 }
 

@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Departamento;
 use App\Models\User;
 use App\Models\Empresa;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
             PaisesSeeder::class,
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
+            EmpresaSeeder::class,
             TipoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
             TipoOrdenComprasSeeder::class,
@@ -39,23 +41,29 @@ class DatabaseSeeder extends Seeder
            // InventarioProductosSeeder::class,
         ]);
          
-       $empresa = Empresa::create([
-            'nombre' => 'GRUPO B',
-            'pais_id' => 80,
-            'departamento_id' => 8,
-            'municipio_id' => 131,
-            'direccion' => 'Colonia Palmira, Tegucigalpa',
-            'telefono' => '2233-4455',
-            'rtn' => '0801199900012',
-            'created_by' => 1,
-            'updated_by' => 1,
-        ]);
+       $empresa = Empresa::where('rtn', '0801199900012')->first();
+       if (!$empresa) {
+           $empresa = Empresa::create([
+               'nombre' => 'GRUPO B',
+               'pais_id' => 80,
+               'departamento_id' => 8,
+               'municipio_id' => 131,
+               'direccion' => 'Colonia Palmira, Tegucigalpa',
+               'telefono' => '2233-4455',
+               'rtn' => '0801199900012',
+               'created_by' => 1,
+               'updated_by' => 1,
+           ]);
+       }
 
-        $user = User::factory()->create([
-            'name' => 'root',
-            'email' => 'root@example.com',
-            'empresa_id' => $empresa->id,
-        ]);
+        $user = User::where('email', 'root@example.com')->first();
+        if (!$user) {
+            $user = User::factory()->create([
+                'name' => 'root',
+                'email' => 'root@example.com',
+                'empresa_id' => $empresa->id,
+            ]);
+        }
 
         //$role = Role::create(['name' => 'admin']);
         //$user->assignRole($role);
