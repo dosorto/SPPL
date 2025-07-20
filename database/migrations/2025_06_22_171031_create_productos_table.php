@@ -23,7 +23,7 @@ return new class extends Migration
         $table->string('codigo', 100)->nullable();
         $table->string('color', 100)->nullable();
         $table->float('isv')->nullable(); //15% ventas 0 18% bebidas alcolicas
-
+        $table->foreignId('empresa_id')->constrained('empresas');
         $table->timestamps(); // created_at y updated_at
         $table->softDeletes(); // deleted_at
 

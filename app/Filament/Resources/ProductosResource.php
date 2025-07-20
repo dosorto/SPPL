@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductosResource\Pages;
 use App\Models\Productos;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -47,6 +48,15 @@ class ProductosResource extends Resource
                         Forms\Components\TextInput::make('isv')
                             ->label('ISV')
                             ->numeric(),
+                        Forms\Components\Select::make('empresa_id')
+                            ->label('Empresa')
+                            ->relationship('empresa', 'nombre')
+                            ->searchable()
+                            ->required()
+                            ->default(fn () => Filament::auth()->user()?->empresa_id)
+                            ->disabled(fn () => true) // visualmente no editable
+                            ->dehydrated(true)        // asegura que se envíe el valor en el form
+                            ->suffix(null),   
                     ])
                     ->columns(2)
                     ->collapsible(),
@@ -154,5 +164,23 @@ class ProductosResource extends Resource
             'edit' => Pages\EditProductos::route('/{record}/edit'),
             'view' => Pages\ViewProductos::route('/{record}'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        // Se obtiene el usuario autenticado
+        $user = Filament::auth()->user();
+
+        // Se inicia la consulta base con las relaciones necesarias
+        $query = parent::getEloquentQuery()->with(['unidadDeMedida', 'empresa']);
+
+        // IMPORTANTE: Si el usuario NO tiene el rol 'Admin', se filtra por su empresa.
+        // Un usuario con el rol 'Admin' se saltará este filtro y verá todos los registros.
+        // Asegúrate de que tu rol de superusuario se llame 'Admin' o cámbialo según corresponda.
+        if (!$user->hasRole('root')) {
+            $query->where('empresa_id', $user->empresa_id);
+        }
+
+        return $query;
     }
 }

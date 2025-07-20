@@ -15,6 +15,7 @@ class ProductoObserver
         InventarioProductos::create([
             'producto_id'      => $producto->id,
             'cantidad'         => 0,
+            'empresa_id'       => $producto->empresa_id,
             'precio_costo'     => 0,
             'precio_detalle'   => 0,
             'precio_promocion' => 0,

@@ -63,6 +63,7 @@ class ProductosFactory extends Factory
             'codigo' => $this->faker->unique()->ean8(),
             'color' => $this->faker->safeColorName(),
             'isv' => $this->faker->randomFloat(2, 0, 0.15),
+            'empresa_id' => 1,
             'created_by' => 1,
             'updated_by' => 1,
             'deleted_by' => null,

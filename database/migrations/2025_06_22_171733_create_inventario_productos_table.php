@@ -20,7 +20,7 @@ return new class extends Migration
         $table->float('precio_detalle');
         $table->float('precio_promocion');
         $table->float('precio_mayorista');
-        // $table->foreignId('empresa_id')->constrained('empresas');
+        $table->foreignId('empresa_id')->constrained('empresas');
         $table->timestamps(); // created_at y updated_at
         $table->softDeletes(); // deleted_at
 

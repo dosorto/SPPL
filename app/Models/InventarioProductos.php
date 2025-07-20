@@ -16,6 +16,7 @@ class InventarioProductos extends Model
     protected $fillable = [
     'producto_id',           // FK a productos
     'cantidad',
+    'empresa_id',
     'precio_costo',
     'precio_detalle',
     'precio_promocion',
@@ -29,5 +30,10 @@ class InventarioProductos extends Model
     public function producto()
     {
         return $this->belongsTo(Productos::class);
+    }
+
+    public function empresa()
+    {
+        return $this->belongsTo(Empresa::class);
     }
 }

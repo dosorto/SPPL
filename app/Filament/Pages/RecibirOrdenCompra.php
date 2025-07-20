@@ -19,6 +19,7 @@ use Filament\Actions\Concerns\InteractsWithActions;
 use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Actions\Action;
+use Illuminate\Support\Collection;
 
 class RecibirOrdenCompra extends Page implements HasForms, HasActions
 {
@@ -36,6 +37,8 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
     public ?int $orden_id = null;
     
     public ?array $data = [];
+    
+    public ?OrdenCompras $orden = null;
     
     public function mount(): void
     {
@@ -64,65 +67,122 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
                             ->afterStateUpdated(fn ($state) => $this->cargarDetallesOrden($state)),
                     ]),
 
+                Forms\Components\Section::make('Resumen de la Orden')
+                    ->visible(fn (): bool => $this->orden !== null)
+                    ->schema([
+                        Forms\Components\Grid::make(3)->schema([
+                            Forms\Components\TextInput::make('nombre_proveedor')
+                                ->label('Proveedor')
+                                ->disabled()->dehydrated(false),
+                           Forms\Components\TextInput::make('fecha_realizada')
+                                ->label('Fecha de Orden')
+                                ->disabled()->dehydrated(false),
+                            Forms\Components\TextInput::make('estado_orden')
+                                ->label('Estado Actual')
+                                ->disabled()->dehydrated(false),
+                        ])
+                    ]),
+
                 Forms\Components\Section::make('Productos a Recibir y Precios')
                     ->visible(fn (callable $get) => !empty($get('detalles_orden')))
                     ->schema([
                         Forms\Components\Repeater::make('detalles_orden')
                             ->label(false)
                             ->schema([
-                                Forms\Components\Section::make()
+                                Forms\Components\Grid::make(9)
                                     ->schema([
-                                        Forms\Components\Grid::make(2)->schema([
-                                            Forms\Components\Group::make()->schema([
-                                                // CAMBIO: Se reemplaza el Select por un TextInput deshabilitado.
-                                                Forms\Components\TextInput::make('producto_nombre')
-                                                    ->label('Producto')
-                                                    ->disabled()
-                                                    ->dehydrated(false), // No enviar este campo, solo es visual.
-                                                Forms\Components\TextInput::make('cantidad')
-                                                    ->label('Cantidad Recibida')
-                                                    ->numeric()
-                                                    ->disabled()->dehydrated()->required(),
-                                            ]),
+                                        Forms\Components\TextInput::make('producto_nombre')
+                                            ->label('Producto')
+                                            ->disabled()
+                                            ->dehydrated(false)
+                                            ->columnSpan(2),
                                             
-                                            // CAMBIO: Se reestructura todo el Fieldset para alinear los campos.
-                                            Forms\Components\Fieldset::make('Cálculo de Precios')
-                                                ->schema([
-                                                    Forms\Components\TextInput::make('precio')
-                                                        ->label('Costo')
-                                                        ->numeric()->required()->prefix('LPS')
-                                                        ->disabled()->dehydrated()
-                                                        ->reactive()->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set))
-                                                        ->columnSpanFull(),
-                                                    
-                                                    // Grupo para Precio Detalle
-                                                    Forms\Components\TextInput::make('porcentaje_ganancia')
-                                                        ->label('% Ganancia Detalle')->numeric()->required()->suffix('%')
-                                                        ->reactive()->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set)),
-                                                    Forms\Components\TextInput::make('precio_detalle')
-                                                        ->label('Precio Venta')->numeric()->required()->prefix('LPS')
-                                                        ->disabled()->dehydrated(),
+                                        Forms\Components\TextInput::make('cantidad')
+                                            ->label('Cant.')
+                                            ->numeric()
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->required()
+                                            ->columnSpan(1),
+                                            
+                                        Forms\Components\TextInput::make('precio')
+                                            ->label('Costo')
+                                            ->numeric()
+                                            ->required()
+                                            ->prefix('L.')
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->columnSpan(1),
+                                            
+                                        Forms\Components\TextInput::make('porcentaje_ganancia')
+                                            ->label('% Gan.')
+                                            ->numeric()
+                                            ->required()
+                                            ->suffix('%')
+                                            ->live(debounce: 500)
+                                            ->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set))
+                                            ->columnSpan(1),
+                                            
+                                        Forms\Components\TextInput::make('precio_detalle')
+                                            ->label('P. Detalle')
+                                            ->numeric()
+                                            ->required()
+                                            ->prefix('L.')
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->columnSpan(1),
 
-                                                    // Grupo para Precio Mayorista
-                                                    Forms\Components\TextInput::make('porcentaje_ganancia_mayorista')
-                                                        ->label('% Ganancia Mayorista')->numeric()->required()->suffix('%')
-                                                        ->reactive()->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set)),
-                                                    Forms\Components\TextInput::make('precio_mayorista')
-                                                        ->label('Precio Mayorista')->numeric()->required()->prefix('LPS')
-                                                        ->disabled()->dehydrated(),
-                                                    
-                                                    // Grupo para Precio de Oferta
-                                                    Forms\Components\TextInput::make('porcentaje_descuento')
-                                                        ->label('% Descuento')->numeric()->required()->suffix('%')
-                                                        ->reactive()->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set)),
-                                                    Forms\Components\TextInput::make('precio_promocion')
-                                                        ->label('Precio Oferta')->numeric()->required()->prefix('LPS')
-                                                        ->disabled()->dehydrated(),
-                                                ])->columns(2), // El Fieldset ahora tiene 2 columnas.
-                                        ]),
+                                        Forms\Components\TextInput::make('porcentaje_ganancia_mayorista')
+                                            ->label('% May.')
+                                            ->numeric()
+                                            ->required()
+                                            ->suffix('%')
+                                            ->live(debounce: 500)
+                                            ->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set))
+                                            ->columnSpan(1),
+                                            
+                                        Forms\Components\TextInput::make('precio_mayorista')
+                                            ->label('P. Mayor.')
+                                            ->numeric()
+                                            ->required()
+                                            ->prefix('L.')
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->columnSpan(1),
+                                        
+                                        Forms\Components\TextInput::make('porcentaje_descuento')
+                                            ->label('% Desc.')
+                                            ->numeric()
+                                            ->required()
+                                            ->suffix('%')
+                                            ->live(debounce: 500)
+                                            ->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set))
+                                            ->columnSpan(1),
+                                    ]),
+                                    
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\TextInput::make('precio_promocion')
+                                            ->label('Precio de Oferta')
+                                            ->numeric()
+                                            ->required()
+                                            ->prefix('L.')
+                                            ->disabled()
+                                            ->dehydrated()
+                                            ->columnSpan(1),
+                                            
+                                        Forms\Components\Placeholder::make('spacer')
+                                            ->label('')
+                                            ->content('')
+                                            ->columnSpan(1),
                                     ]),
                             ])
-                            ->addable(false)->deletable(false),
+                            ->addable(false)
+                            ->deletable(false)
+                            ->reorderable(false)
+                            ->collapsed(false)
+                            ->itemLabel(fn (array $state): ?string => $state['producto_nombre'] ?? 'Producto')
+                            ->columnSpanFull(),
                     ]),
                 
                 Actions::make([
@@ -154,13 +214,15 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
     public function cargarDetallesOrden(?int $ordenId): void
     {
         if (empty($ordenId)) {
+            $this->orden = null;
             $this->form->fill(['detalles_orden' => []]);
             return;
         }
         
-        $orden = OrdenCompras::with('detalles.producto')->find($ordenId);
+        $orden = OrdenCompras::with(['detalles.producto', 'proveedor'])->find($ordenId);
         
         if ($orden && $orden->estado !== 'Recibida') {
+            $this->orden = $orden;
             $detallesEnriquecidos = [];
             foreach ($orden->detalles as $detalle) {
                 $costo = $detalle->precio;
@@ -170,7 +232,6 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
 
                 $detallesEnriquecidos[] = [
                     'producto_id' => $detalle->producto_id,
-                    // CAMBIO: Se añade el nombre del producto para mostrarlo en el TextInput.
                     'producto_nombre' => $detalle->producto->nombre,
                     'cantidad' => $detalle->cantidad,
                     'precio' => $costo,
@@ -184,9 +245,13 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
             }
             $this->form->fill([
                 'orden_id' => $ordenId,
+                'nombre_proveedor' => $orden->proveedor->nombre_proveedor ?? 'N/A',
+                'fecha_realizada' => $orden->fecha_realizada->format('d/m/Y'),
+                'estado_orden' => $orden->estado,
                 'detalles_orden' => $detallesEnriquecidos
             ]);
         } else {
+            $this->orden = null;
             $this->form->fill([
                 'orden_id' => $ordenId,
                 'detalles_orden' => []
@@ -206,14 +271,16 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
         $porcentajeDescuento = (float) $get('porcentaje_descuento');
         $porcentajeGananciaMayorista = (float) $get('porcentaje_ganancia_mayorista');
 
-        $precioDetalle = $costo * (1 + $porcentajeGanancia / 100);
-        $set('precio_detalle', number_format($precioDetalle, 2, '.', ''));
+        if ($costo > 0) {
+            $precioDetalle = $costo * (1 + $porcentajeGanancia / 100);
+            $set('precio_detalle', number_format($precioDetalle, 2, '.', ''));
 
-        $precioMayorista = $costo * (1 + $porcentajeGananciaMayorista / 100);
-        $set('precio_mayorista', number_format($precioMayorista, 2, '.', ''));
+            $precioMayorista = $costo * (1 + $porcentajeGananciaMayorista / 100);
+            $set('precio_mayorista', number_format($precioMayorista, 2, '.', ''));
 
-        $precioPromocion = $precioDetalle * (1 - $porcentajeDescuento / 100);
-        $set('precio_promocion', number_format($precioPromocion, 2, '.', ''));
+            $precioPromocion = $precioDetalle * (1 - $porcentajeDescuento / 100);
+            $set('precio_promocion', number_format($precioPromocion, 2, '.', ''));
+        }
     }
 
     public function procesarInventario(): void
