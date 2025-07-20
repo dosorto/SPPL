@@ -36,6 +36,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'unidad_de_medidas', //16
             '', //17
             'inventario_productos',
+            'facturas', //18
         ];
 
         // Acciones comunes de las políticas

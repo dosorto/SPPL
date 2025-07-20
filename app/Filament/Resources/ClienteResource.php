@@ -36,6 +36,16 @@ class ClienteResource extends Resource
                             Forms\Components\TextInput::make('persona.dni')
                                 ->label('DNI / RTN')
                                 ->required(),
+                            Forms\Components\TextInput::make('persona.primer_nombre')
+                                ->label('Primer Nombre')
+                                ->required(),
+                            Forms\Components\TextInput::make('persona.segundo_nombre')
+                                ->label('Segundo Nombre'),
+                            Forms\Components\TextInput::make('persona.primer_apellido')
+                                ->label('Primer Apellido')
+                                ->required(),
+                            Forms\Components\TextInput::make('persona.segundo_apellido')
+                                ->label('Segundo Apellido'),
                             Forms\Components\Select::make('persona.sexo')
                                 ->label('Sexo')
                                 ->options([

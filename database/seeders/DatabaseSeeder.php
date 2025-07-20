@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Departamento;
 use App\Models\User;
 use App\Models\Empresa;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -26,6 +27,7 @@ class DatabaseSeeder extends Seeder
             PaisesSeeder::class,
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
+            EmpresaSeeder::class,
             TipoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
             TipoOrdenComprasSeeder::class,
