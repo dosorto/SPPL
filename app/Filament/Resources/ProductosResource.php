@@ -39,6 +39,28 @@ class ProductosResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload(),
+                        Forms\Components\Select::make('categoria_id')
+                            ->label('Categoría')
+                            ->relationship('categoria', 'nombre')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('subcategoria_id', null); // Resetear subcategoría al cambiar categoría
+                            }),
+                        Forms\Components\Select::make('subcategoria_id')
+                            ->label('Subcategoría')
+                            ->relationship('subcategoria', 'nombre', function ($query, $get) {
+                                $categoriaId = $get('categoria_id');
+                                if ($categoriaId) {
+                                    $query->where('categoria_id', $categoriaId);
+                                }
+                            })
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->disabled(fn ($get) => !$get('categoria_id')),
                         Forms\Components\TextInput::make('sku')
                             ->label('SKU')
                             ->maxLength(100),
@@ -54,9 +76,9 @@ class ProductosResource extends Resource
                             ->searchable()
                             ->required()
                             ->default(fn () => Filament::auth()->user()?->empresa_id)
-                            ->disabled(fn () => true) // visualmente no editable
-                            ->dehydrated(true)        // asegura que se envíe el valor en el form
-                            ->suffix(null),   
+                            ->disabled(fn () => true)
+                            ->dehydrated(true)
+                            ->suffix(null),
                     ])
                     ->columns(2)
                     ->collapsible(),
@@ -112,6 +134,14 @@ class ProductosResource extends Resource
                 Tables\Columns\TextColumn::make('unidadDeMedida.nombre')
                     ->label('Unidad de Medida')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('categoria.nombre')
+                    ->label('Categoría')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('subcategoria.nombre')
+                    ->label('Subcategoría')
+                    ->sortable()
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable()
@@ -168,19 +198,11 @@ class ProductosResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        // Se obtiene el usuario autenticado
         $user = Filament::auth()->user();
-
-        // Se inicia la consulta base con las relaciones necesarias
-        $query = parent::getEloquentQuery()->with(['unidadDeMedida', 'empresa']);
-
-        // IMPORTANTE: Si el usuario NO tiene el rol 'Admin', se filtra por su empresa.
-        // Un usuario con el rol 'Admin' se saltará este filtro y verá todos los registros.
-        // Asegúrate de que tu rol de superusuario se llame 'Admin' o cámbialo según corresponda.
+        $query = parent::getEloquentQuery()->with(['unidadDeMedida', 'empresa', 'categoria', 'subcategoria']);
         if (!$user->hasRole('root')) {
             $query->where('empresa_id', $user->empresa_id);
         }
-
         return $query;
     }
 }

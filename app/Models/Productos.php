@@ -15,6 +15,8 @@ class Productos extends Model
 
     protected $fillable = [
         'unidad_de_medida_id',
+        'categoria_id',
+        'subcategoria_id',
         'nombre',
         'descripcion',
         'descripcion_corta',
@@ -33,6 +35,16 @@ class Productos extends Model
         return $this->belongsTo(UnidadDeMedidas::class, 'unidad_de_medida_id');
     }
 
+    public function categoria()
+    {
+        return $this->belongsTo(CategoriaProducto::class, 'categoria_id');
+    }
+
+    public function subcategoria()
+    {
+        return $this->belongsTo(SubcategoriaProducto::class, 'subcategoria_id');
+    }
+
     public function fotosRelacion()
     {
         return $this->hasMany(ProductoFoto::class, 'producto_id');
@@ -42,6 +54,4 @@ class Productos extends Model
     {
         return $this->belongsTo(Empresa::class);
     }
-
-    
 }
