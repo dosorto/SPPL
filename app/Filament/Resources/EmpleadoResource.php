@@ -140,9 +140,19 @@ class EmpleadoResource extends Resource
                                 ->live(onBlur: true)
                                 ->columnSpanFull(),
                             Forms\Components\Select::make('tipo_empleado_id')
-                            ->label('Tipo de empleado')
-                            ->relationship('tipoEmpleado', 'nombre_tipo')
-                            ->required()->columnSpanFull(),
+                                ->label('Tipo de empleado')
+                                ->relationship('tipoEmpleado', 'nombre_tipo')
+                                ->required()->columnSpanFull(),
+
+                            Forms\Components\Section::make('Deducciones aplicables')
+                                ->schema([
+                                    Forms\Components\CheckboxList::make('deducciones')
+                                        ->label('Deducciones que aplican al empleado')
+                                        ->options(\App\Models\Deducciones::pluck('deduccion', 'id'))
+                                        ->columns(2)
+                                        ->helperText('Selecciona las deducciones que aplican a este empleado.'),
+                                ])
+                                ->collapsible(),
                         ])->columns(2)->columnSpanFull(),
                     // Paso 3: Empresa y departamento
                     Forms\Components\Wizard\Step::make('Empresa y departamento')

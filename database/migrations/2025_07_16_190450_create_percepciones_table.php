@@ -11,19 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('departamento_empleados', function (Blueprint $table) {
+        Schema::create('percepciones', function (Blueprint $table) {
             $table->id();
-            $table->string('nombre_departamento_empleado', 100); 
-            $table->text('descripcion', 200)->nullable(); 
-            $table->foreignId('empresa_id')->constrained('empresas');
-            $table->timestamps(); // created_at y updated_at
-            $table->softDeletes(); // deleted_at
+
+            $table->string('percepcion');
+            $table->decimal('valor', 10, 2); 
+
+            $table->timestamps();
+            $table->softDeletes();
 
             $table->integer('created_by')->nullable();
             $table->integer('updated_by')->nullable();
             $table->integer('deleted_by')->nullable();
-
-            // $table->unique(['nombre_departamento_empleado'], 'departamento_unique');
         });
     }
 
@@ -32,6 +31,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('departamento_empleados');
+        Schema::dropIfExists('percepciones');
     }
 };

@@ -16,6 +16,7 @@ class Deducciones extends Model
     protected $fillable = [
         'deduccion',
         'valor',
+        'tipo_valor',
         'created_by',
         'updated_by',
         'deleted_by',

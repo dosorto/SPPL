@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Get;
 
 class DeduccionesResource extends Resource
 {
@@ -29,10 +30,25 @@ class DeduccionesResource extends Resource
                 ->label('Nombre de la deducción')
                 ->required(),
 
-            TextInput::make('valor')
-                ->label('Monto')
+            Forms\Components\Select::make('tipo_valor')
+                ->label('Tipo de valor')
+                ->options([
+                    'porcentaje' => 'Porcentaje',
+                    'monto' => 'Monto',
+                ])
+                ->default('porcentaje')
+                ->required()
+                ->reactive(),
+
+            Forms\Components\TextInput::make('valor')
+                ->label('Valor')
                 ->numeric()
-                ->required(),
+                ->required()
+                ->suffix(function (Get $get) {
+                    return $get('tipo_valor') === 'porcentaje' ? '%' : 'L';
+                })
+                ->helperText('Ejemplo: 5 = 5% ó 500 = L500'),
+            
             ]);
     }
 
@@ -40,8 +56,18 @@ class DeduccionesResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('deduccion')->label('Nombre'),
-                TextColumn::make('valor')->label('Monto'),
+                Tables\Columns\TextColumn::make('deduccion')->label('Deducción'),
+
+                Tables\Columns\TextColumn::make('valor')
+                    ->label('Valor')
+                    ->formatStateUsing(function ($state, $record) {
+                        return $record->tipo_valor === 'porcentaje'
+                            ? $state . '%'
+                            : 'L ' . number_format($state, 2);
+            }),
+
+            Tables\Columns\TextColumn::make('tipo_valor')->label('Tipo'),
+
             ])
             ->filters([
                 //

@@ -26,6 +26,8 @@ class EditEmpleado extends EditRecord
         if ($empleado && $empleado->persona) {
             $data['persona'] = $empleado->persona->toArray();
         }
+        // Prellenar deducciones seleccionadas
+        $data['deducciones'] = $empleado->deduccionesAplicadas()->pluck('deduccion_id')->toArray();
         return $data;
     }
 
@@ -37,8 +39,13 @@ class EditEmpleado extends EditRecord
         $empleado->persona->update($personaData);
         $data['persona_id'] = $empleado->persona->id;
         unset($data['persona']);
+        // Guardar deducciones seleccionadas en el campo deducciones_aplicables
+        $data['deducciones_aplicables'] = $data['deducciones'] ?? [];
+        unset($data['deducciones']);
         return $data;
     }
+
+    // Ya no se sincronizan registros en EmpleadoDeducciones automáticamente aquí
 
     protected function getRedirectUrl(): string
     {

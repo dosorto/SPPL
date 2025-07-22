@@ -5,24 +5,36 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Traits\TenantScoped;
 
 class Nominas extends Model
 {
     /** @use HasFactory<\Database\Factories\NominasFactory> */
-    use HasFactory, SoftDeletes;
+        use HasFactory, SoftDeletes, TenantScoped;
 
     protected $table = 'nominas';
 
     protected $fillable = [
         'mes',
         'año',
-        'estado',
         'descripcion',
         'empresa_id',
+        'empleado_id',
+        'sueldo_bruto',
+        'deducciones',
+        'percepciones',
+        'sueldo_neto',
+        'cerrada',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
+
+    // Relación con Empleado
+    public function empleado()
+    {
+        return $this->belongsTo(\App\Models\Empleado::class, 'empleado_id');
+    }
 
     // Relación con Empresa
     public function empresa()

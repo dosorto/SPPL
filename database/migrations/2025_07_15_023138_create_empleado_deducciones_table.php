@@ -12,19 +12,18 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('empleado_deducciones', function (Blueprint $table) {
-        $table->id();
+            $table->id();
 
-        $table->foreignId('empleado_id')->constrained('empleados')->onDelete('cascade');
-        $table->foreignId('deduccion_id')->constrained('deducciones')->onDelete('cascade');
+            $table->foreignId('empleado_id')->constrained('empleados');
+            $table->foreignId('deduccion_id')->constrained('deducciones');
+            $table->date('fecha_aplicacion')->default(DB::raw('CURRENT_DATE'));
 
-        $table->date('fecha_aplicacion')->nullable();
+            $table->timestamps();      
+            $table->softDeletes();  
 
-        $table->timestamps();      
-        $table->softDeletes();  
-
-        $table->integer('created_by')->nullable();
-        $table->integer('updated_by')->nullable();
-        $table->integer('deleted_by')->nullable();
+            $table->integer('created_by')->nullable();
+            $table->integer('updated_by')->nullable();
+            $table->integer('deleted_by')->nullable();
         });
     }
 

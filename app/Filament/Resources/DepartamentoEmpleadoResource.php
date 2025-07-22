@@ -6,9 +6,13 @@ use App\Filament\Resources\DepartamentoEmpleadoResource\Pages;
 use App\Models\DepartamentoEmpleado;
 use Filament\Forms;
 use Filament\Forms\Form;
-use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use App\Filament\Resources\UserResource;
+use App\Filament\Resources\EmpleadoResource;
+use App\Filament\Resources\EmpresaResource;
+use Filament\Resources\Resource;
+use Filament\Facades\Filament;
 
 class DepartamentoEmpleadoResource extends Resource
 {
@@ -22,6 +26,15 @@ class DepartamentoEmpleadoResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Select::make('empresa_id')
+                    ->label('Empresa')
+                    ->relationship('empresa', 'nombre')
+                    ->required()
+                    ->default(fn () => Filament::auth()->user()?->empresa_id) // asigna por defecto la empresa del usuario autenticado
+                    ->disabled(fn () => true)                                 // evita que el usuario la cambie
+                    ->dehydrated(true)                                        // envía el valor aunque esté deshabilitado
+                    ->reactive()
+                    ->columnSpanFull(),               
                 // cambio jessuri: Campo para el nombre del departamento, único y requerido
                 Forms\Components\TextInput::make('nombre_departamento_empleado')
                     ->label('Nombre del departamento')
@@ -39,12 +52,10 @@ class DepartamentoEmpleadoResource extends Resource
             ]);
     }
 
-    // cambio jessuri: Personaliza la tabla de departamentos internos con badges, colores y búsqueda
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                // cambio jessuri: Columna para el nombre del departamento, con badge y búsqueda
                 Tables\Columns\TextColumn::make('nombre_departamento_empleado')
                     ->label('Departamento')
                     ->badge()
@@ -55,7 +66,6 @@ class DepartamentoEmpleadoResource extends Resource
                     ->label('Descripción')
                     ->limit(30),
             ])
-            // cambio jessuri: Acciones de editar y eliminar
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),

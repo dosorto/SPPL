@@ -1,0 +1,12 @@
+<?php
+
+namespace App\Filament\Resources\PercepcionesResource\Pages;
+
+use App\Filament\Resources\PercepcionesResource;
+use Filament\Actions;
+use Filament\Resources\Pages\CreateRecord;
+
+class CreatePercepciones extends CreateRecord
+{
+    protected static string $resource = PercepcionesResource::class;
+}

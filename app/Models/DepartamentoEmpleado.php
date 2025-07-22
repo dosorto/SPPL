@@ -6,29 +6,33 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use App\Models\Empresa;
-
+use App\Models\Traits\TenantScoped;
 
 class DepartamentoEmpleado extends Model
 {
     /** @use HasFactory<\Database\Factories\DepartementoempleadoFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, TenantScoped;
 
     protected $table = 'departamento_empleados'; 
 
     protected $fillable = [
         'nombre_departamento_empleado',
         'descripcion',
+        'empresa_id',
         'created_by',
         'updated_by',
     ];
     
 
 
-
-
     public function empleados()
     {
         return $this->hasMany(Empleado::class);
+    }
+
+    public function empresa()
+    {
+    return $this->belongsTo(Empresa::class);
     }
 
     /**

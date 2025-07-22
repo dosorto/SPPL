@@ -26,33 +26,21 @@ class DetalleNominaResource extends Resource
 
         return $form
             ->schema([
-                // Empleado (nombre completo, usando la relación)
-                Forms\Components\TextInput::make('empleado.nombre_completo')
-                    ->label('Empleado')
-                    
-                    ->disabled(),
+                \Filament\Forms\Components\View::make('filament.detalle-nomina.nombre-empleado')
+                    ->label('Empleado'),
 
-                // Sueldo bruto
                 Forms\Components\TextInput::make('sueldo_bruto')
                     ->label('Sueldo Bruto')
                     ->disabled(),
 
-                // Deducciones
+                Forms\Components\TextInput::make('percepciones')
+                    ->label('Percepciones')
+                    ->disabled(),
+
                 Forms\Components\TextInput::make('deducciones')
                     ->label('Deducciones')
                     ->disabled(),
 
-                // Total horas extra
-                Forms\Components\TextInput::make('total_horas_extra')
-                    ->label('Total de Horas Extra')
-                    ->disabled(),
-
-                // Monto de horas extra
-                Forms\Components\TextInput::make('horas_extra_monto')
-                    ->label('Monto por Horas Extra')
-                    ->disabled(),
-
-                // Sueldo neto
                 Forms\Components\TextInput::make('sueldo_neto')
                     ->label('Sueldo Neto')
                     ->disabled(),
@@ -71,7 +59,11 @@ public static function table(Table $table): Table
 
             TextColumn::make('sueldo_bruto')
                 ->label('Bruto')
-                ->money('HNL'), // si la versión lo soporta
+                ->money('HNL'),
+
+            TextColumn::make('percepciones')
+                ->label('Percepciones')
+                ->money('HNL'),
 
             TextColumn::make('deducciones')
                 ->label('Deducciones')
@@ -83,7 +75,6 @@ public static function table(Table $table): Table
         ])
         ->actions([
             Tables\Actions\ViewAction::make(),
-            Tables\Actions\EditAction::make(),
             Tables\Actions\DeleteAction::make(),
         ])
         ->bulkActions([

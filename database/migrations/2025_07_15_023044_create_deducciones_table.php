@@ -15,10 +15,14 @@ return new class extends Migration
         $table->id();
 
         $table->string('deduccion');
-        $table->decimal('valor', 10, 2); // Ej: 5.00 significa 5%
+        // Aquí el valor puede representar tanto un porcentaje como un monto
+        $table->decimal('valor', 10, 2);
 
-        $table->timestamps();      // created_at, updated_at
-        $table->softDeletes();     // deleted_at
+        // Nuevo campo para indicar si el valor es un porcentaje o un monto
+        $table->enum('tipo_valor', ['porcentaje', 'monto'])->default('porcentaje');
+        
+        $table->timestamps();      
+        $table->softDeletes();     
 
         $table->integer('created_by')->nullable();
         $table->integer('updated_by')->nullable();

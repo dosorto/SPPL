@@ -5,10 +5,13 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Traits\TenantScoped;
+
 
 class Empleado extends Model
 {
-    use HasFactory, SoftDeletes;
+
+    use HasFactory, SoftDeletes, TenantScoped;
 
     protected $table = 'empleados';
 
@@ -16,6 +19,7 @@ class Empleado extends Model
         'numero_empleado',
         'fecha_ingreso',
         'salario',
+        'deducciones_aplicables',
         'persona_id',
         'departamento_empleado_id', // FK a departamentos_empleados
         'empresa_id',
@@ -29,6 +33,7 @@ class Empleado extends Model
         'fecha_nacimiento' => 'datetime',
         'fecha_ingreso' => 'date',
         'salario' => 'decimal:2',
+        'deducciones_aplicables' => 'array',
         // 'created_at' => 'datetime',
         // 'updated_at' => 'datetime',
         // 'deleted_at' => 'datetime',
@@ -75,6 +80,12 @@ class Empleado extends Model
     public function deduccionesAplicadas()
     {
         return $this->hasMany(EmpleadoDeducciones::class, 'empleado_id')->with('deduccion');
+    }
+
+        // Relación con empleado_percepciones (1 empleado puede tener muchas percepciones)
+    public function percepcionesAplicadas()
+    {
+        return $this->hasMany(\App\Models\EmpleadoPercepciones::class, 'empleado_id')->with('percepcion');
     }
 
     public function getNombreCompletoAttribute()

@@ -17,8 +17,12 @@ class CreateEmpleado extends CreateRecord
         $persona = \App\Models\Persona::create($personaData);
         $data['persona_id'] = $persona->id;
         unset($data['persona']);
+        // Guardar deducciones seleccionadas en el campo deducciones_aplicables
+        $data['deducciones_aplicables'] = $data['deducciones'] ?? [];
+        unset($data['deducciones']);
         return $data;
     }
+
 
     protected function getRedirectUrl(): string
     {

@@ -9,36 +9,74 @@ use App\Models\Empleado;
 
 class CreateNomina extends CreateRecord
 {
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
     protected static string $resource = NominaResource::class;
 
-    protected function afterCreate(): void
+    protected function handleRecordCreation(array $data): \Illuminate\Database\Eloquent\Model
     {
-        $data = $this->form->getState(); // Estado del formulario
+        $nomina = \App\Models\Nominas::create([
+            'empresa_id' => $data['empresa_id'],
+            'mes' => $data['mes'],
+            'año' => $data['año'],
+            'descripcion' => $data['descripcion'],
+            'estado' => 'pendiente',
+            'created_by' => auth()->id(),
+        ]);
 
         foreach ($data['empleadosSeleccionados'] as $empleadoInput) {
             if (!empty($empleadoInput['seleccionado'])) {
-                // ✅ Cargamos el empleado desde la base de datos, con sus deducciones
-                $empleado = Empleado::with('deduccionesAplicadas.deduccion')->find($empleadoInput['empleado_id']);
-
-                // 🧮 Sumamos el valor total de las deducciones aplicadas
-                $totalDeducciones = $empleado->deduccionesAplicadas->sum(function ($relacion) {
-                    return $relacion->deduccion->valor ?? 0;
+                $empleado = \App\Models\Empleado::find($empleadoInput['empleado_id']);
+                $sueldo = $empleado->salario;
+                $deducciones = $empleado->deduccionesAplicadas->sum(function ($relacion) use ($sueldo) {
+                    $deduccion = $relacion->deduccion;
+                    if (!$deduccion) return 0;
+                    if (trim(strtolower($deduccion->tipo_valor)) === 'porcentaje') {
+                        return ($sueldo * ($deduccion->valor / 100));
+                    }
+                    return $deduccion->valor;
                 });
-
-                // 💰 Calculamos el sueldo neto
-                $sueldoNeto = $empleado->salario - $totalDeducciones;
-
-                DetalleNominas::create([
-                    'nomina_id' => $this->record->id,
-                    'empleado_id' => $empleado->id,
-                    'sueldo_bruto' => $empleado->salario,
-                    'deducciones' => $totalDeducciones,
-                    'sueldo_neto' => $sueldoNeto,
-                    'total_horas_extra' => 0,
-                    'horas_extra_monto' => 0,
+                $deduccionesDetalle = $empleado->deduccionesAplicadas->map(function ($relacion) use ($sueldo) {
+                    $deduccion = $relacion->deduccion;
+                    if (!$deduccion) return null;
+                    $nombre = $deduccion->deduccion ?? '';
+                    $tipo = trim(strtolower($deduccion->tipo_valor)) === 'porcentaje' ? 'Porcentaje' : 'Monto';
+                    $valor = $tipo === 'Porcentaje' ? ($deduccion->valor . '%') : ('$' . $deduccion->valor);
+                    return $nombre . ': ' . $valor;
+                })->filter()->values()->implode("\n");
+                $percepciones = $empleado->percepcionesAplicadas->sum(function ($relacion) {
+                    $percepcion = $relacion->percepcion;
+                    if (!$percepcion) return 0;
+                    if (($percepcion->percepcion ?? '') === 'Horas Extras') {
+                        $cantidad = $relacion->cantidad_horas ?? 0;
+                        $valorUnitario = $percepcion->valor ?? 0;
+                        return $cantidad * $valorUnitario;
+                    }
+                    return $percepcion->valor ?? 0;
+                });
+                $percepcionesDetalle = $empleado->percepcionesAplicadas->map(function ($relacion) {
+                    $percepcion = $relacion->percepcion;
+                    if (!$percepcion) return null;
+                    $nombre = $percepcion->percepcion ?? '';
+                    $valor = '$' . $percepcion->valor;
+                    return $nombre . ': ' . $valor;
+                })->filter()->values()->implode("\n");
+                $total = $sueldo + $percepciones - $deducciones;
+                \App\Models\DetalleNominas::create([
+                    'nomina_id' => $nomina->id,
+                    'empleado_id' => $empleadoInput['empleado_id'],
+                    'sueldo_bruto' => $sueldo,
+                    'deducciones' => $deducciones,
+                    'deducciones_detalle' => $deduccionesDetalle,
+                    'percepciones' => $percepciones,
+                    'percepciones_detalle' => $percepcionesDetalle,
+                    'sueldo_neto' => $total,
                     'created_by' => auth()->id(),
                 ]);
             }
         }
+        return $nomina;
     }
 }

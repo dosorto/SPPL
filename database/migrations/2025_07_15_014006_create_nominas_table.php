@@ -16,10 +16,17 @@ return new class extends Migration
 
             $table->unsignedTinyInteger('mes'); 
             $table->year('año'); 
-            $table->enum('estado', ['pendiente', 'pagado'])->default('pendiente');
             $table->string('descripcion')->nullable();
+            $table->boolean('cerrada')->default(false);
 
             $table->foreignId('empresa_id')->constrained('empresas')->onDelete('cascade');
+
+            // Nuevos campos de detalle_nominas
+            $table->foreignId('empleado_id')->nullable()->constrained('empleados')->onDelete('cascade');
+            $table->decimal('sueldo_bruto', 12, 2)->nullable();
+            $table->decimal('deducciones', 12, 2)->nullable();
+            $table->decimal('percepciones', 12, 2)->nullable();
+            $table->decimal('sueldo_neto', 12, 2)->nullable();
 
             $table->timestamps(); 
             $table->softDeletes(); 
