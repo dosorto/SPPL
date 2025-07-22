@@ -39,7 +39,7 @@ class DatabaseSeeder extends Seeder
             OrdenComprasSeeder::class,
             OrdenComprasDetalleSeeder::class,
             DepartamentoEmpleadoSeeder::class,
-            // EmpleadoSeeder::class,
+            EmpleadoSeeder::class,
             DeduccionesSeeder::class,
             PercepcionesSeeder::class,
             CategoriaProductoSeeder::class,
