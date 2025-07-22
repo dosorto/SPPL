@@ -18,6 +18,7 @@ class DetalleNominas extends Model
         'nomina_id',
         'empleado_id',
         'sueldo_bruto',
+        'empresa_id',
         'deducciones',
         'percepciones',
         'sueldo_neto',
@@ -34,5 +35,10 @@ class DetalleNominas extends Model
     public function empleado()
     {
         return $this->belongsTo(Empleado::class, 'empleado_id');
+    }
+
+    public function empresa()
+    {
+        return $this->belongsTo(Empresa::class, 'empresa_id');
     }
 }

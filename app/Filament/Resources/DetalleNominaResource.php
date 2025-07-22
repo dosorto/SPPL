@@ -17,82 +17,98 @@ use Filament\Tables\Columns\NumberColumn;
 
 class DetalleNominaResource extends Resource
 {
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+        if (auth()->check()) {
+            // Aseguramos que exista empresa_id en la consulta
+            $query->where('empresa_id', auth()->user()->empresa_id);
+            
+            // Agregamos logging para depuración
+            \Illuminate\Support\Facades\Log::info('Filtrando DetalleNominas', [
+                'empresa_id' => auth()->user()->empresa_id,
+                'user_id' => auth()->id(),
+            ]);
+        }
+        return $query;
+    }
     protected static ?string $model = DetalleNominas::class;
+
+    protected static ?string $navigationLabel = 'Historial de Pagos';
+
+    protected static ?string $modelLabel = 'Historial de Pago';
+    
 
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
     {
-
         return $form
             ->schema([
-                \Filament\Forms\Components\View::make('filament.detalle-nomina.nombre-empleado')
-                    ->label('Empleado'),
+                \Filament\Forms\Components\Select::make('nomina_id')
+                    ->label('Nómina')
+                    ->relationship('nomina', 'folio')
+                    ->required(),
 
-                Forms\Components\TextInput::make('sueldo_bruto')
-                    ->label('Sueldo Bruto')
-                    ->disabled(),
+                \Filament\Forms\Components\Select::make('empleado_id')
+                    ->label('Empleado')
+                    ->relationship('empleado', 'nombre_completo')
+                    ->required(),
+                    
+                \Filament\Forms\Components\Hidden::make('empresa_id')
+                    ->default(fn() => auth()->user()->empresa_id),
 
-                Forms\Components\TextInput::make('percepciones')
-                    ->label('Percepciones')
-                    ->disabled(),
+                \Filament\Forms\Components\TextInput::make('sueldo_bruto')
+                    ->label('Sueldo bruto')
+                    ->numeric()
+                    ->required(),
 
-                Forms\Components\TextInput::make('deducciones')
+                \Filament\Forms\Components\TextInput::make('deducciones')
                     ->label('Deducciones')
-                    ->disabled(),
+                    ->numeric()
+                    ->required(),
 
-                Forms\Components\TextInput::make('sueldo_neto')
-                    ->label('Sueldo Neto')
-                    ->disabled(),
+                \Filament\Forms\Components\TextInput::make('percepciones')
+                    ->label('Percepciones')
+                    ->numeric()
+                    ->required(),
+
+                \Filament\Forms\Components\TextInput::make('sueldo_neto')
+                    ->label('Sueldo neto')
+                    ->numeric()
+                    ->required(),
             ]);
-
-        }
-
-public static function table(Table $table): Table
-{
-    return $table
-        ->columns([
-            TextColumn::make('empleado.nombre_completo')
-                ->label('Empleado')
-                ->sortable()
-                ->searchable(),
-
-            TextColumn::make('sueldo_bruto')
-                ->label('Bruto')
-                ->money('HNL'),
-
-            TextColumn::make('percepciones')
-                ->label('Percepciones')
-                ->money('HNL'),
-
-            TextColumn::make('deducciones')
-                ->label('Deducciones')
-                ->money('HNL'),
-
-            TextColumn::make('sueldo_neto')
-                ->label('Neto')
-                ->money('HNL'),
-        ])
-        ->actions([
-            Tables\Actions\ViewAction::make(),
-            Tables\Actions\DeleteAction::make(),
-        ])
-        ->bulkActions([
-            Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make(),
-            ]),
-        ]);
-
     }
 
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                \Filament\Tables\Columns\TextColumn::make('empleado.nombre_completo')->label('Empleado'),
+                \Filament\Tables\Columns\TextColumn::make('sueldo_bruto')->label('Sueldo Bruto'),
+                \Filament\Tables\Columns\TextColumn::make('deducciones')->label('Deducciones'),
+                \Filament\Tables\Columns\TextColumn::make('percepciones')->label('Percepciones'),
+                \Filament\Tables\Columns\TextColumn::make('sueldo_neto')->label('Sueldo Neto'),
+            ])
+            ->actions([
+                \Filament\Tables\Actions\ViewAction::make()
+                    ->icon('heroicon-o-eye'),
+            ])
+            ->headerActions([]); // Oculta el botón de crear
+    }
 
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListDetalleNominas::route('/'),
-            'create' => Pages\CreateDetalleNomina::route('/create'),
             'edit' => Pages\EditDetalleNomina::route('/{record}/edit'),
             'view' => Pages\ViewDetalleNomina::route('/{record}'),
         ];
+    }
+    
+    // Ocultar completamente la opción de crear nuevos registros
+    public static function canCreate(): bool
+    {
+        return false;
     }
 }

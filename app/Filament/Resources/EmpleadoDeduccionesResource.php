@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Facades\Filament;
 
 class EmpleadoDeduccionesResource extends Resource
 {
@@ -34,6 +35,7 @@ class EmpleadoDeduccionesResource extends Resource
                     ->searchable()
                     ->required()
                     ->reactive(),
+
 
                 Select::make('deduccion_id')
                     ->label('Deducción')

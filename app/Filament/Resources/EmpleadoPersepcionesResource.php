@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\DatePicker;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Facades\Filament;
 
 class EmpleadoPersepcionesResource extends Resource
 {
@@ -63,6 +64,16 @@ class EmpleadoPersepcionesResource extends Resource
                         };
                     }),
 
+
+
+                Forms\Components\Select::make('empresa_id')
+                    ->label('Empresa')
+                    ->relationship('empresa', 'nombre')
+                    ->default(fn () => Filament::auth()->user()?->empresa_id)
+                    ->hidden()
+                    ->required()
+                    ->dehydrated(true),
+                
                 \Filament\Forms\Components\TextInput::make('cantidad_horas')
                     ->label('Cantidad de horas extras')
                     ->numeric()

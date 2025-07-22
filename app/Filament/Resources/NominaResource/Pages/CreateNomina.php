@@ -67,6 +67,7 @@ class CreateNomina extends CreateRecord
                 \App\Models\DetalleNominas::create([
                     'nomina_id' => $nomina->id,
                     'empleado_id' => $empleadoInput['empleado_id'],
+                    'empresa_id' => $nomina->empresa_id,
                     'sueldo_bruto' => $sueldo,
                     'deducciones' => $deducciones,
                     'deducciones_detalle' => $deduccionesDetalle,

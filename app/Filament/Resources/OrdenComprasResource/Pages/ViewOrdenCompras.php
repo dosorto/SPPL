@@ -7,6 +7,10 @@ use Filament\Resources\Pages\ViewRecord;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
+use Filament\Actions\EditAction;
+use Filament\Actions\DeleteAction;
+use Filament\Actions\Action;
+use App\Filament\Pages\RecibirOrdenCompra;
 use Carbon\Carbon;
 
 class ViewOrdenCompras extends ViewRecord
@@ -34,7 +38,7 @@ class ViewOrdenCompras extends ViewRecord
                         ->extraAttributes(['class' => 'text-lg font-semibold text-gray-800']),
                     Placeholder::make('proveedor_id')
                         ->label('Proveedor')
-                        ->content(fn () => $this->record->proveedores?->nombre_proveedor ?? 'N/A')
+                        ->content(fn () => $this->record->proveedor?->nombre_proveedor ?? 'N/A')
                         ->extraAttributes(['class' => 'text-gray-600']),
                     Placeholder::make('empresa_id')
                         ->label('Empresa')
@@ -43,6 +47,10 @@ class ViewOrdenCompras extends ViewRecord
                     Placeholder::make('fecha_realizada')
                         ->label('Fecha Realizada')
                         ->content(fn () => $this->record->fecha_realizada ? Carbon::parse($this->record->fecha_realizada)->format('d/m/Y') : 'N/A')
+                        ->extraAttributes(['class' => 'text-gray-600']),
+                    Placeholder::make('descripcion')
+                        ->label('Descripción')
+                        ->content(fn () => $this->record->descripcion ?? 'N/A')
                         ->extraAttributes(['class' => 'text-gray-600']),
                 ])
                 ->columns(2)
@@ -53,13 +61,16 @@ class ViewOrdenCompras extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return [
-            \Filament\Actions\EditAction::make()->label('Editar')
-                ->color('warning')
-                ->icon('heroicon-o-pencil'),
-            \Filament\Actions\DeleteAction::make()->label('Eliminar')
-                ->color('danger')
-                ->icon('heroicon-o-trash'),
-        ];
+        return $this->record->estado === 'Pendiente' ? [
+            EditAction::make()
+                ->label('Editar'),
+            DeleteAction::make()
+                ->label('Eliminar'),
+            Action::make('recibirEnInventario')
+                ->label('Recibir en Inventario')
+                ->icon('heroicon-o-inbox-arrow-down')
+                ->color('success')
+                ->url(fn () => RecibirOrdenCompra::getUrl(['orden_id' => $this->record->id])),
+        ] : [];
     }
 }

@@ -13,7 +13,7 @@ class ListDetalleNominas extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            Actions\CreateAction::make(),
+            // Se eliminó la acción de crear
         ];
     }
 }

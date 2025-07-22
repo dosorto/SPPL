@@ -13,15 +13,27 @@ return new class extends Migration
     {
         Schema::create('facturas', function (Blueprint $table) {
             $table->id();
+
+            // --- Relaciones ---
+            $table->foreignId('cliente_id')->constrained('clientes');
+            $table->foreignId('empresa_id')->constrained('empresas');
+            $table->foreignId('empleado_id')->constrained('empleados');
+
+            // --- Datos de la Factura ---
             $table->date('fecha_factura');
-            $table->foreignId('empresa_id')->constrained('empresas')->onDelete('cascade');
-            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
-            $table->foreignId('cliente_id')->constrained('clientes')->onDelete('cascade');
+            $table->enum('estado', ['Pendiente', 'Pagada', 'Anulada', 'Vencida'])->default('Pendiente');
+
+            // --- Totales Calculados ---
+            $table->decimal('subtotal', 10, 2);
+            $table->decimal('impuestos', 10, 2);
+            $table->decimal('total', 10, 2);
+            
+            // --- Auditoría y Timestamps ---
             $table->timestamps();
             $table->softDeletes();
-            $table->integer('created_by')->nullable();
-            $table->integer('updated_by')->nullable();
-            $table->integer('deleted_by')->nullable();
+            $table->foreignId('created_by')->nullable();
+            $table->foreignId('updated_by')->nullable();
+            $table->foreignId('deleted_by')->nullable();
         });
     }
 

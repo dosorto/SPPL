@@ -14,6 +14,7 @@ class Percepciones extends Model
 
         protected $fillable = [
         'percepcion',
+        'empresa_id',
         'valor',
         'created_by',
         'updated_by',
@@ -25,5 +26,10 @@ class Percepciones extends Model
     public function percepcionesAplicadas()
     {
         return $this->hasMany(EmpleadoPercepciones::class, 'empleado_id')->with('deduccion');
+    }
+
+    public function empresa()
+    {
+        return $this->belongsTo(Empresa::class, 'empresa_id');
     }
 }

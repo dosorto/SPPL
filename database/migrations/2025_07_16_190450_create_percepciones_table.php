@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('percepciones', function (Blueprint $table) {
             $table->id();
-
+            $table->foreignId('empresa_id')->constrained('empresas');
             $table->string('percepcion');
             $table->decimal('valor', 10, 2); 
 

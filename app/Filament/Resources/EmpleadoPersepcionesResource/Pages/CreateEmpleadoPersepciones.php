@@ -9,4 +9,10 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateEmpleadoPersepciones extends CreateRecord
 {
     protected static string $resource = EmpleadoPersepcionesResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['empresa_id'] = auth()->user()->empresa_id;
+        return $data;
+    }
 }

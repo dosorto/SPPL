@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('descripcion')->nullable();
             $table->boolean('cerrada')->default(false);
 
-            $table->foreignId('empresa_id')->constrained('empresas')->onDelete('cascade');
+            $table->foreignId('empresa_id')->constrained('empresas');
 
             // Nuevos campos de detalle_nominas
             $table->foreignId('empleado_id')->nullable()->constrained('empleados')->onDelete('cascade');

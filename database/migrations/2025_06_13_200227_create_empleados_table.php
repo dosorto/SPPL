@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('empleados', function (Blueprint $table) {
             $table->id();
-            $table->string('numero_empleado', 255)->unique();
+            $table->string('numero_empleado', 255);
             $table->date('fecha_ingreso');
             $table->decimal('salario', 10, 2);
             $table->json('deducciones_aplicables')->nullable();

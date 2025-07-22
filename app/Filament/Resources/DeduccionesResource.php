@@ -3,18 +3,16 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\DeduccionesResource\Pages;
-use App\Filament\Resources\DeduccionesResource\RelationManagers;
 use App\Models\Deducciones;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Components\TextInput;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Forms\Get;
 
 class DeduccionesResource extends Resource
 {
@@ -26,29 +24,35 @@ class DeduccionesResource extends Resource
     {
         return $form
             ->schema([
-            TextInput::make('deduccion')
-                ->label('Nombre de la deducción')
-                ->required(),
 
-            Forms\Components\Select::make('tipo_valor')
-                ->label('Tipo de valor')
-                ->options([
-                    'porcentaje' => 'Porcentaje',
-                    'monto' => 'Monto',
-                ])
-                ->default('porcentaje')
-                ->required()
-                ->reactive(),
+                TextInput::make('deduccion')
+                    ->label('Nombre de la deducción')
+                    ->required(),
 
-            Forms\Components\TextInput::make('valor')
-                ->label('Valor')
-                ->numeric()
-                ->required()
-                ->suffix(function (Get $get) {
-                    return $get('tipo_valor') === 'porcentaje' ? '%' : 'L';
-                })
-                ->helperText('Ejemplo: 5 = 5% ó 500 = L500'),
-            
+                Forms\Components\Select::make('tipo_valor')
+                    ->label('Tipo de valor')
+                    ->options([
+                        'porcentaje' => 'Porcentaje',
+                        'monto' => 'Monto',
+                    ])
+                    ->default('porcentaje')
+                    ->required()
+                    ->reactive(),
+
+                Forms\Components\Select::make('empresa_id')
+                    ->label('Empresa')
+                    ->relationship('empresa', 'nombre')
+                    ->default(fn () => Filament::auth()->user()?->empresa_id)
+                    ->hidden()
+                    ->required()
+                    ->dehydrated(true),
+
+                TextInput::make('valor')
+                    ->label('Valor')
+                    ->numeric()
+                    ->required()
+                    ->suffix(fn (Get $get) => $get('tipo_valor') === 'porcentaje' ? '%' : 'L')
+                    ->helperText('Ejemplo: 5 = 5% ó 500 = L500'),
             ]);
     }
 
@@ -56,7 +60,8 @@ class DeduccionesResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('deduccion')->label('Deducción'),
+                Tables\Columns\TextColumn::make('deduccion')
+                    ->label('Deducción'),
 
                 Tables\Columns\TextColumn::make('valor')
                     ->label('Valor')
@@ -64,10 +69,10 @@ class DeduccionesResource extends Resource
                         return $record->tipo_valor === 'porcentaje'
                             ? $state . '%'
                             : 'L ' . number_format($state, 2);
-            }),
+                    }),
 
-            Tables\Columns\TextColumn::make('tipo_valor')->label('Tipo'),
-
+                Tables\Columns\TextColumn::make('tipo_valor')
+                    ->label('Tipo'),
             ])
             ->filters([
                 //
@@ -86,9 +91,7 @@ class DeduccionesResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
     public static function getPages(): array
@@ -99,4 +102,5 @@ class DeduccionesResource extends Resource
             'edit' => Pages\EditDeducciones::route('/{record}/edit'),
         ];
     }
+
 }

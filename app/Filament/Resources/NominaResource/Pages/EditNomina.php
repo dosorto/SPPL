@@ -71,7 +71,7 @@ class EditNomina extends EditRecord
                     ]),
 
                 // Sección especial para empleados (después del formulario principal)
-                Section::make('Historial de Pagos de Empleados')
+                Section::make('Empleados en la Nómina')
                     ->schema([
                         \Filament\Forms\Components\Placeholder::make('tabla-empleados')
                             ->content(function ($record) {
@@ -91,11 +91,11 @@ class EditNomina extends EditRecord
     {
         return [
             \Filament\Actions\Action::make('addEmpleado')
-                ->label('Agregar registros de pago')
-                ->modalHeading('Agregar registros al historial de pagos')
+                ->label('Agregar empleados a la nómina')
+                ->modalHeading('Agregar empleados a la nómina')
                 ->form([
                     \Filament\Forms\Components\CheckboxList::make('empleadosParaAgregar')
-                        ->label('Empleados disponibles para registro')
+                        ->label('Empleados disponibles para agregar')
                         ->options(function () {
                             $empleadosEnNomina = $this->record->detalleNominas->pluck('empleado_id')->toArray();
                             return Empleado::whereNotIn('id', $empleadosEnNomina)->get()->mapWithKeys(function($empleado) {
@@ -138,6 +138,7 @@ class EditNomina extends EditRecord
                         \App\Models\DetalleNominas::create([
                             'nomina_id' => $nomina->id,
                             'empleado_id' => $empleadoId,
+                            'empresa_id' => $nomina->empresa_id,  // Añadimos el campo empresa_id
                             'sueldo_bruto' => $sueldo,
                             'deducciones' => $deducciones,
                             'percepciones' => $percepciones,
@@ -146,14 +147,14 @@ class EditNomina extends EditRecord
                         ]);
                     }
                     \Filament\Notifications\Notification::make()
-                        ->title('Registros de pago agregados')
-                        ->body('Registros de pago agregados correctamente al historial.')
+                        ->title('Empleados agregados')
+                        ->body('Empleados agregados correctamente a la nómina.')
                         ->success()
                         ->send();
                     // Refrescar la página para que Livewire recargue la tabla
                     $this->redirect(request()->header('Referer') ?? route('filament.admin.resources.nominas.edit', $this->record));
                 })
-                ->modalSubmitActionLabel('Agregar registros de pago')
+                ->modalSubmitActionLabel('Agregar empleados')
                 ->modalWidth('lg'),
         ];
     }

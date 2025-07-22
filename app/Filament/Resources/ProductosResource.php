@@ -4,11 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ProductosResource\Pages;
 use App\Models\Productos;
+use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class ProductosResource extends Resource
 {
@@ -37,6 +39,28 @@ class ProductosResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload(),
+                        Forms\Components\Select::make('categoria_id')
+                            ->label('Categoría')
+                            ->relationship('categoria', 'nombre')
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->reactive()
+                            ->afterStateUpdated(function ($state, callable $set) {
+                                $set('subcategoria_id', null); // Resetear subcategoría al cambiar categoría
+                            }),
+                        Forms\Components\Select::make('subcategoria_id')
+                            ->label('Subcategoría')
+                            ->relationship('subcategoria', 'nombre', function ($query, $get) {
+                                $categoriaId = $get('categoria_id');
+                                if ($categoriaId) {
+                                    $query->where('categoria_id', $categoriaId);
+                                }
+                            })
+                            ->required()
+                            ->searchable()
+                            ->preload()
+                            ->disabled(fn ($get) => !$get('categoria_id')),
                         Forms\Components\TextInput::make('sku')
                             ->label('SKU')
                             ->maxLength(100),
@@ -46,6 +70,12 @@ class ProductosResource extends Resource
                         Forms\Components\TextInput::make('isv')
                             ->label('ISV')
                             ->numeric(),
+                        Forms\Components\Select::make('empresa_id')
+                            ->label('Empresa')
+                            ->relationship('empresa', 'nombre')
+                            ->default(fn () => Filament::auth()->user()?->empresa_id)
+                            ->hidden()
+                            ->dehydrated(true),
                     ])
                     ->columns(2)
                     ->collapsible(),
@@ -94,13 +124,46 @@ class ProductosResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('nombre')->searchable()->sortable(),
-                Tables\Columns\TextColumn::make('unidadDeMedida.nombre')->sortable(),
-                Tables\Columns\TextColumn::make('sku')->sortable(),
-                Tables\Columns\TextColumn::make('codigo')->sortable(),
-                Tables\Columns\ViewColumn::make('codigo')->view('filament.tables.columns.codigo-barra'),
-                Tables\Columns\TextColumn::make('isv')->sortable(),
+                Tables\Columns\TextColumn::make('nombre')
+                    ->label('Nombre')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('unidadDeMedida.nombre')
+                    ->label('Unidad de Medida')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('categoria.nombre')
+                    ->label('Categoría')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('subcategoria.nombre')
+                    ->label('Subcategoría')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('sku')
+                    ->label('SKU')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('codigo')
+                    ->label('Código de Barras')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\ViewColumn::make('codigo')
+                    ->label('Código de Barras')
+                    ->view('filament.tables.columns.codigo-barra'),
+                Tables\Columns\TextColumn::make('isv')
+                    ->label('ISV')
+                    ->sortable(),
             ])
+            ->modifyQueryUsing(function (Builder $query, Table $table) {
+                $search = $table->getLivewire()->tableSearch;
+                if ($search) {
+                    $query->where(function (Builder $subQuery) use ($search) {
+                        $subQuery->where('nombre', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%")
+                            ->orWhere('codigo', 'like', "%{$search}%");
+                    });
+                }
+            })
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\EditAction::make()->label('Editar'),
@@ -128,5 +191,15 @@ class ProductosResource extends Resource
             'edit' => Pages\EditProductos::route('/{record}/edit'),
             'view' => Pages\ViewProductos::route('/{record}'),
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $user = Filament::auth()->user();
+        $query = parent::getEloquentQuery()->with(['unidadDeMedida', 'empresa', 'categoria', 'subcategoria']);
+        if (!$user->hasRole('root')) {
+            $query->where('empresa_id', $user->empresa_id);
+        }
+        return $query;
     }
 }

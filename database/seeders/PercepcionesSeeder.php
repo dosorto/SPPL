@@ -15,30 +15,37 @@ class PercepcionesSeeder extends Seeder
         \App\Models\Percepciones::create([
             'percepcion' => 'Bono de Productividad',
             'valor' => 500.00,
+            'empresa_id' => 1, 
         ]);
         \App\Models\Percepciones::create([
             'percepcion' => 'Horas Extras',
             'valor' => 120.50,
+            'empresa_id' => 1, 
         ]);
         \App\Models\Percepciones::create([
             'percepcion' => 'Bonificación Especial',
             'valor' => 250.00,
+            'empresa_id' => 1, 
         ]);
         \App\Models\Percepciones::create([
             'percepcion' => 'Comisión por Ventas',
             'valor' => 300.00,
+            'empresa_id' => 1, 
         ]);
         \App\Models\Percepciones::create([
             'percepcion' => 'Viáticos',
             'valor' => 180.75,
+            'empresa_id' => 1, 
         ]);
         \App\Models\Percepciones::create([
             'percepcion' => 'Aguinaldo',
             'valor' => 1000.00,
+            'empresa_id' => 1, 
         ]);
         \App\Models\Percepciones::create([
             'percepcion' => 'Vacaciones',
             'valor' => 800.00,
+            'empresa_id' => 1, 
         ]);
     }
 }

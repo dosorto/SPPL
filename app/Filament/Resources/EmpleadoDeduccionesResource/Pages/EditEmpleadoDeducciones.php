@@ -15,5 +15,13 @@ class EditEmpleadoDeducciones extends EditRecord
         return [
             Actions\DeleteAction::make(),
         ];
+        
+    }
+
+
+     protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        $data['empresa_id'] = auth()->user()->empresa_id;
+        return $data;
     }
 }

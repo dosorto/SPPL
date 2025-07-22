@@ -76,11 +76,7 @@ class Empresa extends Model
         return $this->hasMany(User::class);
     }
 
-    /**
-     * Cambio jessuri: Esta función booted() asigna automáticamente los campos de auditoría (created_by, updated_by, deleted_by)
-     * con el ID del usuario autenticado al crear, actualizar o eliminar una empresa.
-     * Así, estos campos se llenan sin intervención manual desde el formulario.
-     */
+
     protected static function booted()
     {
         static::creating(function ($empresa) {

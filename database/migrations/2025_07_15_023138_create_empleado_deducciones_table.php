@@ -16,6 +16,7 @@ return new class extends Migration
 
             $table->foreignId('empleado_id')->constrained('empleados');
             $table->foreignId('deduccion_id')->constrained('deducciones');
+            $table->foreignId('empresa_id')->constrained('empresas');
             $table->date('fecha_aplicacion')->default(DB::raw('CURRENT_DATE'));
 
             $table->timestamps();      

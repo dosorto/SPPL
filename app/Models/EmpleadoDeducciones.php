@@ -16,6 +16,7 @@ class EmpleadoDeducciones extends Model
     protected $fillable = [
         'empleado_id',
         'deduccion_id',
+        'empresa_id',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -29,5 +30,10 @@ class EmpleadoDeducciones extends Model
     public function deduccion()
     {
         return $this->belongsTo(Deducciones::class, 'deduccion_id');
+    }
+
+        public function empresa()
+    {
+        return $this->belongsTo(Empresa::class, 'empresa_id');
     }
 }

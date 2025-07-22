@@ -13,8 +13,9 @@ return new class extends Migration
     {
         Schema::create('detalle_nominas', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('nomina_id')->constrained('nominas')->onDelete('cascade');
-            $table->foreignId('empleado_id')->constrained('empleados')->onDelete('cascade');
+            $table->foreignId('nomina_id')->constrained('nominas');
+            $table->foreignId('empleado_id')->constrained('empleados');
+            $table->foreignId('empresa_id')->constrained('empresas');
             $table->decimal('sueldo_bruto', 10, 2);
             $table->decimal('deducciones', 10, 2)->default(0);
             $table->decimal('percepciones', 10, 2)->default(0);

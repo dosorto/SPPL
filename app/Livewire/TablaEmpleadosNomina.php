@@ -96,6 +96,7 @@ class TablaEmpleadosNomina extends Component
             DetalleNominas::create([
                 'nomina_id' => $nomina->id,
                 'empleado_id' => $empleadoId,
+                'empresa_id' => $nomina->empresa_id, // Asegurarnos de que este campo siempre tenga un valor
                 'sueldo_bruto' => $sueldo,
                 'deducciones' => $deducciones,
                 'percepciones' => $percepciones,

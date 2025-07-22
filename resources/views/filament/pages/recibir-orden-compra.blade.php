@@ -1,11 +1,12 @@
 <x-filament-panels::page>
-    <form wire:submit="submit">
-        {{ $this->form }}
-
-        <div class="mt-6">
-            <x-filament::button type="submit">
-                Confirmar Recepción y Actualizar Inventario
-            </x-filament::button>
-        </div>
-    </form>
+    {{ $this->form }}
+    
+    <div class="mt-6 flex justify-end">
+        <x-filament-actions::actions 
+            :actions="$this->getActions()" 
+            alignment="right"
+        />
+    </div>
+    
+    <x-filament-actions::modals />
 </x-filament-panels::page>

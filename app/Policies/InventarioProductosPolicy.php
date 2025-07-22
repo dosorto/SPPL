@@ -6,7 +6,7 @@ use App\Models\InventarioProductos;
 use App\Models\User;
 use Illuminate\Auth\Access\Response;
 
-class InventarioPolicy
+class InventarioProductosPolicy
 {
     /**
      * Determine whether the user can view any models.
@@ -63,4 +63,5 @@ class InventarioPolicy
     {
         return $user->can('force_delete_inventario_productos');
     }
+
 }

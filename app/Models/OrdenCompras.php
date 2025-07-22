@@ -6,16 +6,19 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\Traits\TenantScoped;
 
 class OrdenCompras extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, TenantScoped;
 
     protected $fillable = [
         'tipo_orden_compra_id',
         'proveedor_id',
         'empresa_id',
         'fecha_realizada',
+        'estado',
+        'descripcion',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -26,6 +29,7 @@ class OrdenCompras extends Model
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
         'deleted_at' => 'datetime',
+        'estado' => 'string',
     ];
 
     public function detalles(): HasMany
@@ -51,9 +55,5 @@ class OrdenCompras extends Model
     public function getTipoOrdenNombreAttribute()
     {
         return $this->tipoOrdenCompra ? $this->tipoOrdenCompra->nombre : 'N/A';
-    }
-    public function proveedores()
-    {
-        return $this->belongsTo(\App\Models\Proveedores::class, 'proveedor_id');
     }
 }

@@ -16,6 +16,7 @@ return new class extends Migration
 
             $table->foreignId('empleado_id')->constrained('empleados');
             $table->foreignId('percepcion_id')->constrained('percepciones');
+            $table->foreignId('empresa_id')->constrained('empresas');
             $table->date('fecha_aplicacion')->nullable();
             $table->integer('cantidad_horas')->nullable();
 
