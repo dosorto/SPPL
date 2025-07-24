@@ -18,8 +18,15 @@ return new class extends Migration
             $table->decimal('cantidad', 10, 2);
             $table->decimal('precio_unitario', 10, 2);
             $table->decimal('sub_total', 10, 2);
-            $table->timestamps();
-            $table->softDeletes();
+            $table->decimal('isv_aplicado', 5, 2)->default(0)->comment('El % de ISV aplicado en el momento de la venta');
+            $table->decimal('costo_unitario', 10, 2)->comment('Congela el costo del producto al momento de la venta.');
+            $table->decimal('utilidad_unitaria', 10, 2)->comment('Congela la ganancia (precio - costo) al momento de la venta.');
+            // Campos de logs
+            $table->timestamps(); // created_at y updated_at
+            $table->softDeletes(); // deleted_at
+            $table->integer('created_by')->nullable();
+            $table->integer('updated_by')->nullable();
+            $table->integer('deleted_by')->nullable();
         });
     }
 

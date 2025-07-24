@@ -19,10 +19,8 @@ return new class extends Migration
             // Relación uno a uno con personas
             $table->foreignId('persona_id')->constrained('personas'); 
             // Relación opcional con empresas
-            $table->foreignId('empresa_id')
-                  ->nullable() // ¡Este campo es opcional!
-                  ->constrained('empresas')
-                  ->onDelete('set null'); // Si se elimina una empresa, se establece a NULL en los clientes
+            $table->foreignId('empresa_id')->constrained('empresas'); 
+            $table->unique(['persona_id', 'empresa_id']);
 
             // Campos de logs
             $table->timestamps(); // created_at y updated_at

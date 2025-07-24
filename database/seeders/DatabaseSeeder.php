@@ -13,8 +13,9 @@ use App\Models\Empleado;
 use App\Models\Persona;
 use App\Models\TipoEmpleado;
 use App\Models\DepartamentoEmpleado;
-
-
+use App\Models\CategoriaCliente;
+use App\Models\Cliente;
+use App\Models\MetodoPago;
 
 class DatabaseSeeder extends Seeder
 {
@@ -51,6 +52,7 @@ class DatabaseSeeder extends Seeder
             PercepcionesSeeder::class,
             CategoriaProductoSeeder::class,
             SubcategoriaProductoSeeder::class,
+            MetodoPagoSeeder::class,
            // InventarioProductosSeeder::class,
         ]);
          
@@ -68,6 +70,33 @@ class DatabaseSeeder extends Seeder
                 'telefono' => '2233-4455',
             ]
         );
+
+        $personaConsumidorFinal = Persona::firstOrCreate(
+            ['dni' => '0000000000000'],
+            [
+                'primer_nombre' => 'Consumidor',
+                'primer_apellido' => 'Final',
+                'direccion' => 'Ciudad',
+                'telefono' => '0000-0000',
+                'sexo' => 'MASCULINO',
+                'fecha_nacimiento' => now(),
+                'municipio_id' => $empresa->municipio_id, // Usamos datos de la empresa
+                'pais_id' => $empresa->pais_id,
+            ]
+        );
+
+        // Se enlaza esa persona como un cliente a la empresa "GRUPO B".
+        Cliente::firstOrCreate(
+            [
+                'persona_id' => $personaConsumidorFinal->id,
+                'empresa_id' => $empresa->id,
+            ],
+            [
+                'rtn' => '00000000000000',
+            ]
+        );
+        
+        $this->command->info('Cliente "Consumidor Final" creado para GRUPO B.');
 
         // --- 2. Asegurar que el rol 'root' exista ---
         Role::firstOrCreate(['name' => 'root']);

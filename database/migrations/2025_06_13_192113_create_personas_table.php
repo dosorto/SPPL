@@ -24,7 +24,7 @@ return new class extends Migration
             $table->foreignId('pais_id')->constrained('paises')->nullable();
 
             $table->string('telefono', 20)->nullable(); // Opcional
-            $table->enum('sexo', ['MASCULINO', 'FEMENINO']);
+            $table->enum('sexo', ['MASCULINO', 'FEMENINO', 'OTRO']);
             $table->date('fecha_nacimiento'); // CAMBIO: Usamos 'date' para la fecha de nacimiento
             $table->string('fotografia', 255)->nullable(); 
             // Campos de auditoría (logs)

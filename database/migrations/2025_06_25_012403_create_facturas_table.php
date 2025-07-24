@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('facturas', function (Blueprint $table) {
             $table->id();
-
+            $table->string('numero_factura')->unique();
+            $table->foreignId('cai_id')->nullable()->constrained('cais');
             // --- Relaciones ---
             $table->foreignId('cliente_id')->constrained('clientes');
             $table->foreignId('empresa_id')->constrained('empresas');
