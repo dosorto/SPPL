@@ -13,12 +13,14 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Facades\Filament;
+use Filament\Forms\Components\TextInput;
+use Filament\Forms\Get;
 
 class PercepcionesResource extends Resource
 {
     protected static ?string $model = Percepciones::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     public static function form(Form $form): Form
     {
@@ -31,16 +33,27 @@ class PercepcionesResource extends Resource
                     ->hidden()
                     ->dehydrated(true),
 
-                \Filament\Forms\Components\TextInput::make('percepcion')
+                Forms\Components\TextInput::make('percepcion')
                     ->label('Nombre de la percepción')
-                    ->required()
-                    ->maxLength(255),
+                    ->required(),
 
-                \Filament\Forms\Components\TextInput::make('valor')
-                    ->label('Valor (Lempiras)')
+                Forms\Components\Select::make('tipo_valor')
+                    ->label('Tipo de valor')
+                    ->options([
+                        'porcentaje' => 'Porcentaje',
+                        'monto' => 'Monto',
+                    ])
+                    ->default('porcentaje')
+                    ->required()
+                    ->reactive(),
+
+                Forms\Components\TextInput::make('valor')
+                    ->label('Valor')
                     ->numeric()
                     ->required()
-                    ->minValue(0),
+                    ->suffix(fn (Get $get) => $get('tipo_valor') === 'porcentaje' ? '%' : ($get('tipo_valor') === 'monto' ? 'L' : ''))
+                    ->helperText('Ejemplo: 5 = 5% ó 500 = L500'),
+
             ]);
     }
 
@@ -53,10 +66,18 @@ class PercepcionesResource extends Resource
                     ->sortable()
                     ->searchable(),
 
-                \Filament\Tables\Columns\TextColumn::make('valor')
-                    ->label('Valor (Lempiras)')
-                    ->money('HNL', true)
-                    ->sortable(),
+                Tables\Columns\TextColumn::make('valor')
+                    ->label('Valor')
+                    ->formatStateUsing(function ($state, $record) {
+                        if ($record->tipo_valor === 'porcentaje') {
+                            $valor = rtrim(rtrim($state, '0'), '.');
+                            return $valor . '%';
+                        }
+                        return 'L ' . number_format($state, 2);
+                    }),
+
+                Tables\Columns\TextColumn::make('tipo_valor')
+                    ->label('Tipo'),
 
             ])
             ->filters([

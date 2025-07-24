@@ -34,12 +34,10 @@ class DetalleNominaResource extends Resource
     }
     protected static ?string $model = DetalleNominas::class;
 
+    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Historial de Pagos';
-
     protected static ?string $modelLabel = 'Historial de Pago';
-    
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
     {

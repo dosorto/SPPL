@@ -17,8 +17,8 @@ use Illuminate\Database\Eloquent\Builder;
 class DeduccionesResource extends Resource
 {
     protected static ?string $model = Deducciones::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     public static function form(Form $form): Form
     {
@@ -66,9 +66,11 @@ class DeduccionesResource extends Resource
                 Tables\Columns\TextColumn::make('valor')
                     ->label('Valor')
                     ->formatStateUsing(function ($state, $record) {
-                        return $record->tipo_valor === 'porcentaje'
-                            ? $state . '%'
-                            : 'L ' . number_format($state, 2);
+                        if ($record->tipo_valor === 'porcentaje') {
+                            $valor = rtrim(rtrim($state, '0'), '.');
+                            return $valor . '%';
+                        }
+                        return 'L ' . number_format($state, 2);
                     }),
 
                 Tables\Columns\TextColumn::make('tipo_valor')

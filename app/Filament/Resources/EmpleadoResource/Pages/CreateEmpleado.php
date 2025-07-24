@@ -17,10 +17,21 @@ class CreateEmpleado extends CreateRecord
         $persona = \App\Models\Persona::create($personaData);
         $data['persona_id'] = $persona->id;
         unset($data['persona']);
-        // Guardar deducciones seleccionadas en el campo deducciones_aplicables
-        $data['deducciones_aplicables'] = $data['deducciones'] ?? [];
-        unset($data['deducciones']);
+        // No guardar deducciones aquí, se sincronizan después de crear el empleado
         return $data;
+    }
+
+    protected function afterCreate(): void
+    {
+        // Sincronizar deducciones seleccionadas con la relación deducciones del empleado, agregando empresa_id en la tabla pivote
+        $deducciones = $this->data['deducciones'] ?? [];
+        if (!empty($deducciones)) {
+            $syncData = [];
+            foreach ($deducciones as $deduccionId) {
+                $syncData[$deduccionId] = ['empresa_id' => $this->record->empresa_id];
+            }
+            $this->record->deducciones()->sync($syncData);
+        }
     }
 
 
