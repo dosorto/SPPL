@@ -44,6 +44,7 @@ class Persona extends Model
         'primer_apellido',
         'segundo_apellido',
         'dni',
+        'tipo_persona',
         'direccion',
         'municipio_id',
         'telefono',
