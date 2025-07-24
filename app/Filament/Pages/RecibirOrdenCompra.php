@@ -20,6 +20,9 @@ use Filament\Actions\Contracts\HasActions;
 use Filament\Forms\Components\Actions;
 use Filament\Forms\Components\Actions\Action;
 use Illuminate\Support\Collection;
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\Section;
+use Filament\Forms\Components\Placeholder;
 
 class RecibirOrdenCompra extends Page implements HasForms, HasActions
 {
@@ -40,6 +43,16 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
     
     public ?OrdenCompras $orden = null;
     
+    public array $productosData = [];
+    
+    // Propiedades para paginación
+    public int $currentPage = 1;
+    public int $perPage = 10;
+    public int $totalPages = 1;
+    
+    // Propiedad para el filtro de búsqueda
+    public string $searchFilter = '';
+    
     public function mount(): void
     {
         $this->form->fill();
@@ -51,6 +64,12 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
     public function updatedOrdenId($value): void
     {
         $this->cargarDetallesOrden($value);
+    }
+
+    // Método que se ejecuta cuando cambia el filtro de búsqueda
+    public function updatedSearchFilter(): void
+    {
+        $this->currentPage = 1; // Resetear a la primera página cuando se filtra
     }
 
     public function form(Form $form): Form
@@ -67,122 +86,28 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
                             ->afterStateUpdated(fn ($state) => $this->cargarDetallesOrden($state)),
                     ]),
 
-                Forms\Components\Section::make('Resumen de la Orden')
-                    ->visible(fn (): bool => $this->orden !== null)
-                    ->schema([
-                        Forms\Components\Grid::make(3)->schema([
-                            Forms\Components\TextInput::make('nombre_proveedor')
-                                ->label('Proveedor')
-                                ->disabled()->dehydrated(false),
-                           Forms\Components\TextInput::make('fecha_realizada')
-                                ->label('Fecha de Orden')
-                                ->disabled()->dehydrated(false),
-                            Forms\Components\TextInput::make('estado_orden')
-                                ->label('Estado Actual')
-                                ->disabled()->dehydrated(false),
-                        ])
+               Section::make('Resumen de la Orden')
+                ->visible(fn (): bool => $this->orden !== null)
+                ->compact() 
+                ->schema([
+                    Grid::make(3)->schema([
+                        Placeholder::make('nombre_proveedor')
+                            ->label('Proveedor')
+                            ->content(fn (): ?string => $this->orden?->proveedor?->nombre_proveedor), 
+
+                        Placeholder::make('fecha_realizada')
+                            ->label('Fecha de Orden')
+                            ->content(fn (): ?string => $this->orden?->fecha_realizada?->format('d/m/Y')),
+
+                        Placeholder::make('estado_orden')
+                            ->label('Estado Actual')
+                            ->content(fn (): ?string => $this->orden?->estado),
+                        
+                        Placeholder::make('descripcion')
+                            ->label('Descripción')
+                            ->content(fn (): ?string => $this->orden?->descripcion)
+                            ->columnSpan(3), 
                     ]),
-
-                Forms\Components\Section::make('Productos a Recibir y Precios')
-                    ->visible(fn (callable $get) => !empty($get('detalles_orden')))
-                    ->schema([
-                        Forms\Components\Repeater::make('detalles_orden')
-                            ->label(false)
-                            ->schema([
-                                Forms\Components\Grid::make(9)
-                                    ->schema([
-                                        Forms\Components\TextInput::make('producto_nombre')
-                                            ->label('Producto')
-                                            ->disabled()
-                                            ->dehydrated(false)
-                                            ->columnSpan(2),
-                                            
-                                        Forms\Components\TextInput::make('cantidad')
-                                            ->label('Cant.')
-                                            ->numeric()
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->required()
-                                            ->columnSpan(1),
-                                            
-                                        Forms\Components\TextInput::make('precio')
-                                            ->label('Costo')
-                                            ->numeric()
-                                            ->required()
-                                            ->prefix('L.')
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(1),
-                                            
-                                        Forms\Components\TextInput::make('porcentaje_ganancia')
-                                            ->label('% Gan.')
-                                            ->numeric()
-                                            ->required()
-                                            ->suffix('%')
-                                            ->live(debounce: 500)
-                                            ->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set))
-                                            ->columnSpan(1),
-                                            
-                                        Forms\Components\TextInput::make('precio_detalle')
-                                            ->label('P. Detalle')
-                                            ->numeric()
-                                            ->required()
-                                            ->prefix('L.')
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(1),
-
-                                        Forms\Components\TextInput::make('porcentaje_ganancia_mayorista')
-                                            ->label('% May.')
-                                            ->numeric()
-                                            ->required()
-                                            ->suffix('%')
-                                            ->live(debounce: 500)
-                                            ->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set))
-                                            ->columnSpan(1),
-                                            
-                                        Forms\Components\TextInput::make('precio_mayorista')
-                                            ->label('P. Mayor.')
-                                            ->numeric()
-                                            ->required()
-                                            ->prefix('L.')
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(1),
-                                        
-                                        Forms\Components\TextInput::make('porcentaje_descuento')
-                                            ->label('% Desc.')
-                                            ->numeric()
-                                            ->required()
-                                            ->suffix('%')
-                                            ->live(debounce: 500)
-                                            ->afterStateUpdated(fn (Get $get, Set $set) => $this->actualizarPrecios($get, $set))
-                                            ->columnSpan(1),
-                                    ]),
-                                    
-                                Forms\Components\Grid::make(2)
-                                    ->schema([
-                                        Forms\Components\TextInput::make('precio_promocion')
-                                            ->label('Precio de Oferta')
-                                            ->numeric()
-                                            ->required()
-                                            ->prefix('L.')
-                                            ->disabled()
-                                            ->dehydrated()
-                                            ->columnSpan(1),
-                                            
-                                        Forms\Components\Placeholder::make('spacer')
-                                            ->label('')
-                                            ->content('')
-                                            ->columnSpan(1),
-                                    ]),
-                            ])
-                            ->addable(false)
-                            ->deletable(false)
-                            ->reorderable(false)
-                            ->collapsed(false)
-                            ->itemLabel(fn (array $state): ?string => $state['producto_nombre'] ?? 'Producto')
-                            ->columnSpanFull(),
                     ]),
                 
                 Actions::make([
@@ -200,7 +125,7 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
                         ->action(function () {
                             $this->procesarInventario();
                         })
-                ])->visible(fn (): bool => !empty($this->data['detalles_orden'] ?? []))
+                ])->visible(fn (): bool => !empty($this->productosData))
 
             ])
             ->statePath('data');
@@ -215,7 +140,8 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
     {
         if (empty($ordenId)) {
             $this->orden = null;
-            $this->form->fill(['detalles_orden' => []]);
+            $this->productosData = [];
+            $this->form->fill([]);
             return;
         }
         
@@ -223,16 +149,19 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
         
         if ($orden && $orden->estado !== 'Recibida') {
             $this->orden = $orden;
-            $detallesEnriquecidos = [];
+            $this->productosData = [];
+            
             foreach ($orden->detalles as $detalle) {
                 $costo = $detalle->precio;
                 $precioDetalle = $costo * 1.30;
                 $precioMayorista = $costo * 1.25;
                 $precioPromocion = $precioDetalle * 0.85;
 
-                $detallesEnriquecidos[] = [
+                $this->productosData[] = [
+                    'id' => $detalle->id,
                     'producto_id' => $detalle->producto_id,
                     'producto_nombre' => $detalle->producto->nombre,
+                    'producto_sku' => $detalle->producto->sku ?? '', // Agregamos el SKU
                     'cantidad' => $detalle->cantidad,
                     'precio' => $costo,
                     'porcentaje_ganancia' => 30,
@@ -243,18 +172,20 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
                     'precio_promocion' => number_format($precioPromocion, 2, '.', ''),
                 ];
             }
+            
             $this->form->fill([
                 'orden_id' => $ordenId,
                 'nombre_proveedor' => $orden->proveedor->nombre_proveedor ?? 'N/A',
                 'fecha_realizada' => $orden->fecha_realizada->format('d/m/Y'),
                 'estado_orden' => $orden->estado,
-                'detalles_orden' => $detallesEnriquecidos
+                'descripcion' => $orden->descripcion,
+                'tipo_orden_nombre' => $orden->tipoOrdenNombre,
             ]);
         } else {
             $this->orden = null;
+            $this->productosData = [];
             $this->form->fill([
                 'orden_id' => $ordenId,
-                'detalles_orden' => []
             ]);
             if ($orden) {
                 Notification::make()->warning()->title('Advertencia')->body('Esta orden ya fue recibida.')->send();
@@ -264,29 +195,135 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
         }
     }
 
-    public function actualizarPrecios(Get $get, Set $set): void
+    public function actualizarPrecios($index): void
     {
-        $costo = (float) $get('precio');
-        $porcentajeGanancia = (float) $get('porcentaje_ganancia');
-        $porcentajeDescuento = (float) $get('porcentaje_descuento');
-        $porcentajeGananciaMayorista = (float) $get('porcentaje_ganancia_mayorista');
+        if (!isset($this->productosData[$index])) {
+            return;
+        }
+
+        $costo = (float) $this->productosData[$index]['precio'];
+        $porcentajeGanancia = (float) $this->productosData[$index]['porcentaje_ganancia'];
+        $porcentajeDescuento = (float) $this->productosData[$index]['porcentaje_descuento'];
+        $porcentajeGananciaMayorista = (float) $this->productosData[$index]['porcentaje_ganancia_mayorista'];
 
         if ($costo > 0) {
-            $precioDetalle = $costo * (1 + $porcentajeGanancia / 100);
-            $set('precio_detalle', number_format($precioDetalle, 2, '.', ''));
+            // Solo calcular automáticamente si el precio no fue editado manualmente
+            if (!isset($this->productosData[$index]['precio_detalle_manual']) || !$this->productosData[$index]['precio_detalle_manual']) {
+                $precioDetalle = $costo * (1 + $porcentajeGanancia / 100);
+                $this->productosData[$index]['precio_detalle'] = number_format($precioDetalle, 2, '.', '');
+            }
+            
+            if (!isset($this->productosData[$index]['precio_mayorista_manual']) || !$this->productosData[$index]['precio_mayorista_manual']) {
+                $precioMayorista = $costo * (1 + $porcentajeGananciaMayorista / 100);
+                $this->productosData[$index]['precio_mayorista'] = number_format($precioMayorista, 2, '.', '');
+            }
 
-            $precioMayorista = $costo * (1 + $porcentajeGananciaMayorista / 100);
-            $set('precio_mayorista', number_format($precioMayorista, 2, '.', ''));
-
-            $precioPromocion = $precioDetalle * (1 - $porcentajeDescuento / 100);
-            $set('precio_promocion', number_format($precioPromocion, 2, '.', ''));
+            if (!isset($this->productosData[$index]['precio_promocion_manual']) || !$this->productosData[$index]['precio_promocion_manual']) {
+                $precioDetalle = (float) $this->productosData[$index]['precio_detalle'];
+                $precioPromocion = $precioDetalle * (1 - $porcentajeDescuento / 100);
+                $this->productosData[$index]['precio_promocion'] = number_format($precioPromocion, 2, '.', '');
+            }
         }
+    }
+
+    public function actualizarPrecioManual($index, $tipoPrecio): void
+    {
+        if (!isset($this->productosData[$index])) {
+            return;
+        }
+
+        $this->productosData[$index][$tipoPrecio . '_manual'] = true;
+        
+        if ($tipoPrecio === 'precio_detalle') {
+            $costo = (float) $this->productosData[$index]['precio'];
+            $precioDetalle = (float) $this->productosData[$index]['precio_detalle'];
+            if ($costo > 0) {
+                $porcentaje = (($precioDetalle / $costo) - 1) * 100;
+                $this->productosData[$index]['porcentaje_ganancia'] = number_format($porcentaje, 2, '.', '');
+            }
+        }
+        
+        if ($tipoPrecio === 'precio_mayorista') {
+            $costo = (float) $this->productosData[$index]['precio'];
+            $precioMayorista = (float) $this->productosData[$index]['precio_mayorista'];
+            if ($costo > 0) {
+                $porcentaje = (($precioMayorista / $costo) - 1) * 100;
+                $this->productosData[$index]['porcentaje_ganancia_mayorista'] = number_format($porcentaje, 2, '.', '');
+            }
+        }
+        
+        if ($tipoPrecio === 'precio_promocion') {
+            $precioDetalle = (float) $this->productosData[$index]['precio_detalle'];
+            $precioPromocion = (float) $this->productosData[$index]['precio_promocion'];
+            if ($precioDetalle > 0) {
+                $porcentaje = (1 - ($precioPromocion / $precioDetalle)) * 100;
+                $this->productosData[$index]['porcentaje_descuento'] = number_format($porcentaje, 2, '.', '');
+            }
+        }
+    }
+
+    // Método para filtrar productos
+    public function getProductosFiltrados()
+    {
+        if (empty($this->searchFilter)) {
+            return $this->productosData;
+        }
+
+        $filtro = strtolower($this->searchFilter);
+        
+        return array_filter($this->productosData, function($producto) use ($filtro) {
+            $nombre = strtolower($producto['producto_nombre'] ?? '');
+            $sku = strtolower($producto['producto_sku'] ?? '');
+            
+            return str_contains($nombre, $filtro) || str_contains($sku, $filtro);
+        });
+    }
+
+    public function getProductosPaginados()
+    {
+        $productosFiltrados = $this->getProductosFiltrados();
+        $this->totalPages = ceil(count($productosFiltrados) / $this->perPage);
+        $offset = ($this->currentPage - 1) * $this->perPage;
+        return array_slice($productosFiltrados, $offset, $this->perPage, true);
+    }
+
+    // Método para obtener el total de productos filtrados
+    public function getTotalProductosFiltrados()
+    {
+        return count($this->getProductosFiltrados());
+    }
+
+    public function previousPage(): void
+    {
+        if ($this->currentPage > 1) {
+            $this->currentPage--;
+        }
+    }
+
+    public function nextPage(): void
+    {
+        if ($this->currentPage < $this->totalPages) {
+            $this->currentPage++;
+        }
+    }
+
+    public function goToPage($page): void
+    {
+        if ($page >= 1 && $page <= $this->totalPages) {
+            $this->currentPage = $page;
+        }
+    }
+
+    // Método para limpiar el filtro
+    public function limpiarFiltro(): void
+    {
+        $this->searchFilter = '';
+        $this->currentPage = 1;
     }
 
     public function procesarInventario(): void
     {
-        $data = $this->form->getState();
-        $ordenId = $this->orden_id ?? $data['orden_id'] ?? null;
+        $ordenId = $this->orden_id ?? $this->data['orden_id'] ?? null;
 
         if (!$ordenId) {
             Notification::make()->danger()->title('Error')->body('No se ha especificado una Orden de Compra.')->send();
@@ -300,7 +337,7 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
             return;
         }
 
-        foreach ($data['detalles_orden'] as $detalleEditable) {
+        foreach ($this->productosData as $detalleEditable) {
             $inventario = InventarioProductos::firstOrCreate(
                 ['producto_id' => $detalleEditable['producto_id']],
                 ['cantidad' => 0, 'precio_costo' => 0, 'precio_detalle' => 0, 'precio_mayorista' => 0, 'precio_promocion' => 0]
