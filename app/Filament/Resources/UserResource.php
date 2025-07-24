@@ -35,10 +35,12 @@ class UserResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('nombre')
+                Forms\Components\TextInput::make('name')
+                    ->label('Nombre')
                     ->required()
                     ->maxLength(255),
-                Forms\Components\TextInput::make('correo')
+                Forms\Components\TextInput::make('email')
+                    ->label('Correo')   
                     ->email()
                     ->required()
                     ->maxLength(255),
@@ -49,40 +51,31 @@ class UserResource extends Resource
                     ->label('Empresa')
                     ->options(Empresa::all()->pluck('nombre', 'id'))
                     ->searchable()
+                    ->live()
                     ->required()
                     ->visible(fn () => auth()->user()->hasRole('root')),
 
                 Forms\Components\Select::make('empleado_id')
-                    ->label('Empleado Asociado')
-                    ->options(function (Get $get) {
-                        $query = Empleado::query()->whereHas('persona');
+    ->label('Empleado')
+    ->searchable()
+    ->options(function (Get $get) {
+        $empresaId = $get('empresa_id');
 
-                        if (auth()->user()->hasRole('root')) {
-                            $empresaId = $get('empresa_id');
-                            if ($empresaId) {
-                                $query->where('empresa_id', $empresaId);
-                            } else {
-                                return [];
-                            }
-                        } else {
-                            $query->where('empresa_id', auth()->user()->empresa_id);
-                        }
+        if (!$empresaId) {
+            return [];
+        }
 
-                        // --- CORRECCIÓN FINAL: Procesar la colección para evitar etiquetas nulas ---
-                        return $query->with('persona')->get()
-                            ->filter(function ($empleado) {
-                                // Asegurarse de que la persona y su nombre completo no sean nulos o vacíos.
-                                return $empleado->persona && !empty($empleado->persona->nombre_completo);
-                            })
-                            ->mapWithKeys(function ($empleado) {
-                                // Crear el array de opciones solo con datos válidos.
-                                return [$empleado->id => $empleado->persona->nombre_completo];
-                            });
-                    })
-                    ->searchable()
-                    ->required()
-                    ->placeholder('Seleccione un empleado'),
-
+        return Empleado::with('persona')
+            ->where('empresa_id', $empresaId)
+            ->get()
+            ->mapWithKeys(function ($empleado) {
+                return [
+                    $empleado->id => $empleado->persona->primer_nombre . ' ' . $empleado->persona->primer_apellido,
+                ];
+            });
+    })
+    ->disabled(fn (Get $get) => !$get('empresa_id'))
+    ->reactive(),
                 Forms\Components\TextInput::make('password') // 1. Nombre del campo: 'password'
                     ->label('Contraseña') // Esta es la etiqueta que ve el usuario
                     ->password()
@@ -156,9 +149,11 @@ class UserResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('nombre')
+                Tables\Columns\TextColumn::make('name')
+                    ->label('Nombre')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('correo')
+                Tables\Columns\TextColumn::make('email')
+                    ->label('Correo')
                     ->searchable(),
                 
                 Tables\Columns\TextColumn::make('empresa.nombre')
