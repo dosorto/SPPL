@@ -17,11 +17,7 @@ return new class extends Migration
             $table->string('rtn', 20)->nullable(); // RTN del cliente
 
             // Relación uno a uno con personas
-            $table->foreignId('persona_id')
-                  ->unique() // Una persona solo puede ser un cliente
-                  ->constrained('personas')
-                  ->onDelete('cascade'); // Si se elimina la persona, se elimina el cliente
-
+            $table->foreignId('persona_id')->constrained('personas'); 
             // Relación opcional con empresas
             $table->foreignId('empresa_id')
                   ->nullable() // ¡Este campo es opcional!

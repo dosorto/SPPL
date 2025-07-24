@@ -6,6 +6,7 @@ use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use App\Models\Empresa;
+use App\Models\Empleado;
 use Spatie\Permission\Models\Role;
 use Filament\Forms;
 use Filament\Forms\Components\Tabs\Tab;
@@ -20,6 +21,7 @@ use Illuminate\Support\Facades\Hash;
 use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Get;
 
 class UserResource extends Resource
 {
@@ -34,27 +36,50 @@ class UserResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('name')
+                    ->label('Nombre')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('email')
+                    ->label('Correo')   
                     ->email()
                     ->required()
                     ->maxLength(255),
+                
 
                 // Campo para asignar la Empresa (solo visible para el 'root')
                 Forms\Components\Select::make('empresa_id')
                     ->label('Empresa')
                     ->options(Empresa::all()->pluck('nombre', 'id'))
                     ->searchable()
+                    ->live()
                     ->required()
                     ->visible(fn () => auth()->user()->hasRole('root')),
 
+                Forms\Components\Select::make('empleado_id')
+    ->label('Empleado')
+    ->searchable()
+    ->options(function (Get $get) {
+        $empresaId = $get('empresa_id');
+
+        if (!$empresaId) {
+            return [];
+        }
+
+        return Empleado::with('persona')
+            ->where('empresa_id', $empresaId)
+            ->get()
+            ->mapWithKeys(function ($empleado) {
+                return [
+                    $empleado->id => $empleado->persona->primer_nombre . ' ' . $empleado->persona->primer_apellido,
+                ];
+            });
+    })
+    ->disabled(fn (Get $get) => !$get('empresa_id'))
+    ->reactive(),
                 Forms\Components\TextInput::make('password') // 1. Nombre del campo: 'password'
                     ->label('Contraseña') // Esta es la etiqueta que ve el usuario
                     ->password()
                     ->revealable() // Extra: Añade un botón para mostrar/ocultar la contraseña
-                    
-                    // 2. ¡LA CLAVE! Esta es la regla que valida la confirmación
                     ->confirmed()
                     
                     ->dehydrateStateUsing(fn ($state) => Hash::make($state))
@@ -125,8 +150,10 @@ class UserResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('name')
+                    ->label('Nombre')
                     ->searchable(),
                 Tables\Columns\TextColumn::make('email')
+                    ->label('Correo')
                     ->searchable(),
                 
                 Tables\Columns\TextColumn::make('empresa.nombre')
