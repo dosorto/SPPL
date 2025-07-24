@@ -66,6 +66,8 @@ class CategoriaClienteResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -87,6 +89,7 @@ class CategoriaClienteResource extends Resource
             'index' => Pages\ListCategoriaClientes::route('/'),
             'create' => Pages\CreateCategoriaCliente::route('/create'),
             'edit' => Pages\EditCategoriaCliente::route('/{record}/edit'),
+            'view' => Pages\ViewCategoriaCliente::route('/{record}'),
         ];
     }
 }

@@ -76,6 +76,8 @@ class CategoriaClienteProductoResource extends Resource
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -97,6 +99,7 @@ class CategoriaClienteProductoResource extends Resource
             'index' => Pages\ListCategoriaClienteProductos::route('/'),
             'create' => Pages\CreateCategoriaClienteProducto::route('/create'),
             'edit' => Pages\EditCategoriaClienteProducto::route('/{record}/edit'),
+            'view' => Pages\ViewCategoriaClienteProducto::route('/{record}'),
         ];
     }
 }
