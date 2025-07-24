@@ -43,7 +43,7 @@ class CreateNomina extends CreateRecord
                     if (!$deduccion) return null;
                     $nombre = $deduccion->deduccion ?? '';
                     $tipo = trim(strtolower($deduccion->tipo_valor)) === 'porcentaje' ? 'Porcentaje' : 'Monto';
-                    $valor = $tipo === 'Porcentaje' ? ($deduccion->valor . '%') : ('$' . $deduccion->valor);
+                    $valor = $tipo === 'Porcentaje' ? ($deduccion->valor . '%') : $deduccion->valor;
                     return $nombre . ': ' . $valor;
                 })->filter()->values()->implode("\n");
                 $percepciones = $empleado->percepcionesAplicadas->sum(function ($relacion) {
@@ -60,7 +60,7 @@ class CreateNomina extends CreateRecord
                     $percepcion = $relacion->percepcion;
                     if (!$percepcion) return null;
                     $nombre = $percepcion->percepcion ?? '';
-                    $valor = '$' . $percepcion->valor;
+                    $valor = $percepcion->valor;
                     return $nombre . ': ' . $valor;
                 })->filter()->values()->implode("\n");
                 $total = $sueldo + $percepciones - $deducciones;

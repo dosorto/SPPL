@@ -16,6 +16,7 @@ class Percepciones extends Model
         'percepcion',
         'empresa_id',
         'valor',
+        'tipo_valor',
         'created_by',
         'updated_by',
         'deleted_by',

@@ -20,8 +20,9 @@ use Filament\Facades\Filament;
 class EmpleadoPersepcionesResource extends Resource
 {
     protected static ?string $model = EmpleadoPercepciones::class;
+    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
 
     public static function form(Form $form): Form
     {

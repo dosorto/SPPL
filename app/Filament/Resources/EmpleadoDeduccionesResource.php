@@ -20,8 +20,8 @@ use Filament\Facades\Filament;
 class EmpleadoDeduccionesResource extends Resource
 {
     protected static ?string $model = EmpleadoDeducciones::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
     public static function form(Form $form): Form
     {

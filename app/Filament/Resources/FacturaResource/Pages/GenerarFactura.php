@@ -36,13 +36,19 @@ class GenerarFactura extends Page
     public float $subtotal = 0;
     public float $impuestos = 0;
     public float $total = 0;
-    const TASA_ISV = 0.15;
 
     public function mount(): void
     {
+        $consumidorFinal = Cliente::whereHas('persona', function ($query) {
+            $query->where('dni', '0000000000000');
+        })->first();
+
+        // 2. Se rellenan los campos del formulario por defecto.
         $this->form->fill([
             'tipo_precio' => 'precio_detalle',
             'cantidad_busqueda' => 1,
+            // Si se encontró al consumidor final, se usa su ID. Si no, se deja en blanco.
+            'cliente_id' => $consumidorFinal ? $consumidorFinal->id : null,
         ]);
     }
 
@@ -97,14 +103,15 @@ class GenerarFactura extends Page
                 })
                 ->required()
                 ->placeholder('Busque por nombre o DNI del cliente...'),
-                    Select::make('tipo_precio')
-                        ->label('Tipo de Precio a Aplicar')
+
+                Select::make('tipo_precio')
+                        ->label('Aplicar Precio Global')
                         ->options([
                             'precio_detalle' => 'Precio Detalle',
                             'precio_mayorista' => 'Precio Mayorista',
                             'precio_promocion' => 'Precio de Promoción',
                         ])
-                        ->live() // Hace que el campo sea reactivo
+                        ->live() 
                         ->required(),
                 ]),
                 Grid::make(['default' => 1, 'md' => 3])
@@ -145,6 +152,7 @@ class GenerarFactura extends Page
             $inventarioProducto = InventarioProductos::find($linea['inventario_id']);
             if ($inventarioProducto) {
                 $linea['precio_unitario'] = $inventarioProducto->{$tipoPrecioSeleccionado};
+                $linea['tipo_precio_key'] = $tipoPrecioSeleccionado;
                 $linea['tipo_precio_label'] = $this->getTipoPrecioLabel($tipoPrecioSeleccionado);
             }
             $nuevasLineas[$productoId] = $linea;
@@ -199,7 +207,9 @@ class GenerarFactura extends Page
                 'sku' => $inventarioProducto->producto->sku,
                 'precio_unitario' => $inventarioProducto->{$tipoPrecio},
                 'cantidad' => $cantidad,
+                'tipo_precio_key' => $tipoPrecio,
                 'tipo_precio_label' => $this->getTipoPrecioLabel($tipoPrecio),
+                'isv_producto' => $inventarioProducto->producto->isv ?? 0,
             ];
         }
 
@@ -211,6 +221,22 @@ class GenerarFactura extends Page
         ]);
         
         $this->calcularTotales();
+    }
+
+    public function actualizarTipoPrecioLinea(int $productoId, string $nuevoTipoPrecio): void
+    {
+        if (isset($this->lineasVenta[$productoId])) {
+            $inventarioProducto = InventarioProductos::find($this->lineasVenta[$productoId]['inventario_id']);
+            if ($inventarioProducto) {
+                // Actualizamos los datos de la línea con el nuevo precio
+                $this->lineasVenta[$productoId]['precio_unitario'] = $inventarioProducto->{$nuevoTipoPrecio};
+                $this->lineasVenta[$productoId]['tipo_precio_key'] = $nuevoTipoPrecio;
+                $this->lineasVenta[$productoId]['tipo_precio_label'] = $this->getTipoPrecioLabel($nuevoTipoPrecio);
+                
+                // Recalculamos los totales generales
+                $this->calcularTotales();
+            }
+        }
     }
 
     private function getTipoPrecioLabel(string $tipoPrecio): string
@@ -230,11 +256,24 @@ class GenerarFactura extends Page
 
     public function calcularTotales(): void
     {
+        // --- INICIO DE LA LÓGICA DE CÁLCULO MODIFICADA ---
         $this->subtotal = 0;
+        $this->impuestos = 0; // Se resetea el total de impuestos
+
         foreach ($this->lineasVenta as $linea) {
-            $this->subtotal += $linea['precio_unitario'] * $linea['cantidad'];
+            // Se calcula el subtotal de la línea (precio * cantidad)
+            $subtotalLinea = $linea['precio_unitario'] * $linea['cantidad'];
+            
+            // Se calcula el impuesto para ESTA línea específica
+            // Se asume que el ISV en la BD está como un porcentaje (ej: 15 para 15%)
+            $impuestoLinea = $subtotalLinea * ($linea['isv_producto'] / 100);
+
+            // Se suma al subtotal y a los impuestos generales de la factura
+            $this->subtotal += $subtotalLinea;
+            $this->impuestos += $impuestoLinea;
         }
-        $this->impuestos = $this->subtotal * self::TASA_ISV;
+
+        // El total general ahora es la suma del subtotal + los impuestos calculados
         $this->total = $this->subtotal + $this->impuestos;
     }
 
@@ -269,11 +308,12 @@ class GenerarFactura extends Page
                     throw new \Exception('Cliente no encontrado.');
                 }
 
-                $empleado = auth()->user()->empleado;
+                 $empleado = auth()->user()->empleado;
 
-                // 2. Si el usuario no tiene un empleado (es root), busca el primer empleado de la BD como respaldo.
+                // 2. Validar que el usuario actual ESTÉ enlazado a un empleado.
+                //    Si no lo está, no puede generar facturas. Es una regla de negocio importante.
                 if (!$empleado) {
-                    $empleado = Empleado::first();
+                    throw new \Exception('El usuario actual no está asociado a ningún empleado. Contacte al administrador del sistema.');
                 }
 
                 // 3. Si AÚN no hay empleado (la tabla está vacía), lanza un error claro.

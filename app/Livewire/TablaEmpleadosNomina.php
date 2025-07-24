@@ -13,15 +13,15 @@ class TablaEmpleadosNomina extends Component
 {
     public $nominaId;
     public $empleados = [];
-    
+
     public function mount($nominaId)
     {
         $this->nominaId = $nominaId;
         $this->cargarEmpleados();
     }
-    
+
     #[On('agregarEmpleados')]
-    
+
     public function cargarEmpleados()
     {
         $nomina = Nominas::find($this->nominaId);
@@ -29,20 +29,20 @@ class TablaEmpleadosNomina extends Component
             $this->empleados = $nomina->detalleNominas()->with('empleado.persona')->get();
         }
     }
-    
+
     public function eliminarEmpleado($detalleId)
     {
         $detalle = DetalleNominas::find($detalleId);
-        
+
         if ($detalle && $detalle->nomina_id == $this->nominaId) {
             $detalle->delete();
-            
+
             Notification::make()
                 ->title('Registro eliminado')
                 ->body('Registro de pago eliminado correctamente del historial.')
                 ->success()
                 ->send();
-                
+
             $this->cargarEmpleados();
         } else {
             Notification::make()
@@ -58,19 +58,19 @@ class TablaEmpleadosNomina extends Component
         if (empty($empleadosIds)) {
             return;
         }
-        
+
         $nomina = Nominas::find($this->nominaId);
         if (!$nomina) return;
-        
+
         foreach ($empleadosIds as $empleadoId) {
             $empleado = Empleado::find($empleadoId);
-            
+
             if (!$empleado) {
                 continue;
             }
-            
+
             $sueldo = $empleado->salario;
-            
+
             $deducciones = $empleado->deduccionesAplicadas->sum(function ($relacion) use ($sueldo) {
                 $deduccion = $relacion->deduccion;
                 if (!$deduccion) return 0;
@@ -79,7 +79,7 @@ class TablaEmpleadosNomina extends Component
                 }
                 return $deduccion->valor;
             });
-            
+
             $percepciones = $empleado->percepcionesAplicadas->sum(function ($relacion) {
                 $percepcion = $relacion->percepcion;
                 if (!$percepcion) return 0;
@@ -90,9 +90,9 @@ class TablaEmpleadosNomina extends Component
                 }
                 return $percepcion->valor ?? 0;
             });
-            
+
             $total = $sueldo + $percepciones - $deducciones;
-            
+
             DetalleNominas::create([
                 'nomina_id' => $nomina->id,
                 'empleado_id' => $empleadoId,
@@ -104,14 +104,15 @@ class TablaEmpleadosNomina extends Component
                 'created_by' => auth()->id(),
             ]);
         }
-        
-            Notification::make()
-                ->title('Registros de pago agregados')
-                ->body('Registros de pago agregados correctamente al historial.')
-                ->success()
-                ->send();        $this->cargarEmpleados();
+
+        Notification::make()
+            ->title('Registros de pago agregados')
+            ->body('Registros de pago agregados correctamente al historial.')
+            ->success()
+            ->send();
+        $this->cargarEmpleados();
     }
-    
+
     public function render()
     {
         return view('livewire.tabla-empleados-nomina');

@@ -15,7 +15,12 @@ return new class extends Migration
             $table->id();
             $table->foreignId('empresa_id')->constrained('empresas');
             $table->string('percepcion');
-            $table->decimal('valor', 10, 2); 
+
+            // Aquí el valor puede representar tanto un porcentaje como un monto
+            $table->decimal('valor', 10, 2);
+
+            // Nuevo campo para indicar si el valor es un porcentaje o un monto
+            $table->enum('tipo_valor', ['porcentaje', 'monto'])->default('porcentaje');
 
             $table->timestamps();
             $table->softDeletes();

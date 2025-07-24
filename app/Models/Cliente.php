@@ -18,6 +18,7 @@ class Cliente extends Model
         'rtn',
         'persona_id',
         'empresa_id',
+        'categoria_cliente_id',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -51,6 +52,14 @@ class Cliente extends Model
     public function empresa()
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    /**
+     * Un cliente pertenece a una categoría de cliente.
+     */
+    public function categoriaCliente()
+    {
+        return $this->belongsTo(CategoriaCliente::class);
     }
 
     protected static function booted(): void

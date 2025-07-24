@@ -16,4 +16,9 @@ class CreateDeducciones extends CreateRecord
         $data['empresa_id'] = auth()->user()->empresa_id;
         return $data;
     }
+
+    protected function getRedirectUrl(): string
+    {
+        return static::$resource::getUrl('index');
+    }
 }

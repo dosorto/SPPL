@@ -20,12 +20,16 @@ class DetalleNominas extends Model
         'sueldo_bruto',
         'empresa_id',
         'deducciones',
+        'deducciones_excluidas', // Usaremos un campo existente o ignorar este atributo
         'percepciones',
         'sueldo_neto',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
+
+    // Variable para almacenar deducciones excluidas en la sesión
+    protected $deduccionesExcluidas = [];
 
     public function nomina()
     {

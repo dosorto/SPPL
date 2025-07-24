@@ -17,6 +17,17 @@ class EditNomina extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('guardarDatosNomina')
+                ->label('Guardar cambios')
+                ->color('primary')
+                ->action(function () {
+                    $this->save();
+                    \Filament\Notifications\Notification::make()
+                        ->title('Nómina actualizada')
+                        ->body('Los datos de la nómina fueron actualizados correctamente.')
+                        ->success()
+                        ->send();
+                }),
             Actions\DeleteAction::make()
                 ->visible(fn (Model $record) => !$record->cerrada),
         ];
@@ -138,7 +149,7 @@ class EditNomina extends EditRecord
                         \App\Models\DetalleNominas::create([
                             'nomina_id' => $nomina->id,
                             'empleado_id' => $empleadoId,
-                            'empresa_id' => $nomina->empresa_id,  // Añadimos el campo empresa_id
+                            'empresa_id' => $nomina->empresa_id,  
                             'sueldo_bruto' => $sueldo,
                             'deducciones' => $deducciones,
                             'percepciones' => $percepciones,

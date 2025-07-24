@@ -82,6 +82,12 @@ class Empleado extends Model
         return $this->hasMany(EmpleadoDeducciones::class, 'empleado_id')->with('deduccion');
     }
 
+
+    public function deducciones()
+    {
+        return $this->belongsToMany(\App\Models\Deducciones::class, 'empleado_deducciones', 'empleado_id', 'deduccion_id');
+    }
+
         // Relación con empleado_percepciones (1 empleado puede tener muchas percepciones)
     public function percepcionesAplicadas()
     {

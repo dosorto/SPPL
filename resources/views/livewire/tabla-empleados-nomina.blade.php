@@ -21,16 +21,16 @@
                                 {{ $detalle->empleado?->persona?->primer_nombre }} {{ $detalle->empleado?->persona?->primer_apellido }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                ${{ number_format($detalle->sueldo_bruto, 2) }}
+                                {{ number_format($detalle->sueldo_bruto, 2) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                ${{ number_format($detalle->deducciones, 2) }}
+                                {{ number_format($detalle->deducciones, 2) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                ${{ number_format($detalle->percepciones, 2) }}
+                                {{ number_format($detalle->percepciones, 2) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                ${{ number_format($detalle->sueldo_neto, 2) }}
+                                {{ number_format($detalle->sueldo_neto, 2) }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <button 
@@ -49,6 +49,7 @@
                     @endforeach
                 </tbody>
             </table>
+            
         </div>
     @endif
 </div>

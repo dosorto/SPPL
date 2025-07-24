@@ -14,10 +14,11 @@
                         <tr>
                             <th scope="col" class="px-6 py-3">SKU</th>
                             <th scope="col" class="px-6 py-3">Producto</th>
-                            <th scope="col" class="px-6 py-3">Tipo</th>
+                            <th scope="col" class="px-6 py-3">Tipo de Precio</th>
                             <th scope="col" class="px-6 py-3 text-right">Precio Unit.</th>
                             <th scope="col" class="px-6 py-3 text-center">Cantidad</th>
                             <th scope="col" class="px-6 py-3 text-right">Subtotal</th>
+                            <th scope="col" class="px-6 py-3 text-right">ISV</th>
                             <th scope="col" class="px-6 py-3 text-center">Acción</th>
                         </tr>
                     </thead>
@@ -29,18 +30,21 @@
                                     {{ $linea['nombre'] }}
                                 </th>
                                 <td class="px-6 py-4">
-                                    <span @class([
-                                        'px-2 py-1 text-xs font-medium rounded-full',
-                                        'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300' => $linea['tipo_precio_label'] === 'Detalle',
-                                        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300' => $linea['tipo_precio_label'] === 'Mayorista',
-                                        'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-300' => $linea['tipo_precio_label'] === 'Promoción',
-                                    ])>
-                                        {{ $linea['tipo_precio_label'] }}
-                                    </span>
+                                    <select 
+                                        wire:change="actualizarTipoPrecioLinea({{ $productoId }}, $event.target.value)"
+                                        class="block w-full text-sm border-gray-300 rounded-lg shadow-sm focus:ring-primary-500 focus:border-primary-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-primary-500 dark:focus:border-primary-500"
+                                    >
+                                        <option value="precio_detalle" @if($linea['tipo_precio_key'] === 'precio_detalle') selected @endif>Detalle</option>
+                                        <option value="precio_mayorista" @if($linea['tipo_precio_key'] === 'precio_mayorista') selected @endif>Mayorista</option>
+                                        <option value="precio_promocion" @if($linea['tipo_precio_key'] === 'precio_promocion') selected @endif>Promoción</option>
+                                    </select>
                                 </td>
                                 <td class="px-6 py-4 text-right">L. {{ number_format($linea['precio_unitario'], 2) }}</td>
                                 <td class="px-6 py-4 text-center">{{ $linea['cantidad'] }}</td>
                                 <td class="px-6 py-4 text-right font-bold">L. {{ number_format($linea['precio_unitario'] * $linea['cantidad'], 2) }}</td>
+                                <td class="px-6 py-4 text-right">
+                                    L. {{ number_format(($linea['precio_unitario'] * $linea['cantidad']) * ($linea['isv_producto'] / 100), 2) }}
+                                </td>
                                 <td class="px-6 py-4 text-center">
                                     <button wire:click="eliminarProducto({{ $productoId }})" class="font-medium text-red-600 dark:text-red-500 hover:underline">
                                         Eliminar
@@ -61,10 +65,13 @@
                             <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Subtotal</span>
                             <span class="text-base font-semibold text-gray-900 dark:text-white">L. {{ number_format($subtotal, 2) }}</span>
                         </li>
+                        {{-- --- INICIO DE LA CORRECCIÓN --- --}}
                         <li class="flex items-center justify-between">
-                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">ISV ({{ (self::TASA_ISV) * 100 }}%)</span>
+                            {{-- Se elimina la referencia a la constante TASA_ISV --}}
+                            <span class="text-base font-normal leading-tight text-gray-500 dark:text-gray-400">Total ISV</span>
                             <span class="text-base font-semibold text-gray-900 dark:text-white">L. {{ number_format($impuestos, 2) }}</span>
                         </li>
+                        {{-- --- FIN DE LA CORRECCIÓN --- --}}
                         <li class="flex items-center justify-between pt-2 mt-2 border-t border-gray-200 dark:border-gray-600">
                             <span class="text-lg font-bold text-gray-900 dark:text-white">Total a Pagar</span>
                             <span class="text-lg font-bold text-gray-900 dark:text-white">L. {{ number_format($total, 2) }}</span>
