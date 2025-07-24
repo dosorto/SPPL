@@ -132,19 +132,6 @@ class ClienteResource extends Resource
                 Tables\Columns\TextColumn::make('numero_cliente')
                     ->label('Número de Cliente')
                     ->searchable(),
-                Tables\Columns\TextColumn::make('persona.tipo_persona')
-                    ->label('Tipo de Persona')
-                    ->formatStateUsing(fn (string $state): string => match($state) {
-                        'juridica' => 'Persona Jurídica',
-                        default => 'Persona Natural',
-                    })
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('RTN')
-                    ->label('RTN')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('persona.dni')
-                    ->label('DNI Persona')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('persona.primer_nombre')
                     ->label('Nombre')
                     ->searchable(),
