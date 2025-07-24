@@ -14,7 +14,14 @@ class Factura extends Model
 
     protected $table = 'facturas';
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
+        'numero_factura', // Añadido
+        'cai_id',         // Añadido
         'cliente_id',
         'empresa_id',
         'empleado_id',
@@ -28,22 +35,38 @@ class Factura extends Model
         'deleted_by',
     ];
 
-    // Relación con los detalles de la factura
+    // --- Relaciones ---
+
     public function detalles()
     {
-        // Apunta al nuevo modelo "DetalleFactura"
-        return $this->hasMany(detalle_factura::class, 'factura_id');
+        return $this->hasMany(DetalleFactura::class, 'factura_id');
     }
 
-    // Relación con el cliente
     public function cliente()
     {
         return $this->belongsTo(Cliente::class);
     }
 
-    // Relación con el empleado que vendió
     public function empleado()
     {
         return $this->belongsTo(Empleado::class);
+    }
+
+    // --- RELACIONES AÑADIDAS ---
+
+    /**
+     * Una factura puede tener un CAI (o no).
+     */
+    public function cai()
+    {
+        return $this->belongsTo(Cai::class);
+    }
+
+    /**
+     * Una factura pertenece a una empresa.
+     */
+    public function empresa()
+    {
+        return $this->belongsTo(Empresa::class);
     }
 }
