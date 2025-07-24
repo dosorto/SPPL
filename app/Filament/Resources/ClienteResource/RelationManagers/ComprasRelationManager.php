@@ -17,7 +17,6 @@ class ComprasRelationManager extends RelationManager
     public function table(Tables\Table $table): Tables\Table
     {
         return $table
-            ->heading('Historial de compras')
             ->columns([
                 TextColumn::make('id')->label('ID'),
                 TextColumn::make('fecha_factura')->label('Fecha de Factura'),

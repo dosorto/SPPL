@@ -33,4 +33,14 @@ class CategoriaProducto extends Model
     {
         return $this->hasMany(Productos::class, 'categoria_id');
     }
+
+    /**
+     * Una categoría de producto tiene muchas relaciones con categorías de clientes.
+     */
+    public function categoriasClientes()
+    {
+        return $this->belongsToMany(CategoriaCliente::class, 'categorias_clientes_productos', 'categoria_producto_id', 'categoria_cliente_id')
+            ->withPivot('descuento_porcentaje', 'activo')
+            ->withTimestamps();
+    }
 }
