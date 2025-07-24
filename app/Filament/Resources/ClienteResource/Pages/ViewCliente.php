@@ -5,71 +5,46 @@ namespace App\Filament\Resources\ClienteResource\Pages;
 use App\Filament\Resources\ClienteResource;
 use Filament\Resources\Pages\ViewRecord;
 use Filament\Forms;
+use Illuminate\Contracts\View\View;
 
 class ViewCliente extends ViewRecord
 {
     protected static string $resource = ClienteResource::class;
-
-    public function getForm(string $name = 'form'): ?\Filament\Forms\Form
+    
+    protected function getHeaderWidgets(): array
+    {
+        return [];
+    }
+    
+    public function getFooterWidgets(): array
+    {
+        return [];
+    }
+    
+    public function getHeading(): string
     {
         $record = $this->getRecord();
-        $empresa = optional($record->empresa)->nombre ?? 'No asignada';
+        return 'Cliente: ' . optional($record->persona)->primer_nombre . ' ' . optional($record->persona)->primer_apellido;
+    }
+    
+    public function getHeader(): ?View
+    {
+        $record = $this->getRecord();
         $persona = optional($record->persona);
-        $pais = optional($persona->pais)->nombre_pais ?? '';
-        $departamento = optional($persona->municipio->departamento)->nombre_departamento ?? '';
-        $municipio = optional($persona->municipio)->nombre_municipio ?? '';
+        
+        return view('filament.resources.cliente-resource.pages.cliente-header', [
+            'record' => $record,
+            'persona' => $persona
+        ]);
+    }
 
-        return $this->makeForm()
-            ->schema([
-                Forms\Components\Section::make('Datos de Cliente')
-                    ->schema([
-                        Forms\Components\Placeholder::make('numero_cliente')
-                            ->label('Número de Cliente')
-                            ->content($record->numero_cliente),
-                        Forms\Components\Placeholder::make('rtn')
-                            ->label('RTN')
-                            ->content($record->RTN),
-                        Forms\Components\Placeholder::make('empresa')
-                            ->label('Empresa')
-                            ->content($empresa),
-                    ]),
-                Forms\Components\Section::make('Datos de Persona')
-                    ->schema([
-                        Forms\Components\Placeholder::make('dni')
-                            ->label('DNI')
-                            ->content($persona->dni ?? ''),
-                        Forms\Components\Placeholder::make('nombres')
-                            ->label('Nombres')
-                            ->content(trim(($persona->primer_nombre ?? '') . ' ' . ($persona->segundo_nombre ?? ''))),
-                        Forms\Components\Placeholder::make('apellidos')
-                            ->label('Apellidos')
-                            ->content(trim(($persona->primer_apellido ?? '') . ' ' . ($persona->segundo_apellido ?? ''))),
-                        Forms\Components\Placeholder::make('sexo')
-                            ->label('Sexo')
-                            ->content($persona->sexo ?? ''),
-                        Forms\Components\Placeholder::make('fecha_nacimiento')
-                            ->label('Fecha de nacimiento')
-                            ->content($persona->fecha_nacimiento ?? ''),
-                    ]),
-                Forms\Components\Section::make('Dirección')
-                    ->schema([
-                        Forms\Components\Placeholder::make('pais')
-                            ->label('País')
-                            ->content($pais),
-                        Forms\Components\Placeholder::make('departamento')
-                            ->label('Departamento')
-                            ->content($departamento),
-                        Forms\Components\Placeholder::make('municipio')
-                            ->label('Municipio')
-                            ->content($municipio),
-                        Forms\Components\Placeholder::make('direccion')
-                            ->label('Dirección')
-                            ->content($persona->direccion ?? ''),
-                        Forms\Components\Placeholder::make('telefono')
-                            ->label('Teléfono')
-                            ->content($persona->telefono ?? ''),
-                    ]),
-            ])
+    // Use the getViewForm() method from the ClienteResource class instead of defining a custom form
+    public function getForm(string $name = 'form'): ?\Filament\Forms\Form
+    {
+        $resource = static::getResource();
+        $record = $this->getRecord();
+        
+        return $resource::getViewForm($this->makeForm())
             ->model($record)
             ->statePath('data');
     }

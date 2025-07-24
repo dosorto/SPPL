@@ -18,8 +18,9 @@ class ClienteResource extends Resource
 {
     public static function getRelations(): array
     {
+       
         return [
-            RelationManagers\ComprasRelationManager::class,
+
         ];
     }
     protected static ?string $model = Cliente::class;
@@ -33,8 +34,17 @@ class ClienteResource extends Resource
                 Wizard::make([
                     Wizard\Step::make('Datos Generales')
                         ->schema([
+                            Forms\Components\Select::make('persona.tipo_persona')
+                                ->label('Tipo de persona')
+                                ->options([
+                                    'natural' => 'Persona Natural',
+                                    'juridica' => 'Persona Jurídica',
+                                ])
+                                ->default('natural')
+                                ->required()
+                                ->reactive(),
                             Forms\Components\TextInput::make('persona.dni')
-                                ->label('DNI / RTN')
+                                ->label('DNI')
                                 ->required(),
                             Forms\Components\TextInput::make('persona.primer_nombre')
                                 ->label('Primer Nombre')
@@ -54,7 +64,7 @@ class ClienteResource extends Resource
                                     'OTRO' => 'Otro',
                                 ])
                                 ->required()
-                                ->visible(fn (callable $get) => $get('persona.tipo_persona') !== 'juridica'),
+                                ->visible(fn (callable $get) => $get('persona.tipo_persona') === 'natural'),
                             Forms\Components\DatePicker::make('persona.fecha_nacimiento')
                                 ->label('Fecha de nacimiento')
                                 ->required()
@@ -105,6 +115,11 @@ class ClienteResource extends Resource
                                 ->options(\App\Models\Empresa::pluck('nombre', 'id'))
                                 ->disabled()
                                 ->visible(fn (callable $get) => !empty($get('persona.empresa_id'))),
+                            Forms\Components\Select::make('categoria_cliente_id')
+                                ->label('Categoría de Cliente')
+                                ->options(\App\Models\CategoriaCliente::pluck('nombre', 'id'))
+                                ->searchable()
+                                ->nullable(),
                         ]),
                 ])->columnSpanFull()
             ]);
@@ -116,6 +131,13 @@ class ClienteResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('numero_cliente')
                     ->label('Número de Cliente')
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('persona.tipo_persona')
+                    ->label('Tipo de Persona')
+                    ->formatStateUsing(fn (string $state): string => match($state) {
+                        'juridica' => 'Persona Jurídica',
+                        default => 'Persona Natural',
+                    })
                     ->searchable(),
                 Tables\Columns\TextColumn::make('RTN')
                     ->label('RTN')
@@ -132,6 +154,9 @@ class ClienteResource extends Resource
                 Tables\Columns\TextColumn::make('empresa.nombre')
                     ->label('Empresa')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('categoriaCliente.nombre')
+                    ->label('Categoría')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()
@@ -141,6 +166,9 @@ class ClienteResource extends Resource
                 Tables\Filters\SelectFilter::make('empresa_id')
                     ->label('Empresa')
                     ->options(\App\Models\Empresa::pluck('nombre', 'id')->toArray()),
+                Tables\Filters\SelectFilter::make('categoria_cliente_id')
+                    ->label('Categoría de Cliente')
+                    ->options(\App\Models\CategoriaCliente::pluck('nombre', 'id')->toArray()),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -168,24 +196,134 @@ class ClienteResource extends Resource
     public static function getViewForm(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\TextInput::make('numero_cliente')->label('Número de Cliente')->disabled(),
-            Forms\Components\TextInput::make('RTN')->label('RTN')->disabled(),
-            Forms\Components\TextInput::make('empresa.nombre')->label('Empresa')->disabled(),
-            Forms\Components\TextInput::make('persona.dni')->label('DNI')->disabled(),
-            Forms\Components\TextInput::make('persona.primer_nombre')->label('Primer Nombre')->disabled(),
-            Forms\Components\TextInput::make('persona.segundo_nombre')->label('Segundo Nombre')->disabled(),
-            Forms\Components\TextInput::make('persona.primer_apellido')->label('Primer Apellido')->disabled(),
-            Forms\Components\TextInput::make('persona.segundo_apellido')->label('Segundo Apellido')->disabled(),
-            Forms\Components\Textarea::make('persona.direccion')->label('Dirección')->disabled(),
-            Forms\Components\TextInput::make('persona.telefono')->label('Teléfono')->disabled(),
-            Forms\Components\TextInput::make('persona.sexo')->label('Sexo')->disabled(),
-            Forms\Components\DatePicker::make('persona.fecha_nacimiento')->label('Fecha de nacimiento')->disabled(),
-            Forms\Components\TextInput::make('persona.pais.nombre_pais')->label('País')->disabled(),
-            Forms\Components\TextInput::make('persona.departamento.nombre_departamento')->label('Departamento')->disabled(),
-            Forms\Components\TextInput::make('persona.municipio.nombre_municipio')->label('Municipio')->disabled(),
-            Forms\Components\TextInput::make('persona.empresa.nombre')->label('Empresa de la Persona')->disabled(),
+            // Primera tarjeta (Datos básicos)
+            Forms\Components\Card::make([
+                Forms\Components\Grid::make(4)
+                    ->schema([
+                        Forms\Components\Placeholder::make('tipo_persona')
+                            ->label('Tipo de persona')
+                            ->content(function ($record) {
+                                return match($record->persona->tipo_persona ?? 'natural') {
+                                    'juridica' => 'Persona Jurídica',
+                                    default => 'Persona Natural',
+                                };
+                            }),
+                        Forms\Components\Placeholder::make('fecha_nacimiento')
+                            ->label('Fecha de nacimiento')
+                            ->content(fn ($record) => $record->persona->fecha_nacimiento ?? 'No especificado')
+                            ->visible(fn ($record) => ($record->persona->tipo_persona ?? 'natural') === 'natural'),
+                        Forms\Components\Placeholder::make('sexo')
+                            ->label('Sexo')
+                            ->content(fn ($record) => $record->persona->sexo ?? 'No especificado')
+                            ->visible(fn ($record) => ($record->persona->tipo_persona ?? 'natural') === 'natural'),
+                        Forms\Components\Placeholder::make('telefono')
+                            ->label('Teléfono')
+                            ->content(fn ($record) => $record->persona->telefono ?? 'No especificado'),
+                    ]),
+            ])->columnSpanFull(),
+
+            // Título DIRECCIÓN
+            Forms\Components\Placeholder::make('direccion_title')
+                ->label('DIRECCIÓN')
+                ->content('')
+                ->extraAttributes(['class' => 'text-xl font-bold pb-2']),
+            
+            // Tarjeta de Dirección
+            Forms\Components\Card::make([
+                Forms\Components\Grid::make(3)
+                    ->schema([
+                        Forms\Components\Placeholder::make('pais')
+                            ->label('País')
+                            ->content(function ($record) {
+                                return $record->persona && $record->persona->pais ? $record->persona->pais->nombre_pais : 'No especificado';
+                            }),
+                        Forms\Components\Placeholder::make('departamento')
+                            ->label('Departamento')
+                            ->content(function ($record) {
+                                // Método 1: Buscar el departamento a través del municipio
+                                if ($record->persona && $record->persona->municipio && $record->persona->municipio->departamento) {
+                                    return $record->persona->municipio->departamento->nombre_departamento;
+                                }
+                                
+                                // Método 2: Buscar directamente por departamento_id
+                                if ($record->persona && $record->persona->departamento_id) {
+                                    try {
+                                        $departamento = \App\Models\Departamento::findOrFail($record->persona->departamento_id);
+                                        return $departamento->nombre_departamento;
+                                    } catch (\Exception $e) {
+                                        // Continuar con el método 3 si hay error
+                                    }
+                                }
+                                
+                                // Método 3: Buscar directamente a través de la relación departamento
+                                if ($record->persona && $record->persona->departamento) {
+                                    return $record->persona->departamento->nombre_departamento;
+                                }
+                                
+                                return 'No especificado';
+                            }),
+                        Forms\Components\Placeholder::make('municipio')
+                            ->label('Municipio')
+                            ->content(function ($record) {
+                                return $record->persona && $record->persona->municipio ? $record->persona->municipio->nombre_municipio : 'No especificado';
+                            }),
+                    ]),
+                Forms\Components\Grid::make(1)
+                    ->schema([
+                        Forms\Components\Placeholder::make('direccion')
+                            ->label('Dirección')
+                            ->content(fn ($record) => $record->persona->direccion ?? 'No especificado'),
+                    ]),
+            ])->columnSpanFull(),
+
+            // Título DATOS DEL CLIENTE
+            Forms\Components\Placeholder::make('datos_cliente_title')
+                ->label('DATOS DEL CLIENTE')
+                ->content('')
+                ->extraAttributes(['class' => 'text-xl font-bold py-2']),
+            
+            // Tarjeta de Datos del Cliente
+            Forms\Components\Card::make([
+                Forms\Components\Grid::make(4)
+                    ->schema([
+                        Forms\Components\Placeholder::make('numero_cliente')
+                            ->label('Número de Cliente')
+                            ->content(fn ($record) => $record->numero_cliente ?? 'No especificado'),
+                        Forms\Components\Placeholder::make('dni')
+                            ->label('DNI')
+                            ->content(fn ($record) => $record->persona->dni ?? 'No especificado'),
+                        Forms\Components\Placeholder::make('rtn')
+                            ->label('RTN')
+                            ->content(function ($record) {
+
+                                return isset($record->RTN) && !empty($record->RTN) 
+                                    ? $record->RTN 
+                                    : 'No especificado';
+                            }),
+                        Forms\Components\Placeholder::make('empresa')
+                            ->label('Empresa')
+                            ->content(fn ($record) => optional($record->empresa)->nombre ?? 'No especificado'),
+                        Forms\Components\Placeholder::make('categoria_cliente')
+                            ->label('Categoría de Cliente')
+                            ->content(fn ($record) => optional($record->categoriaCliente)->nombre ?? 'No especificado'),
+                    ]),
+            ])->columnSpanFull(),
+            
+            // Título HISTORIAL DE COMPRAS
+            Forms\Components\Placeholder::make('historial_title')
+                ->label('HISTORIAL DE COMPRAS')
+                ->content('')
+                ->extraAttributes(['class' => 'text-xl font-bold py-2']),
+                
+            // Tarjeta de Historial de Compras
+            Forms\Components\Card::make([
+                Forms\Components\View::make('components.historial-compras')
+                    ->viewData(['cliente' => fn ($record) => $record])
+                    ->columnSpanFull(),
+            ])->columnSpanFull(),
+
+           
         ]);
     }
 
-    // Eliminar el filtro manual por empresa_id, ya que el trait TenantScoped lo aplica automáticamente
 }

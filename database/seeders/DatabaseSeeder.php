@@ -37,8 +37,11 @@ class DatabaseSeeder extends Seeder
             TipoOrdenComprasSeeder::class,
             CategoriaUnidadesSeeder::class,
             UnidadDeMedidasSeeder::class,
+            CategoriaClienteSeeder::class,  // Agregamos el seeder de categorías de clientes
             PersonaSeeder::class, 
             ClienteSeeder::class,
+            AsignarCategoriasClientesSeeder::class,  // Agregamos el seeder para asignar categorías
+            CategoriaClienteProductoSeeder::class,  // Agregamos el seeder para la relación entre categorías
             ProductosSeeder::class,
             OrdenComprasSeeder::class,
             OrdenComprasDetalleSeeder::class,
