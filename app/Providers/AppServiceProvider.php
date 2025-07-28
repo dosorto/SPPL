@@ -23,5 +23,6 @@ class AppServiceProvider extends ServiceProvider
     {
         // Registrar el observer para DetalleNominas
         \App\Models\DetalleNominas::observe(\App\Observers\DetalleNominasObserver::class);
+        
     }
 }
