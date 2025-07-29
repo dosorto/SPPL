@@ -9,6 +9,8 @@ use Filament\Forms\Components\Section;
 use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\View;
 use Filament\Pages\Actions\EditAction;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Http\Response;
 
 class ViewNomina extends ViewRecord
 {
@@ -62,6 +64,14 @@ class ViewNomina extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
+            \Filament\Actions\Action::make('imprimirNomina')
+                ->label('Imprimir Nómina')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('success')
+                ->action(function () {
+                    return $this->generarPDF();
+                }),
+
             EditAction::make()
                 ->visible(fn () => !$this->record->cerrada),
                 
@@ -88,5 +98,96 @@ class ViewNomina extends ViewRecord
                     $this->redirect(route('filament.admin.resources.nominas.view', $this->record));
                 }),
         ];
+    }
+
+    public function generarPDF(): Response
+    {
+        // Obtener la nómina actual
+        $nomina = $this->record;
+        
+        if (!$nomina) {
+            return response('No se encontró la nómina solicitada.', 404);
+        }
+        
+        // Obtener los detalles de la nómina (empleados)
+        $detallesNomina = $nomina->detalleNominas;
+        
+        // Preparar los datos para el PDF
+        $empleadosData = [];
+        $totalGeneral = 0;
+        
+        foreach ($detallesNomina as $detalle) {
+            $empleado = $detalle->empleado;
+            if (!$empleado) continue;
+            
+            // Convertir los detalles de deducciones y percepciones a arrays
+            $deduccionesArray = [];
+            $deduccionesDetalle = explode("\n", trim($detalle->deducciones_detalle ?? ''));
+            foreach ($deduccionesDetalle as $deduccion) {
+                if (!empty($deduccion)) {
+                    $deduccionesArray[] = [
+                        'nombre' => $deduccion,
+                        'aplicada' => true,
+                        'valorMostrado' => ''
+                    ];
+                }
+            }
+            
+            $percepcionesArray = [];
+            $percepcionesDetalle = explode("\n", trim($detalle->percepciones_detalle ?? ''));
+            foreach ($percepcionesDetalle as $percepcion) {
+                if (!empty($percepcion)) {
+                    $percepcionesArray[] = [
+                        'nombre' => $percepcion,
+                        'aplicada' => true,
+                        'valorMostrado' => ''
+                    ];
+                }
+            }
+            
+            $empleadosData[] = [
+                'nombre' => $empleado->getNombreCompletoAttribute(),
+                'salario' => $detalle->sueldo_bruto,
+                'deduccionesArray' => $deduccionesArray,
+                'percepcionesArray' => $percepcionesArray,
+                'total' => $detalle->sueldo_neto,
+                'seleccionado' => true,
+            ];
+            
+            $totalGeneral += $detalle->sueldo_neto;
+        }
+        
+        // Obtener el nombre del mes
+        $meses = [
+            1 => 'Enero',
+            2 => 'Febrero',
+            3 => 'Marzo',
+            4 => 'Abril',
+            5 => 'Mayo',
+            6 => 'Junio',
+            7 => 'Julio',
+            8 => 'Agosto',
+            9 => 'Septiembre',
+            10 => 'Octubre',
+            11 => 'Noviembre',
+            12 => 'Diciembre',
+        ];
+        $mesNombre = $meses[$nomina->mes] ?? '';
+        
+        // Generar el PDF con configuración de codificación
+        $pdf = PDF::loadView('pdf.nomina', [
+            'empresa' => $nomina->empresa,
+            'empleados' => $empleadosData,
+            'mesNombre' => $mesNombre,
+            'año' => $nomina->año,
+            'descripcion' => $nomina->descripcion,
+        ]);
+        
+        // Configurar opciones del PDF para UTF-8
+        $pdf->getDomPDF()->set_option('isHtml5ParserEnabled', true);
+        $pdf->getDomPDF()->set_option('isPhpEnabled', true);
+        
+        // Descargar el PDF
+        return $pdf->download('nomina_'.$mesNombre.'_'.$nomina->año.'.pdf');
     }
 }

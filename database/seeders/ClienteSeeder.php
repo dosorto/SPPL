@@ -16,6 +16,7 @@ class ClienteSeeder extends Seeder
         $faker = Faker::create('es_ES');
         $empresas = Empresa::all();
         $municipios = Municipio::all(); 
+        $departamentosValidos = \App\Models\Departamento::pluck('id')->toArray();
 
         if ($empresas->isEmpty() || $municipios->isEmpty()) { 
             $this->command->error('No hay empresas o municipios para asignar clientes. Ejecuta los seeders de Empresas y Municipios primero.');
@@ -30,6 +31,10 @@ class ClienteSeeder extends Seeder
         $municipioDefault = $municipios->first();
         $empresaDefaultParaPersona = $empresas->first();
 
+        $departamentoIdDefault = $municipioDefault->departamento_id;
+        if (!isset($departamentoIdDefault) || !in_array($departamentoIdDefault, $departamentosValidos)) {
+            $departamentoIdDefault = null;
+        }
         $personaConsumidorFinal = Persona::firstOrCreate(
             ['dni' => '0000000000000'], // Atributo único para buscar
             [ // Datos a usar si no se encuentra y se debe crear
@@ -41,6 +46,7 @@ class ClienteSeeder extends Seeder
                 'fecha_nacimiento' => now(),
                 'empresa_id' => $empresaDefaultParaPersona->id,
                 'municipio_id' => $municipioDefault->id,
+                'departamento_id' => $departamentoIdDefault,
                 'pais_id' => $municipioDefault->departamento->pais_id,
             ]
         );
@@ -65,6 +71,10 @@ class ClienteSeeder extends Seeder
             $empresa = $empresas->random();
             $municipio = $municipios->random(); 
 
+            $departamentoId = $municipio->departamento_id;
+            if (!isset($departamentoId) || !in_array($departamentoId, $departamentosValidos)) {
+                $departamentoId = null;
+            }
             // Crear una Persona para el cliente
             $persona = Persona::create([
                 'primer_nombre' => $faker->firstName,
@@ -75,8 +85,9 @@ class ClienteSeeder extends Seeder
                 'sexo' => $faker->randomElement(['Masculino', 'Femenino']),
                 'fecha_nacimiento' => $faker->dateTimeBetween('-70 years', '-18 years'),
                 'empresa_id' => $empresa->id,
-                'municipio_id' => $municipio->id, // <-- AÑADIR ESTA LÍNEA
-                'pais_id' => $municipio->departamento->pais_id, // Asumimos que podemos obtener el país desde el municipio
+                'municipio_id' => $municipio->id,
+                'departamento_id' => $departamentoId,
+                'pais_id' => $municipio->departamento->pais_id,
             ]);
 
             // Crear el Cliente asociado a la Persona

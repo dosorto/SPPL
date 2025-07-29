@@ -22,6 +22,7 @@ class EmpleadoSeeder extends Seeder
         // 1. Obtener todas las dependencias necesarias
         $empresas = Empresa::all();
         $tiposEmpleado = TipoEmpleado::all();
+        $departamentosValidos = \App\Models\Departamento::pluck('id')->toArray();
 
         // 2. Validar que existan los registros necesarios para crear empleados
         if ($empresas->isEmpty() || $tiposEmpleado->isEmpty()) {
@@ -51,6 +52,10 @@ class EmpleadoSeeder extends Seeder
 
             // 4. Crear una nueva Persona para cada Empleado
             // Esto evita conflictos y asegura que cada empleado tenga datos personales únicos.
+            $departamentoId = $departamento->id;
+            if (!isset($departamentoId) || !in_array($departamentoId, $departamentosValidos)) {
+                $departamentoId = null;
+            }
             $persona = Persona::create([
                 'primer_nombre' => $faker->firstName,
                 'primer_apellido' => $faker->lastName,
@@ -62,6 +67,7 @@ class EmpleadoSeeder extends Seeder
                 'empresa_id' => $empresa->id,
                 'municipio_id' => $empresa->municipio_id,
                 'pais_id' => $empresa->pais_id,
+                'departamento_id' => $departamentoId,
             ]);
 
             // 5. Crear el Empleado asociado a la Persona recién creada
