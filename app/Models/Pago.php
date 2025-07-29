@@ -29,6 +29,8 @@ class Pago extends Model
         'empresa_id',
         'monto',
         'referencia',
+        'monto_recibido',
+        'cambio',
         'fecha_pago',
         'created_by',
         'updated_by',
@@ -40,8 +42,12 @@ class Pago extends Model
      *
      * @var array<string, string>
      */
+    
     protected $casts = [
         'fecha_pago' => 'datetime',
+        'monto' => 'decimal:2',
+        'monto_recibido' => 'decimal:2',
+        'cambio' => 'decimal:2',
     ];
 
     // --- Relaciones ---

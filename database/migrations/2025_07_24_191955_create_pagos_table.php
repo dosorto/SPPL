@@ -22,6 +22,8 @@ return new class extends Migration
             // --- Datos del Pago ---
             $table->decimal('monto', 10, 2);
             $table->string('referencia')->nullable()->comment('Ej: # de transferencia, últimos 4 dígitos');
+            $table->decimal('monto_recibido', 10, 2)->nullable();
+            $table->decimal('cambio', 10, 2)->nullable();
             $table->timestamp('fecha_pago')->useCurrent(); // Usa la fecha y hora actual por defecto
 
             // --- Auditoría y Timestamps ---

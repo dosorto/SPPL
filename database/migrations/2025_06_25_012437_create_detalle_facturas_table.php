@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('producto_id')->constrained('inventario_productos');
             $table->decimal('cantidad', 10, 2);
             $table->decimal('precio_unitario', 10, 2);
+            $table->decimal('descuento_aplicado', 5, 2)->nullable();
             $table->decimal('sub_total', 10, 2);
             $table->decimal('isv_aplicado', 5, 2)->default(0)->comment('El % de ISV aplicado en el momento de la venta');
             $table->decimal('costo_unitario', 10, 2)->comment('Congela el costo del producto al momento de la venta.');
