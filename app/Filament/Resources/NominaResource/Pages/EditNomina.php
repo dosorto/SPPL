@@ -56,29 +56,33 @@ class EditNomina extends EditRecord
             ->schema([
                 Section::make('Información de la nómina')
                     ->schema([
-                        \Filament\Forms\Components\Select::make('mes')
-                            ->label('Mes')
-                            ->options([
-                                1 => 'Enero',
-                                2 => 'Febrero',
-                                3 => 'Marzo',
-                                4 => 'Abril',
-                                5 => 'Mayo',
-                                6 => 'Junio',
-                                7 => 'Julio',
-                                8 => 'Agosto',
-                                9 => 'Septiembre',
-                                10 => 'Octubre',
-                                11 => 'Noviembre',
-                                12 => 'Diciembre',
+                        \Filament\Forms\Components\Grid::make(3)
+                            ->schema([
+                                \Filament\Forms\Components\Select::make('mes')
+                                    ->label('Mes')
+                                    ->options([
+                                        1 => 'Enero',
+                                        2 => 'Febrero',
+                                        3 => 'Marzo',
+                                        4 => 'Abril',
+                                        5 => 'Mayo',
+                                        6 => 'Junio',
+                                        7 => 'Julio',
+                                        8 => 'Agosto',
+                                        9 => 'Septiembre',
+                                        10 => 'Octubre',
+                                        11 => 'Noviembre',
+                                        12 => 'Diciembre',
+                                    ])
+                                    ->required(),
+                                \Filament\Forms\Components\TextInput::make('descripcion')
+                                    ->label('Descripción')
+                                    ->maxLength(255),
                             ])
-                            ->required(),
-
-                        \Filament\Forms\Components\TextInput::make('descripcion')
-                            ->label('Descripción')
-                            ->maxLength(255),
-
-                        // Campo estado eliminado porque ya no se usará
+                            ->columnSpanFull(),
+                    ])
+                    ->extraAttributes([
+                        'class' => 'mb-6',
                     ]),
 
                 // Sección especial para empleados (después del formulario principal)
@@ -138,12 +142,20 @@ class EditNomina extends EditRecord
                         $percepciones = $empleado->percepcionesAplicadas->sum(function ($relacion) {
                             $percepcion = $relacion->percepcion;
                             if (!$percepcion) return 0;
-                            if (($percepcion->percepcion ?? '') === 'Horas Extras') {
-                                $cantidad = $relacion->cantidad_horas ?? 0;
-                                $valorUnitario = $percepcion->valor ?? 0;
-                                return $cantidad * $valorUnitario;
-                            }
-                            return $percepcion->valor ?? 0;
+                            
+                                            if (($percepcion->percepcion ?? '') === 'Horas Extras') {
+                    $cantidad = $relacion->cantidad_horas ?? 0;
+                    $valorUnitario = $percepcion->valor ?? 0;
+                    return $cantidad * $valorUnitario;
+                }
+                
+                // Solo para Aguinaldo: usar valor específico si está definido
+                if (($percepcion->percepcion ?? '') === 'Aguinaldo' && $relacion->valor !== null) {
+                    return $relacion->valor;
+                }
+                
+                // Para otras percepciones o si no hay valor específico, usar el valor predeterminado
+                return $percepcion->valor ?? 0;
                         });
                         $total = $sueldo + $percepciones - $deducciones;
                         \App\Models\DetalleNominas::create([

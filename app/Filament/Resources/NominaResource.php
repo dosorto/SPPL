@@ -220,10 +220,16 @@ class NominaResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('descripcion')->label('Descripción'),
-                Tables\Columns\TextColumn::make('mes')->label('Mes'),
                 Tables\Columns\TextColumn::make('año')->label('Año'),
-                Tables\Columns\TextColumn::make('empresa.nombre')->label('Empresa'),
-
+                Tables\Columns\TextColumn::make('mes')
+                    ->label('Mes')
+                    ->formatStateUsing(function ($state) {
+                        $meses = [
+                            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
+                            7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
+                        ];
+                        return $meses[(int)$state] ?? $state;
+                    }),
                 Tables\Columns\IconColumn::make('cerrada')
                     ->label('Cerrada')
                     ->boolean()
@@ -234,11 +240,17 @@ class NominaResource extends Resource
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),   
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make()
                     ->visible(fn (Nominas $record): bool => !$record->cerrada),
                 Tables\Actions\DeleteAction::make()
                     ->visible(fn (Nominas $record): bool => !$record->cerrada),
+                Tables\Actions\Action::make('generarPdf')
+                    ->label('Generar PDF')
+                    ->icon('heroicon-o-document-arrow-down')
+                    ->color('success')
+                    ->url(fn (Nominas $record) => route('nominas.generar-pdf', ['nomina' => $record->id]))
+                    ->openUrlInNewTab(),
             ])
             ->bulkActions([
                 Tables\Actions\DeleteBulkAction::make(),

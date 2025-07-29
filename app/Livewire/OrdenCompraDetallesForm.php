@@ -6,20 +6,17 @@ use Livewire\Component;
 use App\Models\Productos;
 use Illuminate\Support\Facades\Session;
 use Filament\Notifications\Notification;
-use Livewire\Livewire;
-
 
 class OrdenCompraDetallesForm extends Component
 {
     public $producto_id;
+    public $producto_nombre = '';
     public $cantidad = 1;
     public $precio = 0;
 
     public $detalles = [];
     public ?int $ordenId = null;
-    //public $ordenId = null;
-
-
+    public $editIndex = null;
 
     // Estado de los campos básicos
     public $formState = [
@@ -60,34 +57,36 @@ class OrdenCompraDetallesForm extends Component
         'formState.fecha_realizada.date' => 'La fecha no es válida.',
     ];
 
-    public function mount()
-{
-    if ($this->ordenId) {
-        $orden = \App\Models\OrdenCompras::with('detalles.producto')->find($this->ordenId);
-        if ($orden) {
-            $this->formState['tipo_orden_compra_id'] = $orden->tipo_orden_compra_id;
-            $this->formState['proveedor_id'] = $orden->proveedor_id;
-            $this->formState['empresa_id'] = $orden->empresa_id;
-            $this->formState['fecha_realizada'] = $orden->fecha_realizada;
-            $this->formState['descripcion'] = $orden->descripcion;
+    public function mount($ordenId = null)
+    {
+        logger('MOUNT ORDEN ID:', ['id' => $ordenId]);
+        $this->ordenId = $ordenId;
 
-            foreach ($orden->detalles as $detalle) {
-                $this->detalles[] = [
-                    'producto_id' => $detalle->producto_id,
-                    'nombre_producto' => $detalle->producto->nombre ?? 'Desconocido',
-                    'cantidad' => $detalle->cantidad,
-                    'precio' => $detalle->precio,
-                    'detalle_id' => $detalle->id,
+        if ($this->ordenId) {
+            $orden = \App\Models\OrdenCompras::with('detalles.producto')->find($this->ordenId);
+            if ($orden) {
+                $this->formState = [
+                    'tipo_orden_compra_id' => $orden->tipo_orden_compra_id,
+                    'proveedor_id' => $orden->proveedor_id,
+                    'empresa_id' => $orden->empresa_id,
+                    'fecha_realizada' => $orden->fecha_realizada,
+                    'descripcion' => $orden->descripcion,
                 ];
-            }
 
-            // 🔁 Notificar al frontend que el estado está completo
-            $this->dispatch('updateFormState', $this->formState);
+                foreach ($orden->detalles as $detalle) {
+                    $this->detalles[] = [
+                        'producto_id' => $detalle->producto_id,
+                        'nombre_producto' => $detalle->producto->nombre ?? 'Desconocido',
+                        'cantidad' => $detalle->cantidad,
+                        'precio' => $detalle->precio,
+                        'detalle_id' => $detalle->id,
+                    ];
+                }
+
+                session()->put('detalles_orden', $this->detalles);
+            }
         }
     }
-}
-
-
 
     public function updateFormState($data)
     {
@@ -99,6 +98,19 @@ class OrdenCompraDetallesForm extends Component
     public function updated($property)
     {
         $this->validateOnly($property);
+    }
+
+    public function updateProductoId()
+    {
+        $productos = Productos::get()->mapWithKeys(function ($p) {
+            return [$p->id => "{$p->sku} - {$p->nombre}"];
+        });
+
+        $selectedId = array_search($this->producto_nombre, $productos->all());
+        $this->producto_id = $selectedId !== false ? $selectedId : '';
+
+        // Validar inmediatamente después de actualizar
+        $this->validateOnly('producto_id');
     }
 
     public function addProducto()
@@ -120,92 +132,61 @@ class OrdenCompraDetallesForm extends Component
             return;
         }
 
-        $this->detalles[] = [
-            'producto_id' => $producto->id,
-            'nombre_producto' => $producto->nombre,
-            'cantidad' => $this->cantidad,
-            'precio' => $this->precio,
-        ];
+        // 👉 Si estamos editando, actualizamos la fila en lugar de agregar una nueva
+        if ($this->editIndex !== null) {
+            $this->detalles[$this->editIndex] = [
+                'producto_id' => $producto->id,
+                'nombre_producto' => $producto->nombre,
+                'cantidad' => $this->cantidad,
+                'precio' => $this->precio,
+                // Si ya tenía detalle_id, conservarlo
+                'detalle_id' => $this->detalles[$this->editIndex]['detalle_id'] ?? null,
+            ];
+            $this->editIndex = null; // reseteamos estado de edición
+        } else {
+            $this->detalles[] = [
+                'producto_id' => $producto->id,
+                'nombre_producto' => $producto->nombre,
+                'cantidad' => $this->cantidad,
+                'precio' => $this->precio,
+            ];
+        }
 
-        // Guardar en sesión para ser usado en CreateOrdenCompras
         session()->put('detalles_orden', $this->detalles);
 
-        // Reset inputs
-        $this->reset(['producto_id', 'cantidad', 'precio']);
+        $this->reset(['producto_id', 'producto_nombre', 'cantidad', 'precio']);
         $this->cantidad = 1;
         $this->precio = 0;
 
-        // Emitir evento si quieres notificar al usuario o actualizar algo
         $this->dispatch('productoAdded');
     }
+
 
     public function editDetalle($index)
     {
         $detalle = $this->detalles[$index];
 
         $this->producto_id = $detalle['producto_id'];
+        $this->producto_nombre = $detalle['nombre_producto'];
         $this->cantidad = $detalle['cantidad'];
         $this->precio = $detalle['precio'];
         $this->editIndex = $index;
     }
 
-
-    public function loadDetallesDesdeOrden($data)
-    {
-        $orden = \App\Models\OrdenCompras::with('detalles.producto')->find($data['orden_id']);
-
-        if (!$orden) return;
-
-        $this->formState = [
-            'tipo_orden_compra_id' => $orden->tipo_orden_compra_id,
-            'proveedor_id' => $orden->proveedor_id,
-            'empresa_id' => $orden->empresa_id,
-            'fecha_realizada' => $orden->fecha_realizada,
-            'descripcion' => $orden->descripcion,
-        ];
-
-        $this->detalles = $orden->detalles->map(function ($item) {
-            return [
-                'producto_id' => $item->producto_id,
-                'nombre_producto' => $item->producto->nombre ?? '',
-                'cantidad' => $item->cantidad,
-                'precio' => $item->precio,
-            ];
-        })->toArray();
-    }
-    public function loadOrden($orden_id)
-    {
-        $this->orden_id = $orden_id;
-        $orden = Orden::with('detalles')->findOrFail($orden_id);
-
-        // Cargar datos generales
-        $this->tipo_orden = $orden->tipo_orden;
-        $this->proveedor_id = $orden->proveedor_id;
-        $this->fecha_realizada = $orden->fecha_realizada;
-        $this->descripcion = $orden->descripcion;
-
-        // Cargar detalles
-        $this->detalles = $orden->detalles->map(function ($detalle) {
-            return [
-                'producto_id' => $detalle->producto_id,
-                'cantidad' => $detalle->cantidad,
-                'precio' => $detalle->precio,
-            ];
-        })->toArray();
-    }
-
-
     public function removeDetalle($index)
     {
         $detalle = $this->detalles[$index] ?? null;
 
-        // Si es un detalle guardado (tiene ID), lo borramos de la base de datos
         if (isset($detalle['detalle_id'])) {
-            \App\Models\OrdenComprasDetalles::find($detalle['detalle_id'])?->delete();
+            \App\Models\OrdenComprasDetalle::find($detalle['detalle_id'])?->delete();
         }
 
         unset($this->detalles[$index]);
         $this->detalles = array_values($this->detalles);
+
+        // 💡 Actualiza la sesión
+        session()->put('detalles_orden', $this->detalles);
+
         $this->dispatch('detalleRemoved');
     }
 
@@ -217,16 +198,27 @@ class OrdenCompraDetallesForm extends Component
                                !empty($this->formState['empresa_id']) &&
                                !empty($this->formState['fecha_realizada']);
 
+        $productos = Productos::get()->mapWithKeys(function ($p) {
+            return [$p->id => "{$p->sku} - {$p->nombre}"];
+        });
+
+        if (!empty($this->producto_nombre)) {
+            $productos = $productos->filter(function ($nombre, $id) {
+                return stripos($nombre, $this->producto_nombre) !== false;
+            });
+        }
+
         return view('livewire.orden-compra-detalles-form', [
-            'productos' => Productos::pluck('nombre', 'id'),
+            'productos' => $productos,
             'isBasicInfoComplete' => $isBasicInfoComplete,
         ]);
     }
 
-    public function boot()
+    public function getIsBasicInfoCompleteProperty()
     {
-        Livewire::component('orden-compra-detalles-form', \App\Livewire\OrdenCompraDetallesForm::class);
+        return !empty($this->formState['tipo_orden_compra_id']) &&
+            !empty($this->formState['proveedor_id']) &&
+            !empty($this->formState['empresa_id']) &&
+            !empty($this->formState['fecha_realizada']);
     }
-    
-
 }

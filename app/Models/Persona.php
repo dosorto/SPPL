@@ -47,6 +47,8 @@ class Persona extends Model
         'tipo_persona',
         'direccion',
         'municipio_id',
+        'departamento_id', // debe ser nullable en la migración y en el modelo
+        'departamento_id',
         'telefono',
         'sexo',
         'fecha_nacimiento',
@@ -73,6 +75,7 @@ class Persona extends Model
     {
         return $this->belongsTo(Paises::class);
     }
+    
 
     /**
      * Una persona puede ser un cliente (relación uno a uno).
