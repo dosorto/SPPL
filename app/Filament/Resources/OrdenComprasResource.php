@@ -109,12 +109,11 @@ class OrdenComprasResource extends Resource
 
                         Forms\Components\View::make('livewire.wrap-orden-compra-detalles-form')
                         ->label('Detalles de la Orden')
-                        ->viewData([
-                            'ordenId' => fn ($record) => $record?->id,
+                        ->viewData(fn (\Filament\Forms\Get $get) => [
+                            'record' => $get('id') ? \App\Models\OrdenCompras::with('detalles.producto')->find($get('id')) : null,
                         ])
-                        ->columnSpanFull(),
 
-
+                        ->columnSpanFull()
 
 
                     ])
