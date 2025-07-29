@@ -47,6 +47,7 @@ class Persona extends Model
         'tipo_persona',
         'direccion',
         'municipio_id',
+        'departamento_id',
         'telefono',
         'sexo',
         'fecha_nacimiento',

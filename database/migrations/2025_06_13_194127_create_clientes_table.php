@@ -23,6 +23,9 @@ return new class extends Migration
                   ->nullable() // ¡Este campo es opcional!
                   ->constrained('empresas')
                   ->onDelete('set null'); // Si se elimina una empresa, se establece a NULL en los clientes
+            
+            // Relación con categorías de clientes
+            $table->foreignId('categoria_cliente_id')->nullable()->constrained('categorias_clientes');
 
             // Campos de logs
             $table->timestamps(); // created_at y updated_at
