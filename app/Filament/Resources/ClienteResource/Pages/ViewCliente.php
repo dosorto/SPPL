@@ -37,15 +37,4 @@ class ViewCliente extends ViewRecord
             'persona' => $persona
         ]);
     }
-
-    // Use the getViewForm() method from the ClienteResource class instead of defining a custom form
-    public function getForm(string $name = 'form'): ?\Filament\Forms\Form
-    {
-        $resource = static::getResource();
-        $record = $this->getRecord();
-        
-        return $resource::getViewForm($this->makeForm())
-            ->model($record)
-            ->statePath('data');
-    }
 }

@@ -35,7 +35,7 @@ class Cliente extends Model
      */
     public function facturas()
     {
-        return $this->hasMany(\App\Models\Factura::class, 'cliente_id');
+        return $this->hasMany(Factura::class, 'cliente_id');
     }
 
     /**

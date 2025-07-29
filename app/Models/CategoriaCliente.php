@@ -38,4 +38,22 @@ class CategoriaCliente extends Model
             ->withPivot('descuento_porcentaje', 'activo')
             ->withTimestamps();
     }
+
+    /**
+     * Una categoría de cliente tiene muchos descuentos por productos específicos.
+     */
+    public function productosEspecificos()
+    {
+        return $this->hasMany(CategoriaClienteProductoEspecifico::class, 'categoria_cliente_id');
+    }
+
+    /**
+     * Relación many-to-many con productos específicos a través de la tabla pivot.
+     */
+    public function productos()
+    {
+        return $this->belongsToMany(Productos::class, 'categorias_clientes_productos_especificos', 'categoria_cliente_id', 'productos_id')
+            ->withPivot('descuento_porcentaje', 'activo')
+            ->withTimestamps();
+    }
 }
