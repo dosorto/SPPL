@@ -22,7 +22,7 @@ class DetalleFacturaFactory extends Factory
 
         return [
             'factura_id' => \App\Models\Factura::factory(),
-            'producto_id' => \App\Models\InventarioProducto::factory(),
+            'producto_id' => \App\Models\InventarioProductos::factory(),
             'cantidad' => $cantidad,
             'precio_unitario' => $precio,
             'sub_total' => $subTotal,

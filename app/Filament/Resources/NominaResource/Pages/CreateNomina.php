@@ -230,8 +230,10 @@ class CreateNomina extends CreateRecord
 
                 if (isset($empleadoInput['percepcionesArray'])) {
                     foreach ($empleadoInput['percepcionesArray'] as $percepcion) {
-                        $percepciones += $percepcion['valorCalculado'] ?? 0;
-                        $percepcionesDetalle .= $percepcion['nombre'] . ': ' . $percepcion['valorMostrado'] . "\n";
+                        if (isset($percepcion['aplicada']) && $percepcion['aplicada']) {
+                            $percepciones += $percepcion['valorCalculado'] ?? 0;
+                            $percepcionesDetalle .= $percepcion['nombre'] . ': ' . $percepcion['valorMostrado'] . "\n";
+                        }
                     }
                 }
 

@@ -37,7 +37,15 @@ class EmpleadoSeeder extends Seeder
             // Seleccionar una empresa al azar
             $empresa = $empresas->random();
 
-            // Obtener los departamentos que pertenecen a la empresa seleccionada
+            // Obtener departamentos geográficos válidos (para la tabla personas)
+            $departamentosGeo = \App\Models\Departamento::all();
+            if ($departamentosGeo->isEmpty()) {
+                $this->command->warn("No hay departamentos geográficos en la base de datos. Se debe ejecutar DepartamentoSeeder primero.");
+                return;
+            }
+            $departamentoGeo = $departamentosGeo->random();
+            
+            // Obtener los departamentos organizacionales que pertenecen a la empresa seleccionada (para la tabla empleados)
             $departamentosDeLaEmpresa = DepartamentoEmpleado::where('empresa_id', $empresa->id)->get();
 
             // Si la empresa no tiene departamentos, saltar a la siguiente iteración
@@ -46,16 +54,14 @@ class EmpleadoSeeder extends Seeder
                 continue;
             }
 
-            // Seleccionar un departamento y tipo de empleado al azar
+            // Seleccionar un departamento organizacional y tipo de empleado al azar
             $departamento = $departamentosDeLaEmpresa->random();
             $tipoEmpleado = $tiposEmpleado->random();
 
             // 4. Crear una nueva Persona para cada Empleado
             // Esto evita conflictos y asegura que cada empleado tenga datos personales únicos.
-            $departamentoId = $departamento->id;
-            if (!isset($departamentoId) || !in_array($departamentoId, $departamentosValidos)) {
-                $departamentoId = null;
-            }
+            // Siempre usamos un departamento geográfico válido para la persona
+            $departamentoId = $departamentoGeo->id;
             $persona = Persona::create([
                 'primer_nombre' => $faker->firstName,
                 'primer_apellido' => $faker->lastName,

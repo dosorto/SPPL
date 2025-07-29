@@ -34,7 +34,13 @@ class ViewNomina extends ViewRecord
                         ->content(fn () => $this->record->empresa?->nombre ?? 'N/A'),
                     Placeholder::make('mes')
                         ->label('Mes')
-                        ->content(fn () => $this->record->mes ?? 'N/A'),
+                        ->content(function () {
+                            $meses = [
+                                1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
+                                7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
+                            ];
+                            return $meses[(int)($this->record->mes)] ?? $this->record->mes;
+                        }),
                     Placeholder::make('año')
                         ->label('Año')
                         ->content(fn () => $this->record->año ?? 'N/A'),
@@ -55,7 +61,7 @@ class ViewNomina extends ViewRecord
                         ->viewData([
                             'empleados' => $this->record->detalleNominas,
                         ])
-                        ->columnSpanFull(),
+                        ->columnSpan('full'),
                 ])
                 ->collapsible(),
         ];
@@ -65,7 +71,7 @@ class ViewNomina extends ViewRecord
     {
         return [
             \Filament\Actions\Action::make('imprimirNomina')
-                ->label('Imprimir Nómina')
+                ->label('Generar PDF')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('success')
                 ->action(function () {
@@ -100,61 +106,19 @@ class ViewNomina extends ViewRecord
         ];
     }
 
-    public function generarPDF(): Response
+    public function generarPDF()
     {
-        // Obtener la nómina actual
-        $nomina = $this->record;
+        // Cargar la nómina actual con todas sus relaciones necesarias
+        $nomina = $this->record->load([
+            'empresa', 
+            'detalleNominas.empleado.persona', 
+            'detalleNominas.empleado.departamento',
+            'detalleNominas.empleadoDeducciones.deduccion',
+            'detalleNominas.empleadoPercepciones.percepcion'
+        ]);
         
         if (!$nomina) {
             return response('No se encontró la nómina solicitada.', 404);
-        }
-        
-        // Obtener los detalles de la nómina (empleados)
-        $detallesNomina = $nomina->detalleNominas;
-        
-        // Preparar los datos para el PDF
-        $empleadosData = [];
-        $totalGeneral = 0;
-        
-        foreach ($detallesNomina as $detalle) {
-            $empleado = $detalle->empleado;
-            if (!$empleado) continue;
-            
-            // Convertir los detalles de deducciones y percepciones a arrays
-            $deduccionesArray = [];
-            $deduccionesDetalle = explode("\n", trim($detalle->deducciones_detalle ?? ''));
-            foreach ($deduccionesDetalle as $deduccion) {
-                if (!empty($deduccion)) {
-                    $deduccionesArray[] = [
-                        'nombre' => $deduccion,
-                        'aplicada' => true,
-                        'valorMostrado' => ''
-                    ];
-                }
-            }
-            
-            $percepcionesArray = [];
-            $percepcionesDetalle = explode("\n", trim($detalle->percepciones_detalle ?? ''));
-            foreach ($percepcionesDetalle as $percepcion) {
-                if (!empty($percepcion)) {
-                    $percepcionesArray[] = [
-                        'nombre' => $percepcion,
-                        'aplicada' => true,
-                        'valorMostrado' => ''
-                    ];
-                }
-            }
-            
-            $empleadosData[] = [
-                'nombre' => $empleado->getNombreCompletoAttribute(),
-                'salario' => $detalle->sueldo_bruto,
-                'deduccionesArray' => $deduccionesArray,
-                'percepcionesArray' => $percepcionesArray,
-                'total' => $detalle->sueldo_neto,
-                'seleccionado' => true,
-            ];
-            
-            $totalGeneral += $detalle->sueldo_neto;
         }
         
         // Obtener el nombre del mes
@@ -174,20 +138,148 @@ class ViewNomina extends ViewRecord
         ];
         $mesNombre = $meses[$nomina->mes] ?? '';
         
-        // Generar el PDF con configuración de codificación
+        // Preparar los datos de los empleados para el PDF, usando los detalles guardados (solo los activos)
+        $empleados = [];
+        $totalNomina = 0;
+
+        foreach ($nomina->detalleNominas as $detalle) {
+            $empleado = $detalle->empleado;
+            $persona = $empleado->persona ?? null;
+            $departamento = $empleado->departamento ?? null;
+
+            // Parsear deducciones activas desde deducciones_detalle
+            $deducciones = [];
+            $deduccionesDetalle = $detalle->deducciones_detalle ?? '';
+            $deduccionesLineas = array_filter(array_map('trim', explode("\n", $deduccionesDetalle)));
+            $sueldoBruto = $detalle->sueldo_bruto;
+            if (empty($deduccionesLineas)) {
+                $deducciones[] = [
+                    'nombre' => 'DEBUG',
+                    'valorMostrado' => 'deducciones_detalle vacío: ' . ($deduccionesDetalle === '' ? '[VACÍO]' : $deduccionesDetalle),
+                    'aplicada' => false,
+                    'valorNumerico' => 0,
+                    'valorCalculado' => 0
+                ];
+            } else {
+                foreach ($deduccionesLineas as $linea) {
+                    if (strpos($linea, ':') !== false) {
+                        [$nombre, $valorMostrado] = array_map('trim', explode(':', $linea, 2));
+                        $valorNumerico = 0;
+                        $valorCalculado = 0;
+                        if (preg_match('/([\d\.,]+)/', $valorMostrado, $matches)) {
+                            $valorNumerico = floatval(str_replace([',', 'L.', ' '], ['', '', ''], $matches[1]));
+                        }
+                        // Detectar porcentaje: termina en % (opcional espacios)
+                        if (preg_match('/([\d\.,]+)\s*%\s*$/', $valorMostrado, $matchesPorc)) {
+                            $porcentaje = floatval(str_replace([',', ' '], ['', ''], $matchesPorc[1]));
+                            $valorCalculado = ($porcentaje / 100) * $sueldoBruto;
+                        } else {
+                            $valorCalculado = $valorNumerico;
+                        }
+                        $deducciones[] = [
+                            'nombre' => $nombre,
+                            'valorMostrado' => $valorMostrado,
+                            'aplicada' => true,
+                            'valorNumerico' => $valorNumerico,
+                            'valorCalculado' => $valorCalculado
+                        ];
+                    }
+                }
+            }
+
+            // Parsear percepciones activas desde percepciones_detalle
+            $percepciones = [];
+            $percepcionesDetalle = $detalle->percepciones_detalle ?? '';
+            $percepcionesLineas = array_filter(array_map('trim', explode("\n", $percepcionesDetalle)));
+            if (empty($percepcionesLineas)) {
+                $percepciones[] = [
+                    'nombre' => 'DEBUG',
+                    'valorMostrado' => 'percepciones_detalle vacío: ' . ($percepcionesDetalle === '' ? '[VACÍO]' : $percepcionesDetalle),
+                    'aplicada' => false,
+                    'valorNumerico' => 0,
+                    'valorCalculado' => 0
+                ];
+            } else {
+                foreach ($percepcionesLineas as $linea) {
+                    if (strpos($linea, ':') !== false) {
+                        [$nombre, $valorMostrado] = array_map('trim', explode(':', $linea, 2));
+                        $valorNumerico = 0;
+                        $valorCalculado = 0;
+                        if (preg_match('/([\d\.,]+)/', $valorMostrado, $matches)) {
+                            $valorNumerico = floatval(str_replace([',', 'L.', ' '], ['', '', ''], $matches[1]));
+                        }
+                        if (preg_match('/([\d\.,]+)\s*%\s*$/', $valorMostrado, $matchesPorc)) {
+                            $porcentaje = floatval(str_replace([',', ' '], ['', ''], $matchesPorc[1]));
+                            $valorCalculado = ($porcentaje / 100) * $sueldoBruto;
+                        } else {
+                            $valorCalculado = $valorNumerico;
+                        }
+                        $percepciones[] = [
+                            'nombre' => $nombre,
+                            'valorMostrado' => $valorMostrado,
+                            'aplicada' => true,
+                            'valorNumerico' => $valorNumerico,
+                            'valorCalculado' => $valorCalculado
+                        ];
+                    }
+                }
+            }
+
+            // Nombre del empleado: primer_nombre, segundo_nombre, primer_apellido, segundo_apellido
+            $nombreEmpleado = 'Empleado #' . $empleado->id;
+            if ($persona) {
+                $nombres = [];
+                if (!empty($persona->primer_nombre)) $nombres[] = $persona->primer_nombre;
+                if (!empty($persona->segundo_nombre)) $nombres[] = $persona->segundo_nombre;
+                if (!empty($persona->primer_apellido)) $nombres[] = $persona->primer_apellido;
+                if (!empty($persona->segundo_apellido)) $nombres[] = $persona->segundo_apellido;
+                $nombreEmpleado = trim(implode(' ', $nombres));
+                if ($nombreEmpleado === '') $nombreEmpleado = 'Empleado #' . $empleado->id;
+            }
+
+            // Calcular totales de deducciones y percepciones activas usando valorCalculado
+            $totalDeducciones = collect($deducciones)->sum(function($item) {
+                return (isset($item['aplicada']) && $item['aplicada']) ? ($item['valorCalculado'] ?? 0) : 0;
+            });
+            $totalPercepciones = collect($percepciones)->sum(function($item) {
+                return (isset($item['aplicada']) && $item['aplicada']) ? ($item['valorCalculado'] ?? 0) : 0;
+            });
+
+            $empleados[] = [
+                'id' => $empleado->id,
+                'numero' => $empleado->numero_empleado,
+                'nombre' => $nombreEmpleado,
+                'departamento' => $departamento ? $departamento->nombre : '',
+                'salario' => $detalle->sueldo_bruto,
+                'deduccionesArray' => $deducciones,
+                'deducciones' => $totalDeducciones,
+                'percepcionesArray' => $percepciones,
+                'percepciones' => $totalPercepciones,
+                'total' => $detalle->sueldo_neto
+            ];
+
+            $totalNomina += $detalle->sueldo_neto;
+        }
+        
+        // Generar el PDF
         $pdf = PDF::loadView('pdf.nomina', [
+            'nomina' => $nomina,
             'empresa' => $nomina->empresa,
-            'empleados' => $empleadosData,
             'mesNombre' => $mesNombre,
-            'año' => $nomina->año,
-            'descripcion' => $nomina->descripcion,
+            'fechaGeneracion' => now()->format('d/m/Y H:i:s'),
+            'empleados' => $empleados,
+            'totalNomina' => $totalNomina,
         ]);
         
-        // Configurar opciones del PDF para UTF-8
+        // Configurar opciones del PDF para mejor manejo de UTF-8
         $pdf->getDomPDF()->set_option('isHtml5ParserEnabled', true);
         $pdf->getDomPDF()->set_option('isPhpEnabled', true);
+        $pdf->getDomPDF()->set_option('isRemoteEnabled', true);
+        $pdf->getDomPDF()->set_option('defaultFont', 'DejaVu Sans');
         
-        // Descargar el PDF
-        return $pdf->download('nomina_'.$mesNombre.'_'.$nomina->año.'.pdf');
+        // Usar streamDownload como en el módulo de órdenes para mejor manejo de memoria
+        return response()->streamDownload(function () use ($pdf) {
+            echo $pdf->output();
+        }, "nomina_{$mesNombre}_{$this->record->año}.pdf");
     }
 }

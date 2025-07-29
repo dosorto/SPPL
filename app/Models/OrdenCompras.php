@@ -34,7 +34,7 @@ class OrdenCompras extends Model
 
     public function detalles(): HasMany
     {
-        return $this->hasMany(OrdenComprasDetalle::class, 'orden_compra_id', 'id');
+        return $this->hasMany(OrdenComprasDetalle::class, 'orden_compra_id');
     }
 
     public function tipoOrdenCompra()

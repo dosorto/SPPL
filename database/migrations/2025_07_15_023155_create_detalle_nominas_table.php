@@ -18,7 +18,9 @@ return new class extends Migration
             $table->foreignId('empresa_id')->constrained('empresas');
             $table->decimal('sueldo_bruto', 10, 2);
             $table->decimal('deducciones', 10, 2)->default(0);
+            $table->text('deducciones_detalle')->nullable();
             $table->decimal('percepciones', 10, 2)->default(0);
+            $table->text('percepciones_detalle')->nullable();
             $table->decimal('sueldo_neto', 10, 2);
             $table->timestamps();       
             $table->softDeletes();      

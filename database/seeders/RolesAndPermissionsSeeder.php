@@ -37,6 +37,8 @@ class RolesAndPermissionsSeeder extends Seeder
             '', //17
             'inventario_productos',
             'facturas', //18
+            'categoria_productos', // Agregado
+            'subcategoria_productos', // Agregado
         ];
 
         // Acciones comunes de las políticas

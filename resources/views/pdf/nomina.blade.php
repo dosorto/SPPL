@@ -2,23 +2,23 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
-    <title>Nomina - {{ $empresa->nombre ?? 'Empresa' }}</title>
+    <title>Nomina - {{ $nomina->empresa->nombre ?? 'Empresa' }}</title>
     <style>
         body {
-            font-family: Arial, sans-serif;
-            margin: 0;
-            padding: 0;
+            font-family: 'DejaVu Sans', sans-serif;
             font-size: 12px;
+            margin: 20px;
         }
         .container {
             width: 100%;
+            max-width: 800px;
             margin: 0 auto;
         }
         .header {
             text-align: center;
-            margin-bottom: 20px;
-            border-bottom: 1px solid #ccc;
+            border-bottom: 2px solid #000;
             padding-bottom: 10px;
+            margin-bottom: 20px;
         }
         .header h1 {
             margin: 0;
@@ -26,41 +26,47 @@
             font-size: 24px;
             color: #333;
         }
-        .info-general {
+        .info-section {
             margin-bottom: 20px;
         }
-        .info-general table {
+        .info-section table {
             width: 100%;
+            border-collapse: collapse;
         }
-        .info-general td {
+        .info-section th, .info-section td {
             padding: 5px;
+            border: 1px solid #ddd;
         }
-        table.datos {
+        .info-section th {
+            background-color: #f2f2f2;
+            text-align: left;
+            font-weight: bold;
+        }
+        .items-table {
             width: 100%;
             border-collapse: collapse;
             margin-bottom: 20px;
         }
-        table.datos th {
-            background-color: #f3f3f3;
+        .items-table th, .items-table td {
+            border: 1px solid #000;
+            padding: 8px;
             text-align: left;
-            padding: 8px;
-            font-weight: bold;
-            border: 1px solid #ddd;
         }
-        table.datos td {
-            padding: 8px;
-            border: 1px solid #ddd;
-        }
-        .total-row td {
+        .items-table th {
+            background-color: #f2f2f2;
             font-weight: bold;
-            background-color: #f9f9f9;
+        }
+        .total {
+            text-align: right;
+            font-weight: bold;
+            margin-top: 10px;
         }
         .footer {
             text-align: center;
-            font-size: 10px;
-            margin-top: 30px;
+            border-top: 1px solid #ddd;
             padding-top: 10px;
-            border-top: 1px solid #ccc;
+            margin-top: 20px;
+            font-size: 10px;
         }
         .text-right {
             text-align: right;
@@ -70,40 +76,68 @@
         }
         .deducciones-list, .percepciones-list {
             margin: 0;
-            padding: 0;
+            padding: 0 0 0 5px;
             list-style-type: none;
+        }
+        .strong {
+            font-weight: bold;
+        }
+        .estado-cerrada {
+            color: #d00;
+            font-weight: bold;
+        }
+        .estado-abierta {
+            color: #0a0;
+            font-weight: bold;
         }
     </style>
 </head>
 <body>
     <div class="container">
+        <!-- Encabezado -->
         <div class="header">
-            <h1>{{ $empresa->nombre ?? 'Empresa' }}</h1>
-            <p>Nomina del mes de {{ $mesNombre }} {{ $año }}</p>
-            @if($descripcion)
-                <p><em>{{ htmlentities($descripcion, ENT_QUOTES, 'UTF-8') }}</em></p>
-            @endif
+            <h1>{{ $nomina->empresa->nombre ?? 'Empresa' }}</h1>
+            <p>{{ $nomina->empresa->direccion ?? '' }}</p>
+            <p>Teléfono: {{ $nomina->empresa->telefono ?? '' }}</p>
+            <h2>Nómina del mes de {{ $mesNombre }} {{ $nomina->año }}</h2>
         </div>
 
-        <div class="info-general">
+        <!-- Información general de la nómina -->
+        <div class="info-section">
             <table>
                 <tr>
-                    <td><strong>Fecha de emisión:</strong></td>
-                    <td>{{ date('d/m/Y') }}</td>
-                    <td><strong>Periodo:</strong></td>
-                    <td>{{ $mesNombre }} {{ $año }}</td>
+                    <th>Fecha de generación</th>
+                    <td>{{ $fechaGeneracion }}</td>
                 </tr>
+                <tr>
+                    <th>Período</th>
+                    <td>{{ $mesNombre }} {{ $nomina->año }}</td>
+                </tr>
+                <tr>
+                    <th>Estado</th>
+                    <td class="{{ $nomina->cerrada ? 'estado-cerrada' : 'estado-abierta' }}">
+                        {{ $nomina->cerrada ? 'Cerrada' : 'Abierta' }}
+                    </td>
+                </tr>
+                @if($nomina->descripcion)
+                <tr>
+                    <th>Descripción</th>
+                    <td>{{ $nomina->descripcion }}</td>
+                </tr>
+                @endif
             </table>
         </div>
 
-        <table class="datos">
+        <!-- Detalle de empleados -->
+        <h3>Detalle de Empleados</h3>
+        <table class="items-table">
             <thead>
                 <tr>
-                    <th>Empleado</th>
-                    <th>Salario Base</th>
-                    <th>Deducciones</th>
-                    <th>Percepciones</th>
-                    <th>Total</th>
+                    <th width="30%">Empleado</th>
+                    <th width="15%">Salario Base</th>
+                    <th width="22%">Deducciones</th>
+                    <th width="22%">Percepciones</th>
+                    <th width="11%">Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -111,38 +145,96 @@
                 @foreach($empleados as $empleado)
                     @php $totalGeneral += $empleado['total']; @endphp
                     <tr>
-                        <td>{{ htmlentities($empleado['nombre'], ENT_QUOTES, 'UTF-8') }}</td>
+                        <td>
+                            <strong>{{ $empleado['nombre'] }}</strong>
+                            @if(!empty($empleado['departamento']))
+                            <br><small>Departamento: {{ $empleado['departamento'] }}</small>
+                            @endif
+                        </td>
                         <td class="text-right">L. {{ number_format($empleado['salario'], 2) }}</td>
                         <td>
                             <ul class="deducciones-list">
+                                @php $totalDeducciones = 0; @endphp
                                 @foreach($empleado['deduccionesArray'] as $deduccion)
                                     @if($deduccion['aplicada'])
-                                        <li>{{ htmlentities($deduccion['nombre'], ENT_QUOTES, 'UTF-8') }} ({{ $deduccion['valorMostrado'] ?? '' }})</li>
+                                        <li>
+                                            {{ $deduccion['nombre'] }}:
+                                            <span class="text-right">
+                                                {{ $deduccion['valorMostrado'] ?? '' }}
+                                                @if(str_ends_with(trim($deduccion['valorMostrado']), '%'))
+                                                    (L. {{ number_format($deduccion['valorCalculado'], 2) }})
+                                                @endif
+                                            </span>
+                                        </li>
+                                        @php $totalDeducciones += $deduccion['valorCalculado'] ?? 0; @endphp
                                     @endif
                                 @endforeach
+                                @if(count($empleado['deduccionesArray']) > 0)
+                                <li class="strong">Total: L. {{ number_format($totalDeducciones, 2) }}</li>
+                                @else
+                                <li>Ninguna</li>
+                                @endif
                             </ul>
                         </td>
                         <td>
                             <ul class="percepciones-list">
+                                @php $totalPercepciones = 0; @endphp
                                 @foreach($empleado['percepcionesArray'] as $percepcion)
                                     @if($percepcion['aplicada'])
-                                        <li>{{ htmlentities($percepcion['nombre'], ENT_QUOTES, 'UTF-8') }} ({{ $percepcion['valorMostrado'] ?? '' }})</li>
+                                        <li>
+                                            {{ $percepcion['nombre'] }}:
+                                            <span class="text-right">
+                                                {{ $percepcion['valorMostrado'] ?? '' }}
+                                                @if(str_ends_with(trim($percepcion['valorMostrado']), '%'))
+                                                    (L. {{ number_format($percepcion['valorCalculado'], 2) }})
+                                                @endif
+                                            </span>
+                                        </li>
+                                        @php $totalPercepciones += $percepcion['valorCalculado'] ?? 0; @endphp
                                     @endif
                                 @endforeach
+                                @if(count($empleado['percepcionesArray']) > 0)
+                                <li class="strong">Total: L. {{ number_format($totalPercepciones, 2) }}</li>
+                                @else
+                                <li>Ninguna</li>
+                                @endif
                             </ul>
                         </td>
-                        <td class="text-right">L. {{ number_format($empleado['total'], 2) }}</td>
+                        <td class="text-right"><strong>L. {{ number_format($empleado['total'], 2) }}</strong></td>
                     </tr>
                 @endforeach
-                <tr class="total-row">
-                    <td colspan="4" class="text-right"><strong>TOTAL NOMINA:</strong></td>
-                    <td class="text-right"><strong>L. {{ number_format($totalGeneral, 2) }}</strong></td>
-                </tr>
             </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" class="text-right strong">TOTAL NÓMINA:</td>
+                    <td class="text-right strong">L. {{ number_format($totalGeneral, 2) }}</td>
+                </tr>
+            </tfoot>
         </table>
+        
+        <!-- Firmas -->
+        <div style="margin-top: 50px;">
+            <table style="width: 100%;">
+                <tr>
+                    <td style="width: 33%; text-align: center;">
+                        __________________________<br>
+                        Elaborado por
+                    </td>
+                    <td style="width: 33%; text-align: center;">
+                        __________________________<br>
+                        Revisado por
+                    </td>
+                    <td style="width: 33%; text-align: center;">
+                        __________________________<br>
+                        Autorizado por
+                    </td>
+                </tr>
+            </table>
+        </div>
 
         <div class="footer">
-            <p>Documento generado el {{ date('d/m/Y H:i:s') }}</p>
+            <p>Este documento es una representación digital de la nómina de empleados</p>
+            <p>Generado el {{ $fechaGeneracion }} - {{ $nomina->empresa->nombre ?? 'Empresa' }}</p>
         </div>
     </div>
 </body>

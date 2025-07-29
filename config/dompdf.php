@@ -18,7 +18,7 @@ return [
     /*
      * Dejavu Sans font is missing glyphs for converted entities, turn it off if you need to show € and £.
      */
-    'convert_entities' => false,
+    'convert_entities' => true,
 
     'options' => [
         /**
@@ -233,7 +233,7 @@ return [
          *
          * @var bool
          */
-        'enable_php' => true,
+        'enable_php' => false,
 
         /**
          * Rnable inline JavaScript
