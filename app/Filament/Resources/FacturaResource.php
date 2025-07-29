@@ -129,7 +129,7 @@ class FacturaResource extends Resource
         ];
     }
 
-     public static function getPages(): array
+    public static function getPages(): array
     {
         return [
             'index' => Pages\ListFacturas::route('/'),
@@ -137,7 +137,9 @@ class FacturaResource extends Resource
             
             // --- AÑADE ESTAS DOS LÍNEAS ---
             'generar-factura' => Pages\GenerarFactura::route('/generar'),
-            'view' => Pages\ViewFactura::route('/{record}'), // La necesitarás más tarde
+            'view' => Pages\ViewFactura::route('/{record}'), 
+            'registrar-pago' => Pages\RegistrarPago::route('/{record}/pago'),
+            'imprimir-factura' => Pages\ImprimirFactura::route('/{record}/imprimir-factura'),
         ];
     }
 

@@ -1,17 +1,17 @@
-<div>
+<div class="w-full px-0">
     @if($empleados->isEmpty())
         <div class="text-gray-500">No hay registros de pago en el historial.</div>
     @else
-        <div class="overflow-x-auto">
-            <table class="min-w-full divide-y divide-gray-200 border">
+        <div class="overflow-x-auto w-full">
+            <table class="min-w-full w-full divide-y divide-gray-200 border">
                 <thead>
                     <tr class="bg-gray-50">
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nombre</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Salario</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Deducciones</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Percepciones</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acciones</th>
+                        <th class="px-6 py-3 text-left text-base font-bold text-gray-700 uppercase tracking-wider">Nombre</th>
+                        <th class="px-6 py-3 text-left text-base font-bold text-gray-700 uppercase tracking-wider">Salario</th>
+                        <th class="px-6 py-3 text-left text-base font-bold text-gray-700 uppercase tracking-wider">Deducciones</th>
+                        <th class="px-6 py-3 text-left text-base font-bold text-gray-700 uppercase tracking-wider">Percepciones</th>
+                        <th class="px-6 py-3 text-left text-base font-bold text-gray-700 uppercase tracking-wider">Total</th>
+                        <th class="px-6 py-3 text-left text-base font-bold text-gray-700 uppercase tracking-wider">Acciones</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">

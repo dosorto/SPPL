@@ -19,7 +19,9 @@ use App\Filament\Resources\FacturaResource\Pages\EditFactura;
 use App\Filament\Resources\FacturaResource\Pages\ViewFactura;
 use App\Filament\Resources\FacturaResource\Pages\ListFacturas;
 use App\Models\Cliente;
+use App\Models\DetalleFactura;
 use App\Models\Empleado;
+use Filament\Forms\Components\Html;
 
 
 class GenerarFactura extends Page
@@ -36,6 +38,7 @@ class GenerarFactura extends Page
     public float $subtotal = 0;
     public float $impuestos = 0;
     public float $total = 0;
+    public ?string $categoriaClienteNombre = null;
 
     public function mount(): void
     {
@@ -49,95 +52,128 @@ class GenerarFactura extends Page
             'cantidad_busqueda' => 1,
             // Si se encontró al consumidor final, se usa su ID. Si no, se deja en blanco.
             'cliente_id' => $consumidorFinal ? $consumidorFinal->id : null,
+            'monto_pago' => 0,
         ]);
     }
 
-
-    public function form(Form $form): Form
+    public function updatedDataClienteId($clienteId): void
     {
-        return $form
-            ->schema([
-                Grid::make(['default' => 1, 'md' => 2])->schema([
-                    Select::make('cliente_id')
-                        ->label('Cliente')
-                        ->searchable()
-                        ->getSearchResultsUsing(function (string $search): array {
-                            $query = \App\Models\Cliente::query();
+        $cliente = Cliente::with('categoriaCliente')->find($clienteId);
 
-                    if (auth()->user()->hasRole('root')) {
-                        $query->withoutGlobalScopes();
-                    }
+        if ($cliente && $cliente->categoriaCliente) {
+            $this->categoriaClienteNombre = $cliente->categoriaCliente->nombre;
+        } else {
+            $this->categoriaClienteNombre = null;
+        }
 
-                    // Buscar por nombre o por DNI en la relación persona
-                    return $query
-                        ->whereHas('persona', function ($q) use ($search) {
-                            $q->where('dni', 'like', "%{$search}%")
-                            ->orWhere('primer_nombre', 'like', "%{$search}%")
-                            ->orWhere('segundo_nombre', 'like', "%{$search}%")
-                            ->orWhere('primer_apellido', 'like', "%{$search}%")
-                            ->orWhere('segundo_apellido', 'like', "%{$search}%");
-                        })
-                        ->with('persona')
-                        ->limit(10)
-                        ->get()
-                        ->mapWithKeys(function ($cliente) {
-                            $persona = $cliente->persona;
-                            if (!$persona) return [];
-                            $nombreCompleto = trim(
-                                "{$persona->primer_nombre} {$persona->segundo_nombre} {$persona->primer_apellido} {$persona->segundo_apellido}"
-                            );
-                            return [
-                                $cliente->id => "{$nombreCompleto} ({$persona->dni})"
-                            ];
-                        })
-                        ->toArray();
-                })
-                ->getOptionLabelUsing(function ($value) {
-                    $cliente = \App\Models\Cliente::with('persona')->find($value);
-                    if (!$cliente || !$cliente->persona) return null;
-                    $persona = $cliente->persona;
-                    $nombreCompleto = trim(
-                        "{$persona->primer_nombre} {$persona->segundo_nombre} {$persona->primer_apellido} {$persona->segundo_apellido}"
-                    );
-                    return "{$nombreCompleto} ({$persona->dni})";
-                })
-                ->required()
-                ->placeholder('Busque por nombre o DNI del cliente...'),
+        $this->dispatch('refresh');
+    }
+
+
+public function form(Form $form): Form
+{
+    return $form
+        ->schema([
+            Grid::make(12)->schema([
+                Select::make('cliente_id')
+                    ->label('Cliente')
+                    ->searchable()
+                    ->getSearchResultsUsing(function (string $search): array {
+                        $query = \App\Models\Cliente::query();
+
+                        if (auth()->user()->hasRole('root')) {
+                            $query->withoutGlobalScopes();
+                        }
+
+                        return $query
+                            ->whereHas('persona', function ($q) use ($search) {
+                                $q->where('dni', 'like', "%{$search}%")
+                                    ->orWhere('primer_nombre', 'like', "%{$search}%")
+                                    ->orWhere('segundo_nombre', 'like', "%{$search}%")
+                                    ->orWhere('primer_apellido', 'like', "%{$search}%")
+                                    ->orWhere('segundo_apellido', 'like', "%{$search}%");
+                            })
+                            ->with('persona')
+                            ->limit(10)
+                            ->get()
+                            ->mapWithKeys(function ($cliente) {
+                                $persona = $cliente->persona;
+                                if (!$persona) return [];
+                                $nombreCompleto = trim("{$persona->primer_nombre} {$persona->segundo_nombre} {$persona->primer_apellido} {$persona->segundo_apellido}");
+                                return [
+                                    $cliente->id => "{$nombreCompleto} ({$persona->dni})"
+                                ];
+                            })
+                            ->toArray();
+                    })
+                    ->getOptionLabelUsing(function ($value) {
+                        $cliente = \App\Models\Cliente::with('persona')->find($value);
+                        if (!$cliente || !$cliente->persona) return null;
+                        $persona = $cliente->persona;
+                        $nombreCompleto = trim("{$persona->primer_nombre} {$persona->segundo_nombre} {$persona->primer_apellido} {$persona->segundo_apellido}");
+                        return "{$nombreCompleto} ({$persona->dni})";
+                    })
+                    ->required()
+                    ->placeholder('Busque por nombre o DNI del cliente...')
+                    ->columnSpan(5),
+
+                
 
                 Select::make('tipo_precio')
-                        ->label('Aplicar Precio Global')
-                        ->options([
-                            'precio_detalle' => 'Precio Detalle',
-                            'precio_mayorista' => 'Precio Mayorista',
-                            'precio_promocion' => 'Precio de Promoción',
-                        ])
-                        ->live() 
-                        ->required(),
-                ]),
-                Grid::make(['default' => 1, 'md' => 3])
-                    ->extraAttributes(['class' => 'items-end']) 
-                    ->schema([
-                        TextInput::make('sku_busqueda')
-                            ->label('Buscar por Código de Barras / SKU')
-                            ->placeholder('Escanee o ingrese el código...')
-                            ->autofocus()
-                            ->live(debounce: 500)
-                            ->extraAttributes(['wire:keydown.enter.prevent' => 'agregarProducto']),
-                        TextInput::make('cantidad_busqueda')
-                            ->label('Cantidad')
-                            ->numeric()
-                            ->default(1)
-                            ->required(),
+                    ->label('Aplicar Precio Global')
+                    ->options([
+                        'precio_detalle' => 'Precio Detalle',
+                        'precio_mayorista' => 'Precio Mayorista',
+                        'precio_promocion' => 'Precio de Promoción',
+                    ])
+                    ->live()
+                    ->required()
+                    ->columnSpan(5),
+
+                Forms\Components\Toggle::make('usar_cai')
+                    ->label('¿Desea asignar CAI?')
+                    ->default(true)
+                    ->reactive()
+                    ->afterStateUpdated(fn ($state, $set) => $set('numero_factura', null))
+                    ->inline(false)
+                    ->columnSpan(2),
+            ]),
+
+            Grid::make(12)
+                ->extraAttributes(['class' => 'items-end'])
+                ->schema([
+                    TextInput::make('cantidad_busqueda')
+                        ->label('Cantidad')
+                        ->numeric()
+                        ->default(1)
+                        ->required()
+                        ->columnSpan(3),
+
+                    TextInput::make('sku_busqueda')
+                        ->label('Buscar por Código de Barras / SKU')
+                        ->placeholder('Escanee o ingrese el código...')
+                        ->autofocus()
+                        ->live(debounce: 500)
+                        ->extraAttributes(['wire:keydown.enter.prevent' => 'agregarProducto'])
+                        ->columnSpan(6),
+
+                    Forms\Components\Group::make([
                         Forms\Components\Actions::make([
                             Forms\Components\Actions\Action::make('agregar')
                                 ->label('Agregar Producto')
                                 ->icon('heroicon-o-plus-circle')
                                 ->action('agregarProducto')
+                                ->extraAttributes(['class' => 'w-full h-full']),
                         ]),
+                    ])
+                    ->extraAttributes(['class' => 'mt-6'])
+                    ->columnSpan(['md' => 2.5]),
                 ]),
-            ])
-            ->statePath('data');
-    }
+        ])
+        ->statePath('data');
+}
+
+
 
     public function updatedDataTipoPrecio($value): void
     {
@@ -146,19 +182,43 @@ class GenerarFactura extends Page
         }
 
         $tipoPrecioSeleccionado = $value;
+        $data = $this->form->getState();
+
+        $cliente = Cliente::with('categoriaCliente.categoriasProductos')->find($data['cliente_id']);
+
         $nuevasLineas = [];
 
         foreach ($this->lineasVenta as $productoId => $linea) {
-            $inventarioProducto = InventarioProductos::find($linea['inventario_id']);
+            $inventarioProducto = InventarioProductos::with('producto')->find($linea['inventario_id']);
             if ($inventarioProducto) {
-                $linea['precio_unitario'] = $inventarioProducto->{$tipoPrecioSeleccionado};
+                $precioOriginal = $inventarioProducto->{$tipoPrecioSeleccionado};
+                $descuento = 0;
+
+                if ($cliente && $cliente->categoriaCliente) {
+                    $categoriaRelacionada = $cliente->categoriaCliente
+                        ->categoriasProductos()
+                        ->where('categoria_producto_id', $inventarioProducto->producto->categoria_id)
+                        ->wherePivot('activo', true)
+                        ->first();
+
+                    if ($categoriaRelacionada) {
+                        $descuento = $categoriaRelacionada->pivot->descuento_porcentaje ?? 0;
+                    }
+                }
+
+                $precioConDescuento = round($precioOriginal * (1 - ($descuento / 100)), 2);
+
+                $linea['precio_unitario'] = $precioConDescuento;
                 $linea['tipo_precio_key'] = $tipoPrecioSeleccionado;
                 $linea['tipo_precio_label'] = $this->getTipoPrecioLabel($tipoPrecioSeleccionado);
+                $linea['descuento_aplicado'] = $descuento;
             }
+
             $nuevasLineas[$productoId] = $linea;
         }
 
         $this->lineasVenta = $nuevasLineas;
+        $this->dispatch('refresh');
         $this->calcularTotales();
     }
     
@@ -196,7 +256,27 @@ class GenerarFactura extends Page
             return;
         }
 
+        
+
         $productoId = $inventarioProducto->id;
+
+        $cliente = Cliente::with('categoriaCliente.categoriasProductos')->find($data['cliente_id']);
+        $descuento = 0;
+
+        if ($cliente && $cliente->categoriaCliente) {
+            $categoriaRelacionada = $cliente->categoriaCliente
+                ->categoriasProductos()
+                ->where('categoria_producto_id', $inventarioProducto->producto->categoria_id)
+                ->wherePivot('activo', true)
+                ->first();
+
+            if ($categoriaRelacionada) {
+                $descuento = $categoriaRelacionada->pivot->descuento_porcentaje ?? 0;
+            }
+        }
+
+        $precioOriginal = $inventarioProducto->{$tipoPrecio};
+        $precioConDescuento = round($precioOriginal * (1 - ($descuento / 100)), 2);
 
         if (isset($this->lineasVenta[$productoId])) {
             $this->lineasVenta[$productoId]['cantidad'] += $cantidad;
@@ -205,11 +285,12 @@ class GenerarFactura extends Page
                 'inventario_id' => $inventarioProducto->id,
                 'nombre' => $inventarioProducto->producto->nombre,
                 'sku' => $inventarioProducto->producto->sku,
-                'precio_unitario' => $inventarioProducto->{$tipoPrecio},
+                'precio_unitario' => $precioConDescuento,
                 'cantidad' => $cantidad,
                 'tipo_precio_key' => $tipoPrecio,
                 'tipo_precio_label' => $this->getTipoPrecioLabel($tipoPrecio),
                 'isv_producto' => $inventarioProducto->producto->isv ?? 0,
+                'descuento_aplicado' => $descuento,
             ];
         }
 
@@ -271,17 +352,20 @@ class GenerarFactura extends Page
             // Se suma al subtotal y a los impuestos generales de la factura
             $this->subtotal += $subtotalLinea;
             $this->impuestos += $impuestoLinea;
+
         }
 
         // El total general ahora es la suma del subtotal + los impuestos calculados
         $this->total = $this->subtotal + $this->impuestos;
+
+        // --- FIN DE LA LÓGICA DE CÁLCULO MODIFICADA ---
     }
 
     protected function getFormActions(): array
     {
         return [
             Action::make('submit')
-                ->label('Finalizar y Generar Factura')
+                ->label('Finalizar y Agregar Metodos de Pago')
                 ->color('success')
                 ->icon('heroicon-o-document-check')
                 ->requiresConfirmation()
@@ -308,7 +392,7 @@ class GenerarFactura extends Page
                     throw new \Exception('Cliente no encontrado.');
                 }
 
-                 $empleado = auth()->user()->empleado;
+                $empleado = auth()->user()->empleado;
 
                 // 2. Validar que el usuario actual ESTÉ enlazado a un empleado.
                 //    Si no lo está, no puede generar facturas. Es una regla de negocio importante.
@@ -321,6 +405,24 @@ class GenerarFactura extends Page
                     throw new \Exception('No se encontró un empleado para asignar a la factura. Verifique que exista al menos un empleado en el sistema.');
                 }
 
+                // 4. Obtener el CAI activo para la empresa del cliente.
+                $cai = null;
+                $numeroFactura = null;
+
+                if (!empty($data['usar_cai'])) {
+                    $cai = \App\Models\Cai::obtenerCaiSeguro($cliente->empresa_id);
+
+                    if (!$cai) {
+                        throw new \Exception('No hay un CAI activo disponible para esta empresa. No se puede emitir factura con CAI.');
+                    }
+
+                    $numeroFactura = str_pad($cai->numero_actual + 1, 8, '0', STR_PAD_LEFT);
+                } else {
+                    // Generar un número alternativo sin CAI (ej: TEMP-00000123)
+                    $ultimoId = Factura::max('id') + 1;
+                    $numeroFactura = 'TEMP-' . str_pad($ultimoId, 8, '0', STR_PAD_LEFT);
+                }
+
                 $factura = Factura::create([
                     'cliente_id' => $cliente->id,
                     'empleado_id' => $empleado->id,
@@ -330,26 +432,45 @@ class GenerarFactura extends Page
                     'subtotal' => $this->subtotal,
                     'impuestos' => $this->impuestos,
                     'total' => $this->total,
+                    'numero_factura' => $numeroFactura,
+                    'cai_id' => $cai?->id,
                 ]);
+            
+                if ($cai) {
+                    $cai->increment('numero_actual');
+                }
+
+                // 5. Registrar el pago si se proporcionó información de pago.
+                
 
                 foreach ($this->lineasVenta as $linea) {
-                    detalle_factura::create([
+                    $inventario = auth()->user()->hasRole('root')
+                        ? InventarioProductos::withoutGlobalScopes()->find($linea['inventario_id'])
+                        : InventarioProductos::find($linea['inventario_id']);
+
+                    $costo = $inventario?->precio_costo ?? 0;
+
+                    DetalleFactura::create([
                         'factura_id' => $factura->id,
                         'producto_id' => $linea['inventario_id'],
                         'cantidad' => $linea['cantidad'],
                         'precio_unitario' => $linea['precio_unitario'],
+                        'descuento_aplicado' => $linea['descuento_aplicado'] ?? 0,
                         'sub_total' => $linea['cantidad'] * $linea['precio_unitario'],
+                        'isv_aplicado'       => $linea['isv_producto'] ?? 0,
+                        'costo_unitario' => $costo,
+                        'utilidad_unitaria' => $linea['precio_unitario'] - $costo,
                     ]);
-                    
-                    $inventario = auth()->user()->hasRole('root')
-                        ? InventarioProductos::withoutGlobalScopes()->find($linea['inventario_id'])
-                        : InventarioProductos::find($linea['inventario_id']);
-                    
+
                     $inventario?->decrement('cantidad', $linea['cantidad']);
                 }
                 
-                Notification::make()->success()->title('¡Factura Generada!')->send();
-                redirect(FacturaResource::getUrl('view', ['record' => $factura]));
+                Notification::make()
+                    ->success()
+                    ->title('¡Factura Generada!')
+                    ->body("Factura No. {$numeroFactura} registrada correctamente.")
+                    ->send();
+                redirect(FacturaResource::getUrl('registrar-pago', ['record' => $factura]));
             });
         } catch (\Exception $e) {
             Notification::make()->danger()->title('Error al generar la factura')->body($e->getMessage())->send();

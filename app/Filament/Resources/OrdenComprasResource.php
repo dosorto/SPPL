@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrdenComprasResource\Pages;
 use App\Models\OrdenCompras;
+use App\Models\TipoOrdenCompras;
 use App\Models\OrdenComprasDetalle;
 use Filament\Tables\Actions\Action;
 use Filament\Forms;
@@ -14,6 +15,8 @@ use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 use Illuminate\Support\Facades\Auth;
 use App\Filament\Pages\RecibirOrdenCompra;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Livewire\Livewire;
 
 class OrdenComprasResource extends Resource
 {
@@ -37,7 +40,13 @@ class OrdenComprasResource extends Resource
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->optionsLimit(100),
+                            ->optionsLimit(100)
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set, $livewire) {
+                                $livewire->dispatch('updateFormState', [
+                                    'tipo_orden_compra_id' => $state,
+                                ]);
+                            }),
                         Forms\Components\Select::make('proveedor_id')
                             ->label('Proveedor')
                             ->relationship('proveedor', 'nombre_proveedor')
@@ -45,14 +54,22 @@ class OrdenComprasResource extends Resource
                             ->searchable()
                             ->preload()
                             ->optionsLimit(100)
-                            ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set) {
+                            ->live()
+                            ->afterStateUpdated(function ($state, callable $set, $livewire) {
                                 $proveedor = \App\Models\Proveedores::find($state);
                                 $set('empresa_id', $proveedor?->empresa_id ?? null);
+                                $livewire->dispatch('updateFormState', [
+                                    'proveedor_id' => $state,
+                                    'empresa_id' => $proveedor?->empresa_id ?? null,
+                                ]);
                             })
-                            ->afterStateHydrated(function ($state, callable $set) {
+                            ->afterStateHydrated(function ($state, callable $set, $livewire) {
                                 $proveedor = \App\Models\Proveedores::find($state);
                                 $set('empresa_id', $proveedor?->empresa_id ?? null);
+                                $livewire->dispatch('updateFormState', [
+                                    'proveedor_id' => $state,
+                                    'empresa_id' => $proveedor?->empresa_id ?? null,
+                                ]);
                             }),
                         Forms\Components\Hidden::make('empresa_id')
                             ->required()
@@ -60,12 +77,24 @@ class OrdenComprasResource extends Resource
                         Forms\Components\DatePicker::make('fecha_realizada')
                             ->label('Fecha Realizada')
                             ->required()
-                            ->default(now()),
+                            ->default(now())
+                            ->live()
+                            ->afterStateUpdated(function ($state, $livewire) {
+                                $livewire->dispatch('updateFormState', [
+                                    'fecha_realizada' => $state,
+                                ]);
+                            }),
                         Forms\Components\Textarea::make('descripcion')
                             ->label('Descripción')
                             ->nullable()
                             ->maxLength(65535)
-                            ->rows(4),
+                            ->rows(4)
+                            ->live()
+                            ->afterStateUpdated(function ($state, $livewire) {
+                                $livewire->dispatch('updateFormState', [
+                                    'descripcion' => $state,
+                                ]);
+                            }),
                         Forms\Components\Hidden::make('created_by')
                             ->default(fn () => Auth::id() ?: null),
                         Forms\Components\Hidden::make('updated_by')
@@ -73,84 +102,20 @@ class OrdenComprasResource extends Resource
                     ])
                     ->columns(2)
                     ->collapsible(),
-                Forms\Components\Section::make('Detalles de la Orden')
-                    ->icon('heroicon-o-shopping-cart')
-                    ->schema([
-                        Forms\Components\Repeater::make('detalles')
-                            ->label('Productos')
-                            ->relationship('detalles')
-                            ->schema([
-                                Forms\Components\Select::make('producto_id')
-                                ->label('Producto')
-                                ->relationship('producto', 'nombre')
-                                ->searchable()
-                                ->required()
-                                ->preload()
-                                ->reactive()
-                                ->optionsLimit(50)
-                                ->getSearchResultsUsing(function (string $search, callable $get) {
-                                    $tipoOrdenId = $get('../../tipo_orden_compra_id');
+                    Forms\Components\Section::make('Detalles de la Orden')
+                        ->icon('heroicon-o-shopping-cart')
+                        ->schema([
+                       
 
-                                    $query = \App\Models\Productos::with(['categoria', 'subcategoria'])
-                                        ->where(function ($q) use ($search) {
-                                            $q->where('nombre', 'like', "%{$search}%")
-                                            ->orWhere('codigo', 'like', "%{$search}%")
-                                            ->orWhere('sku', 'like', "%{$search}%");
-                                        });
+                        Forms\Components\View::make('livewire.wrap-orden-compra-detalles-form')
+                        ->label('Detalles de la Orden')
+                        ->viewData(fn (\Filament\Forms\Get $get) => [
+                            'record' => $get('id') ? \App\Models\OrdenCompras::with('detalles.producto')->find($get('id')) : null,
+                        ])
 
-                                    if ($tipoOrdenId) {
-                                        $tipoOrden = \App\Models\TipoOrdenCompra::with(['categoria', 'subcategoria'])->find($tipoOrdenId);
-
-                                        if ($tipoOrden?->categoria_id) {
-                                            $query->where('categoria_id', $tipoOrden->categoria_id);
-                                        }
-
-                                        if ($tipoOrden?->subcategoria_id) {
-                                            $query->where('subcategoria_id', $tipoOrden->subcategoria_id);
-                                        }
-                                    }
-
-                                    if (Auth::check() && !Auth::user()->hasRole('root')) {
-                                        $query->where('empresa_id', Auth::user()->empresa_id);
-                                    }
-
-                                    return $query->limit(50)->pluck('nombre', 'id');
-                                })
-                                ->getOptionLabelFromRecordUsing(function ($record) {
-                                    return sprintf(
-                                        '%s (Categoría: %s, Subcategoría: %s, SKU: %s)',
-                                        $record->nombre,
-                                        optional($record->categoria)->nombre ?? 'Sin categoría',
-                                        optional($record->subcategoria)->nombre ?? 'Sin subcategoría',
-                                        $record->sku
-                                    );
-                                }),
+                        ->columnSpanFull()
 
 
-                            
-                                Forms\Components\TextInput::make('cantidad')
-                                    ->label('Cantidad')
-                                    ->required()
-                                    ->numeric()
-                                    ->minValue(1),
-                                Forms\Components\TextInput::make('precio')
-                                    ->label('Precio Unitario')
-                                    ->required()
-                                    ->numeric()
-                                    ->prefix('HNL'),
-                                Forms\Components\Hidden::make('created_by')
-                                    ->default(fn () => Auth::id() ?: null),
-                                Forms\Components\Hidden::make('updated_by')
-                                    ->default(fn () => Auth::id() ?: null),
-                            ])
-                            ->columns(3)
-                            ->required()
-                            ->disabled(function ($get) {
-                                return !($get('tipo_orden_compra_id') &&
-                                         $get('proveedor_id') &&
-                                         $get('empresa_id') &&
-                                         $get('fecha_realizada'));
-                            }),
                     ])
                     ->collapsible(),
             ])
@@ -215,6 +180,20 @@ class OrdenComprasResource extends Resource
                         ->color('success')
                         ->hidden(fn (OrdenCompras $record): bool => $record->estado === 'Recibida')
                         ->url(fn (OrdenCompras $record): string => RecibirOrdenCompra::getUrl(['orden_id' => $record->id])),
+                    Action::make('generatePdf')
+                        ->label('Generar PDF')
+                        ->icon('heroicon-o-document-arrow-down')
+                        ->color('primary')
+                        ->hidden(fn (OrdenCompras $record): bool => $record->estado !== 'Recibida')
+                        ->action(function (OrdenCompras $record) {
+                            $pdf = Pdf::loadView('pdf.orden-compra', [
+                                'orden' => $record->load(['empresa', 'proveedor', 'tipoOrdenCompra', 'detalles.producto']),
+                                'fechaGeneracion' => now()->format('d/m/Y H:i:s'),
+                            ]);
+                            return response()->streamDownload(function () use ($pdf) {
+                                echo $pdf->output();
+                            }, "orden-compra-{$record->id}.pdf");
+                        }),
                     Tables\Actions\DeleteAction::make()->label('Eliminar')
                         ->disabled(fn (OrdenCompras $record): bool => $record->estado === 'Recibida'),
                 ]),
@@ -235,7 +214,7 @@ class OrdenComprasResource extends Resource
     public static function getRelations(): array
     {
         return [
-            \App\Filament\Resources\OrdenComprasResource\RelationManagers\DetallesRelationManager::class,
+            //\App\Filament\Resources\OrdenComprasResource\RelationManagers\DetallesRelationManager::class,
         ];
     }
 

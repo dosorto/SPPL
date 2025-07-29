@@ -20,8 +20,9 @@ class DetalleNominas extends Model
         'sueldo_bruto',
         'empresa_id',
         'deducciones',
-        'deducciones_excluidas', // Usaremos un campo existente o ignorar este atributo
+        'deducciones_detalle',
         'percepciones',
+        'percepciones_detalle',
         'sueldo_neto',
         'created_by',
         'updated_by',
@@ -44,5 +45,17 @@ class DetalleNominas extends Model
     public function empresa()
     {
         return $this->belongsTo(Empresa::class, 'empresa_id');
+    }
+
+    // Relación para deducciones asociadas a este detalle de nómina
+    public function empleadoDeducciones()
+    {
+        return $this->hasMany(\App\Models\EmpleadoDeducciones::class, 'empleado_id', 'empleado_id');
+    }
+
+    // Relación para percepciones asociadas a este detalle de nómina
+    public function empleadoPercepciones()
+    {
+        return $this->hasMany(\App\Models\EmpleadoPercepciones::class, 'empleado_id', 'empleado_id');
     }
 }
