@@ -18,10 +18,12 @@ class CategoriaClienteProductoResource extends Resource
 {
     protected static ?string $model = CategoriaClienteProducto::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-tag';
-    protected static ?string $navigationGroup = 'Ventas';
-    protected static ?string $navigationLabel = 'Categorías Cliente-Producto';
-    protected static ?int $navigationSort = 6;
+    // Recurso desactivado - funcionalidad fusionada con CategoriaClienteResource
+    protected static ?string $navigationIcon = null;
+    protected static ?string $navigationGroup = null;
+    protected static ?string $navigationLabel = null;
+    protected static ?int $navigationSort = null;
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function form(Form $form): Form
     {

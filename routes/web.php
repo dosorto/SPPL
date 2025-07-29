@@ -1,5 +1,15 @@
 <?php
 
+
+
+// Ruta directa para descargar PDF de nómina
+use App\Filament\Resources\NominaResource\Pages\ViewNomina;
+Route::get('/admin/nominas/{nomina}/generar-pdf', function ($nomina) {
+    $page = app(ViewNomina::class);
+    $page->record = \App\Models\Nominas::findOrFail($nomina);
+    return $page->generarPDF();
+})->name('nominas.generar-pdf')->middleware(['web', 'auth']);
+
 use Illuminate\Support\Facades\Route;
 use App\Models\Factura;
 

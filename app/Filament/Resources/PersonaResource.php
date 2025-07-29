@@ -18,7 +18,7 @@ class PersonaResource extends Resource
 {
     protected static ?string $model = Persona::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-user';
 
     public static function form(Form $form): Form
     {
@@ -266,20 +266,16 @@ class PersonaResource extends Resource
             
             // Tarjeta de Datos del Cliente
             Forms\Components\Card::make([
-                Forms\Components\Grid::make(4)
+                Forms\Components\Grid::make(3)
                     ->schema([
                         Forms\Components\Placeholder::make('numero_cliente')
                             ->label('Número de Cliente')
-                            ->content(fn ($record) => $record->numero_cliente ?? 'No especificado'),
-                        Forms\Components\Placeholder::make('dni')
-                            ->label('DNI')
-                            ->content(fn ($record) => $record->dni ?? 'No especificado'),
+                            ->content(fn ($record) => optional($record->cliente)->numero_cliente ?? 'No especificado'),
                         Forms\Components\Placeholder::make('rtn')
                             ->label('RTN')
                             ->content(function ($record) {
-                                return isset($record->RTN) && !empty($record->RTN) 
-                                    ? $record->RTN 
-                                    : 'No especificado';
+                                $rtn = optional($record->cliente)->rtn;
+                                return ($rtn !== null && $rtn !== '') ? $rtn : 'No especificado';
                             }),
                         Forms\Components\Placeholder::make('empresa')
                             ->label('Empresa')

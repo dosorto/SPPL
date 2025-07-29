@@ -13,12 +13,25 @@ class EditPersona extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
+            Actions\ViewAction::make(),
             Actions\DeleteAction::make(),
         ];
     }
 
+    protected function mutateFormDataBeforeFill(array $data): array
+    {
+        // Asegurar que todos los campos estén disponibles para el formulario
+        return $data;
+    }
+
+    protected function mutateFormDataBeforeSave(array $data): array
+    {
+        // Los datos se guardan directamente porque Persona no tiene relaciones complejas como Cliente
+        return $data;
+    }
+
     protected function getRedirectUrl(): string
     {
-        return $this->getResource()::getUrl('index');
+        return $this->getResource()::getUrl('view', ['record' => $this->getRecord()]);
     }
 }

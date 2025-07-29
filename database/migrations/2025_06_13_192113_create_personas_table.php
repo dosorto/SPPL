@@ -18,10 +18,13 @@ return new class extends Migration
             $table->string('primer_apellido', 50);
             $table->string('segundo_apellido', 50)->nullable(); // Opcional
             $table->string('dni', 20)->unique(); 
+            $table->enum('tipo_persona', ['natural', 'juridica'])->default('natural');
             $table->text('direccion');
             // Claves foráneas
             $table->foreignId('municipio_id')->constrained('municipios');
+            $table->foreignId('departamento_id')->nullable()->constrained('departamentos');
             $table->foreignId('pais_id')->constrained('paises')->nullable();
+            $table->foreignId('empresa_id')->nullable()->constrained('empresas');
 
             $table->string('telefono', 20)->nullable(); // Opcional
             $table->enum('sexo', ['MASCULINO', 'FEMENINO', 'OTRO']);

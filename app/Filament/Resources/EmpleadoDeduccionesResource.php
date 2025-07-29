@@ -36,18 +36,11 @@ class EmpleadoDeduccionesResource extends Resource
                     ->required()
                     ->reactive(),
 
-
+                // Mostrar todas las deducciones disponibles
                 Select::make('deduccion_id')
                     ->label('Deducción')
-                    ->options(function (callable $get) {
-                        $empleadoId = $get('empleado_id');
-                        if (!$empleadoId) return [];
-                        $empleado = \App\Models\Empleado::find($empleadoId);
-                        if (!$empleado || empty($empleado->deducciones_aplicables)) return [];
-                        // Obtener solo las deducciones seleccionadas en el wizard (campo deducciones_aplicables)
-                        return \App\Models\Deducciones::whereIn('id', $empleado->deducciones_aplicables)
-                            ->pluck('deduccion', 'id')
-                            ->toArray();
+                    ->options(function () {
+                        return \App\Models\Deducciones::all()->pluck('deduccion', 'id')->toArray();
                     })
                     ->required()
                     ->rule(function ($get, $context) {
