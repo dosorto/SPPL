@@ -21,6 +21,7 @@ class PersonaFactory extends Factory
             'dni' => $this->faker->unique()->randomNumber(8),
             'direccion' => $this->faker->address(),
             'municipio_id' => Municipio::inRandomOrder()->first()->id ?? 1,
+            'departamento_id' => \App\Models\Departamento::inRandomOrder()->first()->id ?? 1,
             'telefono' => $this->faker->phoneNumber(),
             'sexo' => $this->faker->randomElement(['MASCULINO', 'FEMENINO']), // Ajuste para coincidir con ENUM
             'fecha_nacimiento' => $this->faker->dateTimeBetween('-80 years', '-18 years')->format('Y-m-d'),

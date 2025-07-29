@@ -81,6 +81,17 @@ class EmpleadoPersepcionesResource extends Resource
                     ->minValue(1)
                     ->visible(fn ($get) => optional(\App\Models\Percepciones::find($get('percepcion_id')))->percepcion === 'Horas Extras')
                     ->dehydrated(),
+                    
+                \Filament\Forms\Components\TextInput::make('valor')
+                    ->label('Valor específico')
+                    ->helperText('Deje en blanco para usar el valor predeterminado de la percepción')
+                    ->numeric()
+                    ->minValue(0)
+                    ->visible(fn ($get) => in_array(
+                        optional(\App\Models\Percepciones::find($get('percepcion_id')))->percepcion, 
+                        ['Aguinaldo', 'Bono', 'Comisión']
+                    ))
+                    ->dehydrated(),
 
                 // DatePicker oculto: la fecha se asignará automáticamente en el modelo
             ]);

@@ -42,6 +42,14 @@ class EditEmpleado extends EditRecord
         // Guardar deducciones seleccionadas en el campo deducciones_aplicables
         $data['deducciones_aplicables'] = $data['deducciones'] ?? [];
         unset($data['deducciones']);
+        // Sincronizar deducciones seleccionadas con la relación deducciones del empleado
+        if (isset($data['deducciones_aplicables'])) {
+            $syncData = [];
+            foreach ($data['deducciones_aplicables'] as $deduccionId) {
+                $syncData[$deduccionId] = ['empresa_id' => $empleado->empresa_id];
+            }
+            $empleado->deducciones()->sync($syncData);
+        }
         return $data;
     }
 

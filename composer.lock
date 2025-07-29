@@ -4,11 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-<<<<<<< HEAD
     "content-hash": "773345549befdf6908313c0e0f43937f",
-=======
-    "content-hash": "b76c5083299dc4d2291961e8450ada91",
->>>>>>> JoseR
     "packages": [
         {
             "name": "anourvalar/eloquent-serialize",
@@ -4117,16 +4113,16 @@
         },
         {
             "name": "picqer/php-barcode-generator",
-            "version": "v3.2.2",
+            "version": "v3.2.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/picqer/php-barcode-generator.git",
-                "reference": "a1d1e687c4a758be759383a709b6205e445091ec"
+                "reference": "fbb1de7454fcc8600133818bc1103abeb86479a4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/picqer/php-barcode-generator/zipball/a1d1e687c4a758be759383a709b6205e445091ec",
-                "reference": "a1d1e687c4a758be759383a709b6205e445091ec",
+                "url": "https://api.github.com/repos/picqer/php-barcode-generator/zipball/fbb1de7454fcc8600133818bc1103abeb86479a4",
+                "reference": "fbb1de7454fcc8600133818bc1103abeb86479a4",
                 "shasum": ""
             },
             "require": {
@@ -4192,9 +4188,9 @@
             ],
             "support": {
                 "issues": "https://github.com/picqer/php-barcode-generator/issues",
-                "source": "https://github.com/picqer/php-barcode-generator/tree/v3.2.2"
+                "source": "https://github.com/picqer/php-barcode-generator/tree/v3.2.3"
             },
-            "time": "2025-06-03T09:09:33+00:00"
+            "time": "2025-07-29T07:15:20+00:00"
         },
         {
             "name": "psr/cache",
@@ -10308,12 +10304,12 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }

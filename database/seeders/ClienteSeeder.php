@@ -16,14 +16,25 @@ class ClienteSeeder extends Seeder
         $faker = Faker::create('es_ES');
         $empresas = Empresa::all();
         $municipios = Municipio::all(); 
+        $departamentosValidos = \App\Models\Departamento::pluck('id')->toArray();
 
         if ($empresas->isEmpty() || $municipios->isEmpty()) { 
             $this->command->error('No hay empresas o municipios. Ejecuta sus seeders primero.');
             return;
         }
 
-        // --- Lógica para "Consumidor Final" (Tu lógica aquí ya es correcta) ---
-        $this->command->info('Asegurando la existencia del cliente "Consumidor Final"...');
+          $this->command->info('Asegurando la existencia del cliente "Consumidor Final"...');
+
+        // 1. Busca o crea UNA ÚNICA persona para "Consumidor Final"
+        // Se le asigna la primera empresa y municipio solo para cumplir con las restricciones de la tabla,
+        // pero esta persona es conceptualmente global.
+        $municipioDefault = $municipios->first();
+        $empresaDefaultParaPersona = $empresas->first();
+
+        $departamentoIdDefault = $municipioDefault->departamento_id;
+        if (!isset($departamentoIdDefault) || !in_array($departamentoIdDefault, $departamentosValidos)) {
+            $departamentoIdDefault = null;
+        }
         $personaConsumidorFinal = Persona::firstOrCreate(
             ['dni' => '0000000000000'],
             [
@@ -33,8 +44,10 @@ class ClienteSeeder extends Seeder
                 'telefono' => '0000-0000',
                 'sexo' => 'MASCULINO',
                 'fecha_nacimiento' => now(),
-                'municipio_id' => $municipios->first()->id,
-                'pais_id' => $municipios->first()->departamento->pais_id,
+                'empresa_id' => $empresaDefaultParaPersona->id,
+                'municipio_id' => $municipioDefault->id,
+                'departamento_id' => $departamentoIdDefault,
+                'pais_id' => $municipioDefault->departamento->pais_id,
             ]
         );
 
@@ -58,7 +71,11 @@ class ClienteSeeder extends Seeder
             $empresa = $empresas->random();
             $municipio = $municipios->random(); 
 
-            // 1. Crear una Persona GLOBAL, sin empresa_id
+            $departamentoId = $municipio->departamento_id;
+            if (!isset($departamentoId) || !in_array($departamentoId, $departamentosValidos)) {
+                $departamentoId = null;
+            }
+            // Crear una Persona para el cliente
             $persona = Persona::create([
                 'primer_nombre' => $faker->firstName,
                 'primer_apellido' => $faker->lastName,
@@ -67,9 +84,10 @@ class ClienteSeeder extends Seeder
                 'telefono' => $faker->phoneNumber,
                 'sexo' => $faker->randomElement(['MASCULINO', 'FEMENINO']),
                 'fecha_nacimiento' => $faker->dateTimeBetween('-70 years', '-18 years'),
+                'empresa_id' => $empresa->id,
                 'municipio_id' => $municipio->id,
+                'departamento_id' => $departamentoId,
                 'pais_id' => $municipio->departamento->pais_id,
-                // El campo 'empresa_id' se ha eliminado de aquí, ¡lo cual es correcto!
             ]);
 
             // 2. Crear el Cliente que ENLAZA la Persona con la Empresa

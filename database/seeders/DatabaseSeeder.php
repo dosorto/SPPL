@@ -83,6 +83,7 @@ class DatabaseSeeder extends Seeder
                 'fecha_nacimiento' => now(),
                 'municipio_id' => $empresa->municipio_id, // Usamos datos de la empresa
                 'pais_id' => $empresa->pais_id,
+                'departamento_id' => $empresa->departamento_id, // Añadimos el departamento_id
             ]
         );
 
@@ -129,6 +130,7 @@ class DatabaseSeeder extends Seeder
                 'empresa_id' => $empresa->id,
                 'municipio_id' => $empresa->municipio_id,
                 'pais_id' => $empresa->pais_id,
+                'departamento_id' => $empresa->departamento_id, // Añadimos el departamento_id
             ]
         );
 
