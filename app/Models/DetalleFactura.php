@@ -19,6 +19,7 @@ class DetalleFactura extends Model
         'cantidad',
         'precio_unitario',
         'sub_total',
+        'descuento_aplicado',
         'isv_aplicado',
         'costo_unitario',
         'utilidad_unitaria',
@@ -42,6 +43,6 @@ class DetalleFactura extends Model
      */
     public function producto()
     {
-        return $this->belongsTo(InventarioProductos::class, 'producto_id');
+        return $this->belongsTo(\App\Models\InventarioProductos::class, 'producto_id');
     }
 }

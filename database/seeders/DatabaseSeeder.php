@@ -53,6 +53,7 @@ class DatabaseSeeder extends Seeder
             CategoriaProductoSeeder::class,
             SubcategoriaProductoSeeder::class,
             MetodoPagoSeeder::class,
+            CaiSeeder::class,
            // InventarioProductosSeeder::class,
         ]);
          

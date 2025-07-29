@@ -58,4 +58,15 @@ class Cai extends Model
     {
         return $this->hasMany(Factura::class);
     }
+
+    public static function obtenerCaiSeguro($empresaId): ?Cai
+    {
+        return self::where('empresa_id', $empresaId)
+            ->where('activo', true)
+            ->whereDate('fecha_limite_emision', '>=', now())
+            ->whereColumn('numero_actual', '<=', 'rango_final')
+            ->orderByDesc('id')
+            ->lockForUpdate()
+            ->first();
+    }
 }

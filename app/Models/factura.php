@@ -37,6 +37,10 @@ class Factura extends Model
 
     // --- Relaciones ---
 
+    protected $casts = [
+    'fecha_factura' => 'date',
+    ];
+
     public function detalles()
     {
         return $this->hasMany(DetalleFactura::class, 'factura_id');
@@ -68,5 +72,10 @@ class Factura extends Model
     public function empresa()
     {
         return $this->belongsTo(Empresa::class);
+    }
+
+    public function pagos()
+    {
+        return $this->hasMany(Pago::class);
     }
 }
