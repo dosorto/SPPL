@@ -16,25 +16,37 @@ class ViewFactura extends ViewRecord
     protected static string $resource = FacturaResource::class;
     protected static string $view = 'filament.resources.factura-resource.pages.view-factura';
 
+
     protected function getHeaderActions(): array
     {
+        // Acceder a la factura a través de $this->record
+        $factura = $this->getRecord();
+
+        // Calcular el monto pagado y el restante
+        $pagado = $factura->pagos()->sum('monto');
+        $restante = round(max(0, $factura->total - $pagado), 2);
+
         return [
-            // BOTÓN 1: Para visualizar el PDF en una nueva pestaña
-            
+            // BOTÓN 1: Para pagar la factura
+            Actions\Action::make('pagar')
+                ->label('Pagar')
+                ->color('success')
+                ->icon('heroicon-o-currency-dollar') // Puedes elegir un icono adecuado
+                ->url(FacturaResource::getUrl('registrar-pago', ['record' => $factura->id]))
+                // El botón solo será visible si el estado de la factura no es 'Pagada'
+                // y si el restante es mayor que 0
+                ->visible(fn () => $factura->estado == 'Pendiente' && $restante > 0),
+
+            // BOTÓN 2: Para visualizar el PDF en una nueva pestaña
             Action::make('vista_previa')
                 ->label('Imprimir Factura')
-                ->icon('heroicon-o-printer') 
+                ->icon('heroicon-o-printer')
                 ->color('warning')
                 ->url(fn () => route('facturas.visualizar', ['factura' => $this->record->id]))
                 ->openUrlInNewTab(),
-
-
-
-            // BOTÓN 2: Para descargar el PDF directamente
-            
         ];
     }
-    
+
 
     protected function resolveRecord(int | string $key): Model
     {

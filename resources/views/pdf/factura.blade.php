@@ -39,17 +39,18 @@
         </div>
 
         <!-- CAI -->
-        <div class="grid grid-cols-3 gap-4 border-t border-b py-2 text-xs mb-4">
-            <div><strong>CAI:</strong><br>{{ $factura->cai->cai ?? 'N/A' }}</div>
-            <div><strong>Rango Autorizado:</strong><br>{{ $factura->cai?->rango_inicial ?? 'N/A' }} - {{ $factura->cai?->rango_final ?? 'N/A' }}</div>
-            <div><strong>Fecha Límite:</strong><br>{{ $factura->cai?->fecha_limite_emision?->format('d/m/Y') ?? 'N/A' }}</div>
+        <div class="border-t border-b py-2 text-xs mb-4 text-center">
+            <p><strong>CAI:</strong> {{ $factura->cai->cai ?? 'N/A' }}</p>
+            <p><strong>Fecha Límite:</strong> {{ $factura->cai?->fecha_limite_emision?->format('d/m/Y') ?? 'N/A' }}</p>
         </div>
+
 
         <!-- Detalles -->
         <table class="w-full border-collapse mb-4">
             <thead class="bg-gray-100 text-xs">
                 <tr>
                     <th class="border px-2 py-1 text-left">Producto</th>
+                    <th class="border px-2 py-1 text-left">SKU</th>
                     <th class="border px-2 py-1 text-right">Cant</th>
                     <th class="border px-2 py-1 text-right">P/U</th>
                     <th class="border px-2 py-1 text-right">Desc (%)</th>
@@ -61,6 +62,7 @@
                 @foreach ($factura->detalles as $detalle)
                     <tr>
                         <td class="border px-2 py-1">{{ $detalle->producto->producto->nombre }}</td>
+                        <td class="border px-2 py-1">{{ $detalle->producto->producto->sku ?? 'N/A' }}</td>
                         <td class="border px-2 py-1 text-right">{{ number_format($detalle->cantidad, 2) }}</td>
                         <td class="border px-2 py-1 text-right">L. {{ number_format($detalle->precio_unitario, 2) }}</td>
                         <td class="border px-2 py-1 text-right">{{ number_format($detalle->descuento_aplicado ?? 0, 2) }}</td>
@@ -69,6 +71,7 @@
                     </tr>
                 @endforeach
             </tbody>
+
         </table>
 
         <!-- Totales -->

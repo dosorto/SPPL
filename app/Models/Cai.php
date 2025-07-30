@@ -13,14 +13,12 @@ class Cai extends Model
 
     protected $table = 'cais';
 
-    /**
-     * The attributes that are mass assignable.
-     *
-     * @var array<int, string>
-     */
     protected $fillable = [
         'cai',
         'empresa_id',
+        'establecimiento',
+        'punto_emision',
+        'tipo_documento',
         'rango_inicial',
         'rango_final',
         'numero_actual',
@@ -31,11 +29,6 @@ class Cai extends Model
         'deleted_by',
     ];
 
-    /**
-     * The attributes that should be cast.
-     *
-     * @var array<string, string>
-     */
     protected $casts = [
         'fecha_limite_emision' => 'date',
         'activo' => 'boolean',
@@ -43,29 +36,38 @@ class Cai extends Model
 
     // --- Relaciones ---
 
-    /**
-     * Un CAI pertenece a una empresa.
-     */
     public function empresa()
     {
         return $this->belongsTo(Empresa::class);
     }
 
-    /**
-     * Un CAI puede tener muchas facturas asociadas.
-     */
     public function facturas()
     {
         return $this->hasMany(Factura::class);
     }
 
-    public static function obtenerCaiSeguro($empresaId): ?Cai
+    // --- Métodos funcionales ---
+
+    /**
+     * Construye el número de factura en formato fiscal: 001-001-01-00000023
+     */
+    public function generarNumeroFactura(): string
+    {
+        $correlativo = str_pad($this->numero_actual + 1, 8, '0', STR_PAD_LEFT);
+        return "{$this->establecimiento}-{$this->punto_emision}-{$this->tipo_documento}-{$correlativo}";
+    }
+
+    /**
+     * Devuelve el CAI activo y disponible para una empresa.
+     * Bloquea el registro para uso en transacción.
+     */
+    public static function obtenerCaiSeguro($empresaId): ?self
     {
         return self::where('empresa_id', $empresaId)
             ->where('activo', true)
             ->whereDate('fecha_limite_emision', '>=', now())
-            ->whereColumn('numero_actual', '<=', 'rango_final')
-            ->orderByDesc('id')
+            ->whereColumn('numero_actual', '<', 'rango_final')
+            ->orderBy('fecha_limite_emision')
             ->lockForUpdate()
             ->first();
     }

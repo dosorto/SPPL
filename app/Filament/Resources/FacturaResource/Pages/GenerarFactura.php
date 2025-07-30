@@ -377,8 +377,13 @@ public function form(Form $form): Form
     public function submit(): void
     {
         $data = $this->form->getState();
+
         if (empty($this->lineasVenta) || empty($data['cliente_id'])) {
-            Notification::make()->danger()->title('Faltan Datos')->body('Debe seleccionar un cliente y agregar productos.')->send();
+            Notification::make()
+                ->danger()
+                ->title('Faltan Datos')
+                ->body('Debe seleccionar un cliente y agregar productos.')
+                ->send();
             return;
         }
 
@@ -394,18 +399,11 @@ public function form(Form $form): Form
 
                 $empleado = auth()->user()->empleado;
 
-                // 2. Validar que el usuario actual ESTÉ enlazado a un empleado.
-                //    Si no lo está, no puede generar facturas. Es una regla de negocio importante.
                 if (!$empleado) {
                     throw new \Exception('El usuario actual no está asociado a ningún empleado. Contacte al administrador del sistema.');
                 }
 
-                // 3. Si AÚN no hay empleado (la tabla está vacía), lanza un error claro.
-                if (!$empleado) {
-                    throw new \Exception('No se encontró un empleado para asignar a la factura. Verifique que exista al menos un empleado en el sistema.');
-                }
-
-                // 4. Obtener el CAI activo para la empresa del cliente.
+                // --- CAI y Número de Factura ---
                 $cai = null;
                 $numeroFactura = null;
 
@@ -416,33 +414,37 @@ public function form(Form $form): Form
                         throw new \Exception('No hay un CAI activo disponible para esta empresa. No se puede emitir factura con CAI.');
                     }
 
-                    $numeroFactura = str_pad($cai->numero_actual + 1, 8, '0', STR_PAD_LEFT);
+                    $numeroFactura = $cai->generarNumeroFactura();
+
+                    // Verificación extra de rango por seguridad
+                    if ($cai->numero_actual + 1 > $cai->rango_final) {
+                        throw new \Exception("El CAI ha alcanzado su límite máximo de emisión.");
+                    }
                 } else {
-                    // Generar un número alternativo sin CAI (ej: TEMP-00000123)
+                    // Generar número alternativo para pruebas u otros casos
                     $ultimoId = Factura::max('id') + 1;
                     $numeroFactura = 'TEMP-' . str_pad($ultimoId, 8, '0', STR_PAD_LEFT);
                 }
 
+                // --- Crear Factura ---
                 $factura = Factura::create([
-                    'cliente_id' => $cliente->id,
-                    'empleado_id' => $empleado->id,
-                    'empresa_id' => $cliente->empresa_id,
-                    'fecha_factura' => now(),
-                    'estado' => 'Pendiente',
-                    'subtotal' => $this->subtotal,
-                    'impuestos' => $this->impuestos,
-                    'total' => $this->total,
-                    'numero_factura' => $numeroFactura,
-                    'cai_id' => $cai?->id,
+                    'cliente_id'      => $cliente->id,
+                    'empleado_id'     => $empleado->id,
+                    'empresa_id'      => $cliente->empresa_id,
+                    'fecha_factura'   => now(),
+                    'estado'          => 'Pendiente',
+                    'subtotal'        => $this->subtotal,
+                    'impuestos'       => $this->impuestos,
+                    'total'           => $this->total,
+                    'numero_factura'  => $numeroFactura,
+                    'cai_id'          => $cai?->id,
                 ]);
-            
+
                 if ($cai) {
                     $cai->increment('numero_actual');
                 }
 
-                // 5. Registrar el pago si se proporcionó información de pago.
-                
-
+                // --- Guardar detalles de productos ---
                 foreach ($this->lineasVenta as $linea) {
                     $inventario = auth()->user()->hasRole('root')
                         ? InventarioProductos::withoutGlobalScopes()->find($linea['inventario_id'])
@@ -451,29 +453,35 @@ public function form(Form $form): Form
                     $costo = $inventario?->precio_costo ?? 0;
 
                     DetalleFactura::create([
-                        'factura_id' => $factura->id,
-                        'producto_id' => $linea['inventario_id'],
-                        'cantidad' => $linea['cantidad'],
-                        'precio_unitario' => $linea['precio_unitario'],
+                        'factura_id'         => $factura->id,
+                        'producto_id'        => $linea['inventario_id'],
+                        'cantidad'           => $linea['cantidad'],
+                        'precio_unitario'    => $linea['precio_unitario'],
                         'descuento_aplicado' => $linea['descuento_aplicado'] ?? 0,
-                        'sub_total' => $linea['cantidad'] * $linea['precio_unitario'],
+                        'sub_total'          => $linea['cantidad'] * $linea['precio_unitario'],
                         'isv_aplicado'       => $linea['isv_producto'] ?? 0,
-                        'costo_unitario' => $costo,
-                        'utilidad_unitaria' => $linea['precio_unitario'] - $costo,
+                        'costo_unitario'     => $costo,
+                        'utilidad_unitaria'  => $linea['precio_unitario'] - $costo,
                     ]);
 
                     $inventario?->decrement('cantidad', $linea['cantidad']);
                 }
-                
+
                 Notification::make()
                     ->success()
                     ->title('¡Factura Generada!')
                     ->body("Factura No. {$numeroFactura} registrada correctamente.")
                     ->send();
+
                 redirect(FacturaResource::getUrl('registrar-pago', ['record' => $factura]));
             });
         } catch (\Exception $e) {
-            Notification::make()->danger()->title('Error al generar la factura')->body($e->getMessage())->send();
+            Notification::make()
+                ->danger()
+                ->title('Error al generar la factura')
+                ->body($e->getMessage())
+                ->send();
         }
     }
+
 }

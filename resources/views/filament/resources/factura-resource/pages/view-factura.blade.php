@@ -24,20 +24,28 @@
                 </div>
             </div>
 
-            <div class="grid md:grid-cols-3 gap-4 mt-4 border-t pt-4">
-                <div>
-                    <p class="text-sm text-gray-500">CAI</p>
-                    <p class="break-all">{{ $record->cai->cai ?? 'N/A' }}</p>
+            @if ($record->cai)
+                <div class="grid md:grid-cols-3 gap-4 mt-4 border-t pt-4 text-center">
+                    <div>
+                        <p class="text-sm text-gray-500">CAI</p>
+                        <p class="break-all font-medium">{{ $record->cai->cai }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Vence</p>
+                        <p class="font-medium">{{ $record->cai->fecha_limite_emision->format('d/m/Y') }}</p>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Nomenclatura</p>
+                        <p class="font-medium">
+                            {{ $record->cai->establecimiento }}-
+                            {{ $record->cai->punto_emision }}-
+                            {{ $record->cai->tipo_documento }}-
+                            {{ str_pad($record->cai->numero_actual, 8, '0', STR_PAD_LEFT) }}
+                        </p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-sm text-gray-500">Rango Autorizado</p>
-                    <p>{{ $record->cai?->rango_inicial ?? 'N/A' }} - {{ $record->cai?->rango_final ?? 'N/A' }}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Vence</p>
-                    <p>{{ $record->cai?->fecha_limite_emision?->format('d/m/Y') ?? 'N/A' }}</p>
-                </div>
-            </div>
+            @endif
+
         </x-filament::card>
 
         {{-- CLIENTE Y VENDEDOR --}}
@@ -72,6 +80,7 @@
                     <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
                         <tr>
                             <th class="px-6 py-3">Producto</th>
+                            <th class="px-6 py-3">SKU</th>
                             <th class="px-6 py-3 text-right">Cantidad</th>
                             <th class="px-6 py-3 text-right">Precio Unitario</th>
                             <th class="px-6 py-3 text-right">Descuento (%)</th>
@@ -79,10 +88,12 @@
                             <th class="px-6 py-3 text-right">Subtotal</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         @foreach ($record->detalles as $detalle)
                             <tr class="border-b last:border-0">
                                 <td class="px-6 py-3">{{ $detalle->producto->producto->nombre }}</td>
+                                <td class="px-6 py-3">{{ $detalle->producto->producto->sku ?? 'N/A' }}</td>
                                 <td class="px-6 py-3 text-right">{{ number_format($detalle->cantidad, 2) }}</td>
                                 <td class="px-6 py-3 text-right">
                                     L. {{ number_format($detalle->precio_unitario, 2) }}
@@ -102,7 +113,26 @@
                             </tr>
                         @endforeach
                     </tbody>
+
                 </table>
+            </div>
+        </x-filament::card>
+
+        {{-- TOTALES --}}
+        <x-filament::card>
+            <div class="grid md:grid-cols-3 gap-4 text-right">
+                <div>
+                    <p class="text-sm text-gray-500">Subtotal</p>
+                    <p class="text-base">L. {{ number_format($record->subtotal, 2) }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500">Impuestos</p>
+                    <p class="text-base">L. {{ number_format($record->impuestos, 2) }}</p>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-500 font-semibold">Total</p>
+                    <p class="text-lg font-bold text-primary">L. {{ number_format($record->total, 2) }}</p>
+                </div>
             </div>
         </x-filament::card>
 
@@ -141,23 +171,6 @@
             @endif
         </x-filament::card>
 
-        {{-- TOTALES --}}
-        <x-filament::card>
-            <div class="grid md:grid-cols-3 gap-4 text-right">
-                <div>
-                    <p class="text-sm text-gray-500">Subtotal</p>
-                    <p class="text-base">L. {{ number_format($record->subtotal, 2) }}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500">Impuestos</p>
-                    <p class="text-base">L. {{ number_format($record->impuestos, 2) }}</p>
-                </div>
-                <div>
-                    <p class="text-sm text-gray-500 font-semibold">Total</p>
-                    <p class="text-lg font-bold text-primary">L. {{ number_format($record->total, 2) }}</p>
-                </div>
-            </div>
-        </x-filament::card>
 
     </div>
 </x-filament::page>

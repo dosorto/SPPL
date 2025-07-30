@@ -7,7 +7,7 @@ use App\Models\Cliente;
 use App\Models\Empresa;
 use App\Models\Factura;
 use App\Models\Empleado;
-use App\Models\detalle_factura;
+use App\Models\DetalleFactura;
 use App\Models\Productos;
 use Carbon\Carbon;
 
@@ -61,7 +61,7 @@ class FacturaSeeder extends Seeder
                     $importe = $cantidad * $precio;
                     
                     // Crear detalle
-                    detalle_factura::create([
+                    DetalleFactura::create([
                         'factura_id' => $factura->id,
                         'producto_id' => $producto->id,
                         'cantidad' => $cantidad,
