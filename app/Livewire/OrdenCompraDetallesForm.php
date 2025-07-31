@@ -139,17 +139,27 @@ class OrdenCompraDetallesForm extends Component
                 'nombre_producto' => $producto->nombre,
                 'cantidad' => $this->cantidad,
                 'precio' => $this->precio,
-                // Si ya tenía detalle_id, conservarlo
                 'detalle_id' => $this->detalles[$this->editIndex]['detalle_id'] ?? null,
             ];
-            $this->editIndex = null; // reseteamos estado de edición
+            $this->editIndex = null;
         } else {
-            $this->detalles[] = [
-                'producto_id' => $producto->id,
-                'nombre_producto' => $producto->nombre,
-                'cantidad' => $this->cantidad,
-                'precio' => $this->precio,
-            ];
+            // 👉 Buscar si el producto ya está agregado
+            $indexExistente = collect($this->detalles)->search(fn($item) => $item['producto_id'] == $producto->id);
+
+            if ($indexExistente !== false) {
+                // Sumar cantidades si ya existe
+                $this->detalles[$indexExistente]['cantidad'] += $this->cantidad;
+                // Actualizar el precio también si lo deseas
+                $this->detalles[$indexExistente]['precio'] = $this->precio;
+            } else {
+                // Agregar nuevo producto
+                $this->detalles[] = [
+                    'producto_id' => $producto->id,
+                    'nombre_producto' => $producto->nombre,
+                    'cantidad' => $this->cantidad,
+                    'precio' => $this->precio,
+                ];
+            }
         }
 
         session()->put('detalles_orden', $this->detalles);
@@ -160,6 +170,7 @@ class OrdenCompraDetallesForm extends Component
 
         $this->dispatch('productoAdded');
     }
+
 
 
     public function editDetalle($index)
