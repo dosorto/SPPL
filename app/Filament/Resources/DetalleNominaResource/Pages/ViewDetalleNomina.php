@@ -69,8 +69,8 @@ class ViewDetalleNomina extends ViewRecord
             \Filament\Forms\Components\Section::make('Detalle de nómina')
                 ->icon('heroicon-o-currency-dollar')
                 ->schema([
-                    \Filament\Forms\Components\Placeholder::make('sueldo_bruto')
-                        ->label('Sueldo Bruto')
+                    \Filament\Forms\Components\Placeholder::make('sueldo')
+                        ->label('Sueldo')
                         ->content(fn () => 'L. ' . number_format($this->record->sueldo_bruto ?? 0, 2)),
                     \Filament\Forms\Components\Placeholder::make('percepciones')
                         ->label('Percepciones')

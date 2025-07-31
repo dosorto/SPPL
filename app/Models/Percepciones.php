@@ -17,10 +17,11 @@ class Percepciones extends Model
         'empresa_id',
         'valor',
         'tipo_valor',
+        'depende_cantidad',
+        'unidad_cantidad',
         'created_by',
         'updated_by',
         'deleted_by',
-
     ];
 
 

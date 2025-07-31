@@ -25,6 +25,7 @@ class Nominas extends Model
         'percepciones',
         'sueldo_neto',
         'cerrada',
+        'tipo_pago',
         'created_by',
         'updated_by',
         'deleted_by',

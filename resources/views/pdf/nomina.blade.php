@@ -114,6 +114,10 @@
                     <td>{{ $mesNombre }} {{ $nomina->año }}</td>
                 </tr>
                 <tr>
+                    <th>Tipo de Pago</th>
+                    <td>{{ ucfirst($tipoPagoNombre) }}</td>
+                </tr>
+                <tr>
                     <th>Estado</th>
                     <td class="{{ $nomina->cerrada ? 'estado-cerrada' : 'estado-abierta' }}">
                         {{ $nomina->cerrada ? 'Cerrada' : 'Abierta' }}
@@ -134,7 +138,7 @@
             <thead>
                 <tr>
                     <th width="30%">Empleado</th>
-                    <th width="15%">Salario Base</th>
+                    <th width="15%">Salario</th>
                     <th width="22%">Deducciones</th>
                     <th width="22%">Percepciones</th>
                     <th width="11%">Total</th>
@@ -194,7 +198,7 @@
                                     @endif
                                 @endforeach
                                 @if(count($empleado['percepcionesArray']) > 0)
-                                <li class="strong">Total: L. {{ number_format($totalPercepciones, 2) }}</li>
+                                <li class="strong">Total: L. {{ number_format($empleado['percepciones'], 2) }}</li>
                                 @else
                                 <li>Ninguna</li>
                                 @endif

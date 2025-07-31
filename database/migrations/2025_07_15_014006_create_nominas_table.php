@@ -18,6 +18,7 @@ return new class extends Migration
             $table->year('año'); 
             $table->string('descripcion')->nullable();
             $table->boolean('cerrada')->default(false);
+            $table->enum('tipo_pago', ['mensual', 'quincenal', 'semanal'])->default('mensual');
 
             $table->foreignId('empresa_id')->constrained('empresas');
 

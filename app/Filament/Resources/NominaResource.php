@@ -60,6 +60,16 @@ class NominaResource extends Resource
                     ])
                     ->required(),
 
+                Select::make('tipo_pago')
+                    ->label('Tipo de Pago')
+                    ->options([
+                        'mensual' => 'Mensual',
+                        'quincenal' => 'Quincenal',
+                        'semanal' => 'Semanal',
+                    ])
+                    ->required()
+                    ->default('mensual'),
+
                 TextInput::make('año')
                     ->label('Año')
                     ->default(date('Y'))
@@ -229,6 +239,16 @@ class NominaResource extends Resource
                             7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
                         ];
                         return $meses[(int)$state] ?? $state;
+                    }),
+                Tables\Columns\TextColumn::make('tipo_pago')
+                    ->label('Tipo de Pago')
+                    ->formatStateUsing(function ($state) {
+                        $tipos = [
+                            'mensual' => 'Mensual',
+                            'quincenal' => 'Quincenal', 
+                            'semanal' => 'Semanal',
+                        ];
+                        return $tipos[$state] ?? ucfirst($state);
                     }),
                 Tables\Columns\IconColumn::make('cerrada')
                     ->label('Cerrada')
