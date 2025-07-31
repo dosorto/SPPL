@@ -28,6 +28,7 @@ return new class extends Migration
             $table->decimal('subtotal', 10, 2);
             $table->decimal('impuestos', 10, 2);
             $table->decimal('total', 10, 2);
+            $table->foreignId('apertura_id')->nullable()->constrained('caja_aperturas');
             
             // --- Auditoría y Timestamps ---
             $table->timestamps();

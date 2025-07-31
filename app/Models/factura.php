@@ -30,6 +30,7 @@ class Factura extends Model
         'subtotal',
         'impuestos',
         'total',
+        'apertura_id', // Añadido
         'created_by',
         'updated_by',
         'deleted_by',
@@ -54,6 +55,11 @@ class Factura extends Model
     public function empleado()
     {
         return $this->belongsTo(Empleado::class);
+    }
+
+    public function cajaApertura()
+    {
+        return $this->belongsTo(CajaApertura::class, 'apertura_id');
     }
 
     // --- RELACIONES AÑADIDAS ---
