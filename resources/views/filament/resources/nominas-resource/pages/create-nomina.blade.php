@@ -7,11 +7,17 @@
                 </x-filament::button>
             </div>
             <!-- Información general de la nómina -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-white">Empresa</label>
                     <input type="text" class="block w-full mt-1 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white" value="{{ $this->empresaNombre ?? '' }}" disabled />
                 </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white">Año</label>
+                    <input type="text" class="block w-full mt-1 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white" value="{{ $this->año ?? '' }}" disabled />
+                </div>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-white">Mes</label>
                     <select wire:model.live="mes" class="block w-full mt-1 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white">
@@ -34,27 +40,31 @@
                     @endif
                 </div>
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-white">Año</label>
-                    <input type="text" class="block w-full mt-1 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white" value="{{ $this->año ?? '' }}" disabled />
+                    <label class="block text-sm font-medium text-gray-700 dark:text-white">Tipo de Pago</label>
+                    <select wire:model.live="tipo_pago" class="block w-full mt-1 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white">
+                        <option value="mensual">Mensual</option>
+                        <option value="quincenal">Quincenal</option>
+                        <option value="semanal">Semanal</option>
+                    </select>
                 </div>
             </div>
-            <div class="mb-6">
+            <div class="mb-2">
                 <label class="block text-sm font-medium text-gray-700 dark:text-white">Descripción</label>
-                <input type="text" class="block w-full mt-1 mb-4 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white" wire:model.lazy="descripcion" maxlength="255" />
-                <div class="flex justify-end mt-6">
-                    <x-filament::button 
-                        type="button" 
-                        color="primary" 
-                        :icon="collect($this->empleadosSeleccionados)->every(fn($e) => !empty($e['seleccionado'])) ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle'" 
-                        class="font-bold" 
-                        wire:click="toggleSeleccionTodos">
-                        @if(collect($this->empleadosSeleccionados)->every(fn($e) => !empty($e['seleccionado'])))
-                            Deseleccionar todos
-                        @else
-                            Seleccionar todos
-                        @endif
-                    </x-filament::button>
-                </div>
+                <input type="text" class="block mt-1 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white w-full md:w-96 lg:w-[40rem]" wire:model.lazy="descripcion" maxlength="255" />
+            </div>
+            <div class="flex justify-end mt-6">
+                <x-filament::button 
+                    type="button" 
+                    color="primary" 
+                    :icon="collect($this->empleadosSeleccionados)->every(fn($e) => !empty($e['seleccionado'])) ? 'heroicon-o-x-circle' : 'heroicon-o-check-circle'" 
+                    class="font-bold" 
+                    wire:click="toggleSeleccionTodos">
+                    @if(collect($this->empleadosSeleccionados)->every(fn($e) => !empty($e['seleccionado'])))
+                        Deseleccionar todos
+                    @else
+                        Seleccionar todos
+                    @endif
+                </x-filament::button>
             </div>
 
             <!-- Tabla de empleados -->
@@ -84,6 +94,7 @@
                                     </td>
                                     <td class="px-4 py-2 text-center text-sm text-gray-500 dark:text-gray-300">
                                         L. {{ number_format($empleado['salario'], 2) }}
+                                        <!-- El tipo de pago ahora se gestiona a nivel de nómina -->
                                     </td>
                                     <td class="px-4 py-2 text-center text-sm">
                                         <ul class="list-none p-0 m-0">
@@ -105,12 +116,28 @@
                                                 <span @if(!$percepcion['aplicada']) style="text-decoration: line-through; color: #888; font-weight: bold;" @endif>
                                                     {{ $percepcion['nombre'] }} ({{ $percepcion['valorMostrado'] }})
                                                 </span>
+                                                <button type="button" class="ml-1" title="Editar valor/porcentaje"
+                                                    wire:click="abrirModalEditarPercepcion({{ $index }}, {{ $pIndex }})">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#facc15">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 10-4-4l-8 8v3h3z" />
+                                                    </svg>
+                                                </button>
+                                                @if($percepcion['depende_cantidad'] ?? false)
+                                                <button type="button" class="ml-1" title="Editar cantidad"
+                                                    wire:click="abrirModalEditarCantidad({{ $index }}, {{ $pIndex }})">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#4ade80">
+                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                                                    </svg>
+                                                </button>
+                                                @endif
                                             </li>
                                             @endforeach
                                         </ul>
                                     </td>
                                     <td class="px-4 py-2 text-center text-sm font-bold text-green-600 dark:text-green-400">
-                                        L. {{ number_format($empleado['total'], 2) }}
+                                        <div class="flex items-center justify-center gap-2 relative">
+                                            L. {{ number_format($empleado['total'], 2) }}
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach
@@ -121,6 +148,43 @@
             </div>
 
             <div class="mt-6 flex justify-end">
+            <!-- El modal de edición de tipo de pago se ha eliminado ya que ahora se gestiona a nivel de nómina -->
+            
+            <!-- Modal edición percepción -->
+            @if($this->modalEditarPercepcionAbierto)
+                <div class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-xs">
+                        <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Editar percepción</h3>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Nuevo valor</label>
+                            <input type="text" class="block w-full border-gray-300 rounded-md dark:bg-gray-700 dark:text-white" wire:model.defer="modalPercepcionValor" />
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <x-filament::button color="secondary" wire:click="cerrarModalEditarPercepcion" type="button">Cancelar</x-filament::button>
+                            <x-filament::button color="primary" wire:click="guardarModalEditarPercepcion" type="button">Guardar</x-filament::button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+            
+            <!-- Modal edición cantidad -->
+            @if($this->modalEditarCantidadAbierto)
+                <div class="fixed inset-0 flex items-center justify-center z-50 bg-black bg-opacity-40">
+                    <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 w-full max-w-xs">
+                        <h3 class="text-lg font-bold mb-4 text-gray-900 dark:text-white">Editar cantidad</h3>
+                        <div class="mb-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-white mb-1">Cantidad de {{ $this->modalCantidadUnidad }}</label>
+                            <input type="number" min="0" step="any" class="block w-full border-gray-300 rounded-md dark:bg-gray-700 dark:text-white" wire:model.defer="modalCantidadValor" />
+                        </div>
+                        <div class="flex justify-end gap-2">
+                            <x-filament::button color="secondary" wire:click="cerrarModalEditarCantidad" type="button">Cancelar</x-filament::button>
+                            <x-filament::button color="primary" wire:click="guardarModalEditarCantidad" type="button">Guardar</x-filament::button>
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            <!-- ...existing code... -->
             </div>
         </form>
     </div>

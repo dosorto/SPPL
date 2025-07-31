@@ -142,20 +142,7 @@ class EditNomina extends EditRecord
                         $percepciones = $empleado->percepcionesAplicadas->sum(function ($relacion) {
                             $percepcion = $relacion->percepcion;
                             if (!$percepcion) return 0;
-                            
-                                            if (($percepcion->percepcion ?? '') === 'Horas Extras') {
-                    $cantidad = $relacion->cantidad_horas ?? 0;
-                    $valorUnitario = $percepcion->valor ?? 0;
-                    return $cantidad * $valorUnitario;
-                }
-                
-                // Solo para Aguinaldo: usar valor específico si está definido
-                if (($percepcion->percepcion ?? '') === 'Aguinaldo' && $relacion->valor !== null) {
-                    return $relacion->valor;
-                }
-                
-                // Para otras percepciones o si no hay valor específico, usar el valor predeterminado
-                return $percepcion->valor ?? 0;
+                            return $relacion->valor ?? $percepcion->valor ?? 0;
                         });
                         $total = $sueldo + $percepciones - $deducciones;
                         \App\Models\DetalleNominas::create([

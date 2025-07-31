@@ -16,12 +16,8 @@ class TipoEmpleadoSeeder extends Seeder
         // Define los tipos de empleado deseados con sus descripciones
         $tipos = [
             [
-                'nombre_tipo' => 'Con Plaza',
+                'nombre_tipo' => 'Permanente',
                 'descripcion' => 'Empleados con un puesto fijo y permanente en la organización.',
-            ],
-            [
-                'nombre_tipo' => 'Estudiante',
-                'descripcion' => 'Estudiantes en prácticas o programas de formación dentro de la empresa.',
             ],
             [
                 'nombre_tipo' => 'Temporales',
@@ -51,6 +47,6 @@ class TipoEmpleadoSeeder extends Seeder
             $this->command->info("Tipo de empleado '{$tipo['nombre_tipo']}' insertado o ya existe.");
         }
 
-        $this->command->info('Tipos de empleado "Temporales", "Estudiante" y "Con Plaza" han sido insertados o ya existen.');
+        $this->command->info('Tipos de empleado "Temporales", "Permanente"  han sido insertados o ya existen.');
     }
 }

@@ -6,7 +6,7 @@
             <tr style="background-color: #f3f4f6;">
                 <th style="border: 1px solid #ccc; padding: 8px;">Número</th>
                 <th style="border: 1px solid #ccc; padding: 8px;">Nombre</th>
-                <th style="border: 1px solid #ccc; padding: 8px;">Sueldo Bruto</th>
+                <th style="border: 1px solid #ccc; padding: 8px;">Sueldo</th>
                 <th style="border: 1px solid #ccc; padding: 8px;">Deducciones</th>
                 <th style="border: 1px solid #ccc; padding: 8px;">Percepciones</th>
                 <th style="border: 1px solid #ccc; padding: 8px;">Sueldo Neto</th>

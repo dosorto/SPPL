@@ -35,14 +35,69 @@ class EmpleadoResource extends Resource
 
                     Forms\Components\Wizard\Step::make('Datos personales')
                         ->schema([
+                            Forms\Components\Hidden::make('persona_autocompletada')
+                                ->default(false),
                             Forms\Components\TextInput::make('persona.dni')
                                 ->label('DNI')
                                 ->required()
+                                ->reactive()
                                 ->rules(function (callable $get, $record) {
+                                    // Solo aplicar la regla unique si NO está autocompletando
+                                    if ($get('persona_autocompletada')) {
+                                        return [];
+                                    }
                                     return [
                                         Rule::unique('personas', 'dni')
                                             ->ignore($record?->persona_id)
                                     ];
+                                })
+                                ->afterStateUpdated(function ($state, callable $set, callable $get) {
+                                    if (empty($state)) {
+                                        // Resetear el estado de autocompletado
+                                        $set('persona_autocompletada', false);
+                                        return;
+                                    }
+                                    
+                                    // Solo buscar si el DNI tiene al menos 3 caracteres para evitar búsquedas innecesarias
+                                    if (strlen($state) < 3) {
+                                        return;
+                                    }
+                                    
+                                    // Buscar persona existente por DNI
+                                    $persona = \App\Models\Persona::with(['municipio.departamento'])->where('dni', $state)->first();
+                                    
+                                    if ($persona) {
+                                        // Marcar como autocompletada
+                                        $set('persona_autocompletada', true);
+                                        
+                                        // Auto-completar todos los datos de la persona
+                                        $set('persona.primer_nombre', $persona->primer_nombre);
+                                        $set('persona.segundo_nombre', $persona->segundo_nombre);
+                                        $set('persona.primer_apellido', $persona->primer_apellido);
+                                        $set('persona.segundo_apellido', $persona->segundo_apellido);
+                                        $set('persona.sexo', $persona->sexo);
+                                        $set('persona.fecha_nacimiento', $persona->fecha_nacimiento);
+                                        $set('persona.fotografia', $persona->fotografia);
+                                        
+                                        // Auto-completar datos de dirección
+                                        $set('persona.pais_id', $persona->pais_id);
+                                        // Obtener departamento_id desde la relación municipio -> departamento o directo
+                                        $departamento_id = $persona->departamento_id ?? ($persona->municipio->departamento_id ?? null);
+                                        $set('persona.departamento_id', $departamento_id);
+                                        $set('persona.municipio_id', $persona->municipio_id);
+                                        $set('persona.direccion', $persona->direccion);
+                                        $set('persona.telefono', $persona->telefono);
+                                        
+                                        // Mostrar notificación de éxito
+                                        \Filament\Notifications\Notification::make()
+                                            ->title('Persona encontrada')
+                                            ->body('Se han completado automáticamente los datos de: ' . $persona->primer_nombre . ' ' . $persona->primer_apellido . '. Los campos de persona están bloqueados.')
+                                            ->success()
+                                            ->send();
+                                    } else {
+                                        // No se encontró persona, permitir edición
+                                        $set('persona_autocompletada', false);
+                                    }
                                 })
                                 ->columnSpanFull(),
                             Forms\Components\TextInput::make('persona.primer_nombre')
@@ -53,11 +108,13 @@ class EmpleadoResource extends Resource
                                 ->minLength(2)
                                 ->regex('/^[\pL\s\-]+$/u') // solo letras, espacios y guiones
                                 ->extraAttributes(['autocomplete' => 'given-name'])
+                                ->disabled(fn (callable $get) => $get('persona_autocompletada'))
                                 ->columnSpanFull(),
 
                             Forms\Components\TextInput::make('persona.segundo_nombre')
                                 ->label('Segundo nombre')
                                 ->placeholder('Ingrese el segundo nombre (opcional)')
+                                ->disabled(fn (callable $get) => $get('persona_autocompletada'))
                                 ->maxLength(50)
                                 ->regex('/^[\pL\s\-]+$/u')
                                 ->extraAttributes(['autocomplete' => 'additional-name'])
@@ -71,6 +128,7 @@ class EmpleadoResource extends Resource
                                 ->minLength(2)
                                 ->regex('/^[\pL\s\-]+$/u')
                                 ->extraAttributes(['autocomplete' => 'family-name'])
+                                ->disabled(fn (callable $get) => $get('persona_autocompletada'))
                                 ->columnSpanFull(),
 
                             Forms\Components\TextInput::make('persona.segundo_apellido')
@@ -79,6 +137,7 @@ class EmpleadoResource extends Resource
                                 ->maxLength(50)
                                 ->regex('/^[\pL\s\-]+$/u')
                                 ->extraAttributes(['autocomplete' => 'family-name'])
+                                ->disabled(fn (callable $get) => $get('persona_autocompletada'))
                                 ->columnSpanFull(),
 
 
@@ -89,6 +148,7 @@ class EmpleadoResource extends Resource
                                 ->searchable()
                                 ->reactive()
                                 ->required()
+                                ->disabled(fn (callable $get) => $get('persona_autocompletada'))
                                 ->columnSpanFull(),
 
                             // NUEVO: Select departamento (filtrado por pais)
@@ -103,7 +163,7 @@ class EmpleadoResource extends Resource
                                 ->searchable()
                                 ->reactive()
                                 ->required()
-                                ->disabled(fn (callable $get) => !$get('persona.pais_id'))
+                                ->disabled(fn (callable $get) => !$get('persona.pais_id') || $get('persona_autocompletada'))
                                 ->columnSpanFull(),
 
                             // NUEVO: Select municipio (filtrado por departamento)
@@ -118,15 +178,33 @@ class EmpleadoResource extends Resource
                                 ->searchable()
                                 ->reactive()
                                 ->required()
-                                ->disabled(fn (callable $get) => !$get('persona.departamento_id'))
+                                ->disabled(fn (callable $get) => !$get('persona.departamento_id') || $get('persona_autocompletada'))
                                 ->columnSpanFull(),
 
                             // Dirección al final
-                            Forms\Components\TextInput::make('persona.direccion')->label('Dirección')->required()->columnSpanFull(),
+                            Forms\Components\TextInput::make('persona.direccion')
+                                ->label('Dirección')
+                                ->required()
+                                ->disabled(fn (callable $get) => $get('persona_autocompletada'))
+                                ->columnSpanFull(),
 
-                            Forms\Components\TextInput::make('persona.telefono')->label('Teléfono')->columnSpanFull(),
-                            Forms\Components\Select::make('persona.sexo')->label('Sexo')->options(['MASCULINO' => 'Masculino', 'FEMENINO' => 'Femenino'])->required()->columnSpanFull(),
-                            Forms\Components\DatePicker::make('persona.fecha_nacimiento')->label('Fecha de nacimiento')->required()->columnSpanFull(),
+                            Forms\Components\TextInput::make('persona.telefono')
+                                ->label('Teléfono')
+                                ->disabled(fn (callable $get) => $get('persona_autocompletada'))
+                                ->columnSpanFull(),
+                            
+                            Forms\Components\Select::make('persona.sexo')
+                                ->label('Sexo')
+                                ->options(['MASCULINO' => 'Masculino', 'FEMENINO' => 'Femenino'])
+                                ->required()
+                                ->disabled(fn (callable $get) => $get('persona_autocompletada'))
+                                ->columnSpanFull(),
+                            
+                            Forms\Components\DatePicker::make('persona.fecha_nacimiento')
+                                ->label('Fecha de nacimiento')
+                                ->required()
+                                ->disabled(fn (callable $get) => $get('persona_autocompletada'))
+                                ->columnSpanFull(),
                         ])->columns(2)->columnSpanFull(),
 
                     // Paso 2: Datos de empleado

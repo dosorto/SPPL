@@ -21,6 +21,10 @@ return new class extends Migration
 
             // Nuevo campo para indicar si el valor es un porcentaje o un monto
             $table->enum('tipo_valor', ['porcentaje', 'monto'])->default('porcentaje');
+            
+            // Campos para manejar percepciones que dependen de una cantidad (ej: horas extras)
+            $table->boolean('depende_cantidad')->default(false);
+            $table->string('unidad_cantidad')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

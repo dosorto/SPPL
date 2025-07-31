@@ -53,6 +53,11 @@ class PercepcionesResource extends Resource
                     ->required()
                     ->suffix(fn (Get $get) => $get('tipo_valor') === 'porcentaje' ? '%' : ($get('tipo_valor') === 'monto' ? 'L' : ''))
                     ->helperText('Ejemplo: 5 = 5% ó 500 = L500'),
+                    
+                Forms\Components\Toggle::make('depende_cantidad')
+                    ->label('Depende de una cantidad')
+                    ->default(false)
+                    ->reactive(),
 
             ]);
     }

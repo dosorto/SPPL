@@ -44,6 +44,16 @@ class ViewNomina extends ViewRecord
                     Placeholder::make('año')
                         ->label('Año')
                         ->content(fn () => $this->record->año ?? 'N/A'),
+                    Placeholder::make('tipo_pago')
+                        ->label('Tipo de Pago')
+                        ->content(function () {
+                            $tipos = [
+                                'mensual' => 'Mensual',
+                                'quincenal' => 'Quincenal',
+                                'semanal' => 'Semanal',
+                            ];
+                            return $tipos[$this->record->tipo_pago] ?? ucfirst($this->record->tipo_pago ?? 'mensual');
+                        }),
                     Placeholder::make('descripcion')
                         ->label('Descripción')
                         ->content(fn () => $this->record->descripcion ?? 'N/A'),
@@ -138,6 +148,14 @@ class ViewNomina extends ViewRecord
         ];
         $mesNombre = $meses[$nomina->mes] ?? '';
         
+        // Obtener el tipo de pago formateado
+        $tiposPago = [
+            'mensual' => 'Mensual',
+            'quincenal' => 'Quincenal',
+            'semanal' => 'Semanal',
+        ];
+        $tipoPagoNombre = $tiposPago[$nomina->tipo_pago] ?? ucfirst($nomina->tipo_pago ?? 'mensual');
+        
         // Preparar los datos de los empleados para el PDF, usando los detalles guardados (solo los activos)
         $empleados = [];
         $totalNomina = 0;
@@ -205,10 +223,16 @@ class ViewNomina extends ViewRecord
                         [$nombre, $valorMostrado] = array_map('trim', explode(':', $linea, 2));
                         $valorNumerico = 0;
                         $valorCalculado = 0;
-                        if (preg_match('/([\d\.,]+)/', $valorMostrado, $matches)) {
+                        // First, extract the value part before any parentheses for quantity info
+                        $valorLimpio = preg_replace('/\s*\(Cantidad:.*?\)/', '', $valorMostrado);
+                        
+                        // Now extract the numerical value from the clean string
+                        if (preg_match('/([\d\.,]+)/', $valorLimpio, $matches)) {
                             $valorNumerico = floatval(str_replace([',', 'L.', ' '], ['', '', ''], $matches[1]));
                         }
-                        if (preg_match('/([\d\.,]+)\s*%\s*$/', $valorMostrado, $matchesPorc)) {
+                        
+                        // Handle percentage values
+                        if (preg_match('/([\d\.,]+)\s*%/', $valorLimpio, $matchesPorc)) {
                             $porcentaje = floatval(str_replace([',', ' '], ['', ''], $matchesPorc[1]));
                             $valorCalculado = ($porcentaje / 100) * $sueldoBruto;
                         } else {
@@ -254,7 +278,7 @@ class ViewNomina extends ViewRecord
                 'deduccionesArray' => $deducciones,
                 'deducciones' => $totalDeducciones,
                 'percepcionesArray' => $percepciones,
-                'percepciones' => $totalPercepciones,
+                'percepciones' => $detalle->percepciones, // Usar el valor guardado en la BD
                 'total' => $detalle->sueldo_neto
             ];
 
@@ -266,6 +290,7 @@ class ViewNomina extends ViewRecord
             'nomina' => $nomina,
             'empresa' => $nomina->empresa,
             'mesNombre' => $mesNombre,
+            'tipoPagoNombre' => $tipoPagoNombre,
             'fechaGeneracion' => now()->format('d/m/Y H:i:s'),
             'empleados' => $empleados,
             'totalNomina' => $totalNomina,
