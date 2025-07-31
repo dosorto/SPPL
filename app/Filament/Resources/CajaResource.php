@@ -20,6 +20,7 @@ class CajaResource extends Resource
     protected static ?string $navigationLabel = 'Cajas';
     protected static ?string $modelLabel = 'Caja';
     protected static ?string $pluralModelLabel = 'Cajas';
+    protected static bool $shouldRegisterNavigation = false;
 
     public static function form(Form $form): Form
     {

@@ -2,49 +2,56 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Traits\TenantScoped;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Facades\Auth;
 
 class CajaApertura extends Model
 {
-    use HasFactory, SoftDeletes, TenantScoped;
+    use HasFactory;
 
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
     protected $fillable = [
-        'caja_id',
-        'empresa_id',
         'user_id',
         'monto_inicial',
-        'estado',
+        'monto_final_calculado',
         'fecha_apertura',
         'fecha_cierre',
-        'created_by',
-        'updated_by',
-        'deleted_by',
+        'estado',
     ];
 
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
     protected $casts = [
-        'monto_inicial' => 'decimal:2',
         'fecha_apertura' => 'datetime',
         'fecha_cierre' => 'datetime',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
     ];
 
-    public function usuario()
+    protected static function booted()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        // ✅ Se ejecuta JUSTO ANTES de crear un nuevo registro
+        static::creating(function ($apertura) {
+            if (Auth::check()) { // Nos aseguramos de que haya un usuario logueado
+                $apertura->user_id = Auth::id();
+                $apertura->fecha_apertura = now();
+                $apertura->estado = 'ABIERTA';
+            }
+        });
     }
 
-    public function caja()
+    /**
+     * Get the user that owns the caja apertura.
+     */
+    public function user(): BelongsTo
     {
-        return $this->belongsTo(Caja::class);
-    }
-
-    public function empresa()
-    {
-        return $this->belongsTo(Empresa::class);
+        return $this->belongsTo(User::class);
     }
 }

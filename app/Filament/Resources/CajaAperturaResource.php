@@ -9,61 +9,40 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
+use App\Filament\Resources\FacturaResource;
+use Illuminate\Support\Facades\Auth;
 
 class CajaAperturaResource extends Resource
 {
     protected static ?string $model = CajaApertura::class;
-    
-    protected static ?string $navigationIcon = 'heroicon-o-wallet';
-    protected static ?string $navigationGroup = 'Ventas';
-    protected static ?string $navigationLabel = 'Apertura de Caja';
-    protected static ?string $modelLabel = 'Apertura de Caja';
-    protected static ?string $pluralModelLabel = 'Aperturas de Caja';
 
+    protected static ?string $navigationIcon = 'heroicon-o-archive-box';
+    protected static ?string $navigationGroup = 'Ventas';
+           
     public static function form(Form $form): Form
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Datos de la Apertura')
-                    ->schema([
-                        Forms\Components\Select::make('caja_id')
-                            ->label('Caja')
-                            ->relationship('caja', 'nombre') // Ajusta el campo visible
-                            ->searchable()
-                            ->required(),
-
-                        Forms\Components\Hidden::make('empresa_id')
-                            ->default(fn () => auth()->user()?->empresa_id),
-
-                        Forms\Components\Hidden::make('user_id')
-                            ->default(fn () => auth()->id()),
-
-                        Forms\Components\TextInput::make('monto_inicial')
-                            ->label('Monto Inicial')
-                            ->prefix('L.')
-                            ->numeric()
-                            ->required(),
-
-                        Forms\Components\Select::make('estado')
-                            ->label('Estado')
-                            ->options([
-                                'abierta' => 'Abierta',
-                                'cerrada' => 'Cerrada',
-                            ])
-                            ->required()
-                            ->default('abierta'),
-
-                        Forms\Components\DateTimePicker::make('fecha_apertura')
-                            ->label('Fecha de Apertura')
-                            ->default(now())
-                            ->required(),
-
-                        Forms\Components\DateTimePicker::make('fecha_cierre')
-                            ->label('Fecha de Cierre')
-                            ->nullable(),
-                    ])
-                    ->columns(2)
+                // El campo 'user_id' ya no es visible, se asigna automáticamente.
+                
+                Forms\Components\TextInput::make('monto_inicial')
+                    ->required()
+                    ->numeric()
+                    ->prefix('L')
+                    ->default(2000.00), // Valor por defecto en el formulario
+                
+                // Los siguientes campos no tienen sentido al crear, solo al editar o ver.
+                Forms\Components\TextInput::make('monto_final_calculado')
+                    ->numeric()
+                    ->prefix('L')
+                    ->disabled() // Deshabilitado para que no se pueda editar
+                    ->visibleOn('edit'), // Solo visible en la página de edición
+                
+                Forms\Components\DateTimePicker::make('fecha_cierre')
+                    ->disabled()
+                    ->visibleOn('edit'),
+                
+                // El campo 'estado' ya no es visible, se asigna automáticamente.
             ]);
     }
 
@@ -71,24 +50,47 @@ class CajaAperturaResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('id')->label('ID')->sortable(),
-                Tables\Columns\TextColumn::make('caja.nombre')->label('Caja')->searchable(),
-                Tables\Columns\TextColumn::make('usuario.name')->label('Usuario')->searchable(),
-                Tables\Columns\TextColumn::make('monto_inicial')->label('Monto Inicial')->money('HNL'),
-                Tables\Columns\TextColumn::make('estado')->badge()->color(fn (string $state) => match ($state) {
-                    'abierta' => 'success',
-                    'cerrada' => 'gray',
-                    default => 'secondary',
-                }),
-                Tables\Columns\TextColumn::make('fecha_apertura')->label('Apertura')->dateTime('d/m/Y H:i'),
-                Tables\Columns\TextColumn::make('fecha_cierre')->label('Cierre')->dateTime('d/m/Y H:i')->sortable(),
+                Tables\Columns\TextColumn::make('user.name')
+                    ->label('Usuario')
+                    ->sortable()
+                    ->searchable(),
+                Tables\Columns\TextColumn::make('monto_inicial')
+                    ->money('LPS')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('fecha_apertura')
+                    ->dateTime()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('fecha_cierre')
+                    ->dateTime()
+                    ->sortable()
+                    ->placeholder('N/A'), // Texto si está vacío
+                Tables\Columns\TextColumn::make('estado')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'ABIERTA' => 'success',
+                        'CERRADA' => 'danger',
+                    })
+                    ->searchable(),
             ])
             ->filters([
                 //
             ])
             ->actions([
-                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\ViewAction::make(),
+                // 👇 NUEVA ACCIÓN PARA IR A FACTURAR
+                Tables\Actions\Action::make('ir_a_facturar')
+                    ->label('Ir a Facturar')
+                    ->icon('heroicon-o-document-plus')
+                    ->color('success')
+                    ->visible(fn (CajaApertura $record): bool => $record->estado === 'ABIERTA')
+                    ->action(function (CajaApertura $record) {
+                        // Guardar el ID de la apertura en la sesión
+                        session(['apertura_id' => $record->id]);
+                        
+                        // Redirigir a la página de generar factura
+                        return redirect(FacturaResource::getUrl('generar-factura'));
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -96,7 +98,8 @@ class CajaAperturaResource extends Resource
                 ]),
             ]);
     }
-
+         
+    // ... (el resto del archivo no cambia) ...
     public static function getRelations(): array
     {
         return [
@@ -111,10 +114,5 @@ class CajaAperturaResource extends Resource
             'create' => Pages\CreateCajaApertura::route('/create'),
             'edit' => Pages\EditCajaApertura::route('/{record}/edit'),
         ];
-    }
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()->with(['caja', 'usuario']);
     }
 }

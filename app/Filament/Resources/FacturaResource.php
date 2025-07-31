@@ -20,6 +20,7 @@ class FacturaResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Ventas';
+    protected static ?string $slug = 'facturas';
 
     
 

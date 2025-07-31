@@ -22,6 +22,12 @@ use App\Models\Cliente;
 use App\Models\DetalleFactura;
 use App\Models\Empleado;
 use Filament\Forms\Components\Html;
+use Illuminate\Support\Facades\Session;
+use App\Filament\Pages\CierreCaja;
+use App\Models\MetodoPago;
+use App\Filament\Pages\AperturaCaja; 
+use App\Models\CajaApertura; 
+use Illuminate\Support\Facades\Auth; 
 
 
 class GenerarFactura extends Page
@@ -42,6 +48,29 @@ class GenerarFactura extends Page
 
     public function mount(): void
     {
+
+        $aperturaId = session('apertura_id');
+        $userId = Auth::id();
+
+
+        $aperturaValida = CajaApertura::where('id', $aperturaId)
+                                      ->where('user_id', $userId)
+                                      ->where('estado', 'ABIERTA')
+                                      ->exists();
+        if (!$aperturaValida) {
+
+            session()->forget('apertura_id');
+
+            Notification::make()
+                ->title('Acceso Denegado')
+                ->body('No tienes una caja activa para facturar. Por favor, abre una caja primero.')
+                ->danger()
+                ->send();
+
+
+            $this->redirect(AperturaCaja::getUrl());
+        }
+
         $consumidorFinal = Cliente::whereHas('persona', function ($query) {
             $query->where('dni', '0000000000000');
         })->first();
@@ -404,6 +433,8 @@ public function form(Form $form): Form
                 if (!$empleado) {
                     throw new \Exception('No se encontró un empleado para asignar a la factura. Verifique que exista al menos un empleado en el sistema.');
                 }
+                
+                $aperturaId = session('apertura_id');
 
                 // 4. Obtener el CAI activo para la empresa del cliente.
                 $cai = null;
@@ -434,6 +465,7 @@ public function form(Form $form): Form
                     'total' => $this->total,
                     'numero_factura' => $numeroFactura,
                     'cai_id' => $cai?->id,
+                    'apertura_id' => $aperturaId,
                 ]);
             
                 if ($cai) {
@@ -475,5 +507,14 @@ public function form(Form $form): Form
         } catch (\Exception $e) {
             Notification::make()->danger()->title('Error al generar la factura')->body($e->getMessage())->send();
         }
+    }
+    protected function getHeaderActions(): array
+    {
+        return [
+            Action::make('cerrarCaja')
+                ->label('Cerrar Caja / Realizar Arqueo')
+                ->color('danger') 
+                ->url(CierreCaja::getUrl()), 
+        ];
     }
 }
