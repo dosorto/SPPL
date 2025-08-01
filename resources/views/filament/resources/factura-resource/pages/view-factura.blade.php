@@ -5,7 +5,9 @@
         <x-filament::card>
             <div class="grid md:grid-cols-4 gap-4">
                 <div>
-                    <p class="text-sm text-gray-500">Factura</p>
+                    <p class="text-sm text-gray-500">
+                        {{ $record->cai ? 'Factura' : 'Orden de Compra' }}
+                    </p>
                     <p class="text-lg font-semibold">#{{ $record->numero_factura }}</p>
                 </div>
                 <div>

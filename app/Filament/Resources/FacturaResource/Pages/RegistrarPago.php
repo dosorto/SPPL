@@ -12,10 +12,13 @@ use Filament\Forms\Get;
 use Filament\Forms\Set; // Importar Set para actualizar campos
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Forms\Components\Toggle;
+use Illuminate\Support\Facades\DB;
 
 class RegistrarPago extends EditRecord
 {
     protected static string $resource = FacturaResource::class;
+    protected static ?string $title = 'Métodos de Pago';
     protected static string $view = 'filament.resources.factura-resource.pages.registrar-pago';
 
     public function mount(int|string $record): void
@@ -41,6 +44,28 @@ class RegistrarPago extends EditRecord
     {
         return $form
             ->schema([
+
+                Toggle::make('usar_cai')
+                ->label('Generar factura')
+                ->default(true)
+                ->reactive()
+                ->afterStateUpdated(function (bool $state, callable $set) {
+                    // Si activo “usar_cai” desactivo “es_orden_compra”
+                    $set('es_orden_compra', ! $state);
+                })
+                ->columnSpanFull(),
+
+                Toggle::make('es_orden_compra')
+                    ->label('Generar Orden de Compra')
+                    ->default(false)
+                    ->reactive()
+                    ->afterStateUpdated(function (bool $state, callable $set) {
+                        // Si activo “es_orden_compra” desactivo “usar_cai”
+                        $set('usar_cai', ! $state);
+                    })
+                    ->columnSpanFull(),
+
+
                 Forms\Components\Placeholder::make('total_a_pagar')
                     ->label('Total a Pagar')
                     ->content(function (Get $get) {
@@ -99,16 +124,6 @@ class RegistrarPago extends EditRecord
                             })
                             ->hidden(), // Oculta el campo 'monto' del usuario
 
-                        Forms\Components\TextInput::make('referencia')
-                            ->label('Referencia (opcional)')
-                            ->columnSpan(2)
-                            ->maxLength(50)
-                            ->visible(function (Get $get) {
-                                $metodoPago = MetodoPago::find($get('metodo_pago_id'));
-                                $nombreMetodo = optional($metodoPago)->nombre;
-                                return in_array($nombreMetodo, ['Tarjeta de Crédito', 'Tarjeta de Débito', 'Transferencia Bancaria']);
-                            }),
-
                         Forms\Components\TextInput::make('monto_recibido')
                             ->label('Monto Recibido')
                             ->numeric()
@@ -156,15 +171,35 @@ class RegistrarPago extends EditRecord
                             ->label('Cambio')
                             ->disabled()
                             ->numeric()
+                            ->default(fn (Get $get) => round(
+                                // monto default - monto a cubrir
+                                (($get('monto_recibido') ?? 0) - ($get('monto') ?? 0)),
+                                2,
+                            ))
+                            ->live()                    // para que se refresque cuando cambie estado
                             ->extraAttributes(function (?string $state) {
                                 if (is_numeric($state) && (float)$state < 0) {
                                     return ['class' => 'font-bold text-danger-600 dark:text-danger-400'];
                                 }
                                 return ['class' => 'font-bold'];
                             })
-                            ->formatStateUsing(function (?string $state) {
-                                return 'L. ' . number_format((float)$state, 2);
+                            ->formatStateUsing(fn (?string $state) => 'L. ' . number_format((float)$state, 2))
+                            ->afterStateHydrated(function ($component, Get $get, Set $set) {
+                                // recalculamos al inicio también
+                                $monto    = (float) ($get('monto') ?? 0);
+                                $recibido = (float) ($get('monto_recibido') ?? 0);
+                                $set('cambio', round($recibido - $monto, 2));
                             }),
+
+
+                        Forms\Components\TextInput::make('referencia')
+                            ->label('Referencia (opcional)')
+                            ->columnSpan(2)
+                            ->maxLength(50)
+                            ->visible(fn (Get $get) => in_array(
+                                optional(MetodoPago::find($get('metodo_pago_id')))->nombre,
+                                ['Tarjeta de Crédito','Tarjeta de Débito','Transferencia Bancaria']
+                            )),
                     ])
                     ->minItems(1)
                     ->default(function () {
@@ -234,58 +269,75 @@ class RegistrarPago extends EditRecord
 
     public function registrarPago(): void
     {
-        $data = $this->form->getState();
+        $data    = $this->form->getState();
+        $factura = $this->record;
 
         try {
-            $factura = $this->record;
-            $pagosDB = $factura->pagos()->sum('monto');
-            $montoTotalFactura = $factura->total;
-            $pagosFormulario = collect($data['pagos']);
+            DB::transaction(function () use ($factura, $data) {
+                // 1) Validación de montos
+                $pagosDB                 = $factura->pagos()->sum('monto');
+                $montoTotalFactura       = $factura->total;
+                $pagosFormulario         = collect($data['pagos']);
+                $montoRecibidoFormulario = round($pagosFormulario->sum(fn ($p) => floatval($p['monto_recibido'] ?? 0)), 2);
+                $saldoPendienteInicial   = round($montoTotalFactura - $pagosDB, 2);
 
-            $montoFormularioTotalRecibido = round($pagosFormulario->sum(fn ($p) => floatval($p['monto_recibido'] ?? 0)), 2);
-            $montoPendienteInicial = round($montoTotalFactura - $pagosDB, 2);
+                if (bccomp((string) $montoRecibidoFormulario, (string) $saldoPendienteInicial, 2) === -1) {
+                    throw new \Exception("El monto total recibido (L. {$montoRecibidoFormulario}) es menor al saldo pendiente de la factura (L. {$saldoPendienteInicial}).");
+                }
 
-            if (bccomp((string) $montoFormularioTotalRecibido, (string) $montoPendienteInicial, 2) === -1) {
-                throw new \Exception("El monto total recibido (L. {$montoFormularioTotalRecibido}) es menor al saldo pendiente de la factura (L. {$montoPendienteInicial}).");
-            }
+                // 2) Crear cada Pago y actualizar cambio
+                $saldoActual = $saldoPendienteInicial;
+                foreach ($pagosFormulario as $pago) {
+                    $montoRecibido = round((float) ($pago['monto_recibido'] ?? 0), 2);
+                    if ($montoRecibido <= 0) {
+                        continue;
+                    }
 
-            $saldoActualFactura = $montoTotalFactura - $pagosDB;
+                    $montoAplicado = min($montoRecibido, $saldoActual);
+                    $cambio        = round($montoRecibido - $montoAplicado, 2);
 
-            foreach ($pagosFormulario as $pago) {
-                if (empty($pago['monto_recibido']) || (float) $pago['monto_recibido'] <= 0) continue;
+                    Pago::create([
+                        'factura_id'     => $factura->id,
+                        'empresa_id'     => $factura->empresa_id,
+                        'metodo_pago_id' => $pago['metodo_pago_id'],
+                        'monto'          => $montoAplicado,
+                        'monto_recibido' => $montoRecibido,
+                        'cambio'         => $cambio,
+                        'referencia'     => $pago['referencia'] ?? null,
+                    ]);
 
-                $montoRecibido = round((float)($pago['monto_recibido'] ?? 0), 2);
+                    $saldoActual -= $montoAplicado;
+                }
 
-                $montoAplicadoAFactura = min($montoRecibido, max(0, $saldoActualFactura));
+                // 3) Asignar número y estado según el toggle
+                if (! empty($data['usar_cai'])) {
+                    // — Factura con CAI —
+                    $cai    = \App\Models\Cai::obtenerCaiSeguro($factura->empresa_id)
+                        ?? throw new \Exception('No hay un CAI activo para esta empresa.');
+                    $numero = $cai->generarNumeroFactura();
+                    $cai->increment('numero_actual');
 
-                $cambio = $montoRecibido - $montoAplicadoAFactura;
-
-                Pago::create([
-                    'factura_id' => $factura->id,
-                    'empresa_id' => $factura->empresa_id,
-                    'metodo_pago_id' => $pago['metodo_pago_id'],
-                    'monto' => $montoAplicadoAFactura,
-                    'referencia' => $pago['referencia'] ?? null, // <--- CAMBIO AQUÍ: Acceso seguro a la referencia
-                    'monto_recibido' => $montoRecibido,
-                    'cambio' => $cambio,
-                ]);
-
-                $saldoActualFactura -= $montoAplicadoAFactura;
-            }
-
-            $totalPagadoFinal = round($factura->fresh()->pagos()->sum('monto'), 2);
-
-            if (bccomp((string)$totalPagadoFinal, (string)$montoTotalFactura, 2) >= 0) {
-                $factura->update(['estado' => 'Pagada']);
-            }
+                    $factura->update([
+                        'numero_factura' => $numero,
+                        'cai_id'         => $cai->id,
+                        'estado'         => 'Pagada',
+                    ]);
+                } else {
+                    // — Orden de Compra: pago sin CAI, número = id de la factura —
+                    $factura->update([
+                        'numero_factura' => (string) $factura->id,
+                        'cai_id'         => null,
+                        'estado'         => 'Pagada',
+                    ]);
+                }
+            });
 
             Notification::make()
                 ->success()
                 ->title('Pago registrado correctamente.')
                 ->send();
 
-            $this->redirect(FacturaResource::getUrl('view', ['record' => $factura]));
-
+            $this->redirect(FacturaResource::getUrl('view', ['record' => $factura->id]));
         } catch (\Exception $e) {
             Notification::make()
                 ->danger()

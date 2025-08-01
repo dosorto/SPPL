@@ -25,6 +25,7 @@ use Filament\Forms\Components\Html;
 use Illuminate\Support\Facades\Session;
 use App\Filament\Pages\CierreCaja;
 use App\Models\MetodoPago;
+use Illuminate\Support\Str;
 use App\Filament\Pages\AperturaCaja; 
 use App\Models\CajaApertura; 
 use Illuminate\Support\Facades\Auth; 
@@ -46,161 +47,181 @@ class GenerarFactura extends Page
     public float $total = 0;
     public ?string $categoriaClienteNombre = null;
 
-    public function mount(): void
+    public function mount(?int $record = null): void
     {
+        // 0) Validar que haya una caja abierta
+        $aperturaId  = session('apertura_id');
+        $userId      = Auth::id();
+        $cajaAbierta = CajaApertura::where('id', $aperturaId)
+            ->where('user_id', $userId)
+            ->where('estado', 'ABIERTA')
+            ->exists();
 
-        $aperturaId = session('apertura_id');
-        $userId = Auth::id();
-
-
-        $aperturaValida = CajaApertura::where('id', $aperturaId)
-                                      ->where('user_id', $userId)
-                                      ->where('estado', 'ABIERTA')
-                                      ->exists();
-        if (!$aperturaValida) {
-
+        if (! $cajaAbierta) {
             session()->forget('apertura_id');
-
             Notification::make()
                 ->title('Acceso Denegado')
                 ->body('No tienes una caja activa para facturar. Por favor, abre una caja primero.')
                 ->danger()
                 ->send();
-
-
             $this->redirect(AperturaCaja::getUrl());
+            return;
         }
 
-        $consumidorFinal = Cliente::whereHas('persona', function ($query) {
-            $query->where('dni', '0000000000000');
-        })->first();
+        if ($record) {
+            // --- EDICIÓN DE FACTURA PENDIENTE ---
+            $factura = Factura::with('detalles.producto.producto')
+                ->findOrFail($record);
 
-        // 2. Se rellenan los campos del formulario por defecto.
-        $this->form->fill([
-            'tipo_precio' => 'precio_detalle',
-            'cantidad_busqueda' => 1,
-            // Si se encontró al consumidor final, se usa su ID. Si no, se deja en blanco.
-            'cliente_id' => $consumidorFinal ? $consumidorFinal->id : null,
-            'monto_pago' => 0,
-        ]);
-    }
+            // (1) relleno el formulario con los datos del cliente
+            $this->form->fill([
+                'cliente_id'        => $factura->cliente_id,
+                'tipo_precio'       => 'precio_detalle',
+                'cantidad_busqueda' => 1,
+                'usar_cai'          => true,
+            ]);
 
-    public function updatedDataClienteId($clienteId): void
-    {
-        $cliente = Cliente::with('categoriaCliente')->find($clienteId);
+            // (2) reconstruyo las líneas de venta desde los detalles
+            $this->lineasVenta = $factura->detalles
+                ->mapWithKeys(fn($det) => [
+                    $det->producto_id => [
+                        'inventario_id'      => $det->producto_id,
+                        'sku'                => $det->producto->producto->sku,
+                        'nombre'             => $det->producto->producto->nombre,
+                        'precio_unitario'    => $det->precio_unitario,
+                        'cantidad'           => $det->cantidad,
+                        'isv_producto'       => $det->isv_aplicado,
+                        'descuento_aplicado' => $det->descuento_aplicado,
+                        'tipo_precio_key'    => 'precio_detalle',
+                        'tipo_precio_label'  => 'Detalle',
+                    ],
+                ])->toArray();
 
-        if ($cliente && $cliente->categoriaCliente) {
-            $this->categoriaClienteNombre = $cliente->categoriaCliente->nombre;
+            $this->calcularTotales();
+
+            // (3) dejo el id en sesión para saber que sigo en modo edición
+            session(['factura_pendiente_id' => $record]);
         } else {
-            $this->categoriaClienteNombre = null;
-        }
+            // --- CREACIÓN DE UNA NUEVA ORDEN (NO CARGO NADA ANTIGUO) ---
+            session()->forget('factura_pendiente_id');
 
-        $this->dispatch('refresh');
+            $consumidorFinal = Cliente::whereHas('persona', fn($q) =>
+                $q->where('dni', '0000000000000')
+            )->first();
+
+            // 1) valores por defecto del formulario
+            $this->form->fill([
+                'cliente_id'        => $consumidorFinal->id ?? null,
+                'tipo_precio'       => 'precio_detalle',
+                'cantidad_busqueda' => 1,
+                'usar_cai'          => true,
+            ]);
+
+            // 2) limpio cualquier línea previa
+            $this->lineasVenta = [];
+            $this->subtotal    = 0;
+            $this->impuestos   = 0;
+            $this->total       = 0;
+        }
     }
 
 
-public function form(Form $form): Form
-{
-    return $form
-        ->schema([
-            Grid::make(12)->schema([
-                Select::make('cliente_id')
-                    ->label('Cliente')
-                    ->searchable()
-                    ->getSearchResultsUsing(function (string $search): array {
-                        $query = \App\Models\Cliente::query();
 
-                        if (auth()->user()->hasRole('root')) {
-                            $query->withoutGlobalScopes();
-                        }
+    public function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Grid::make(12)->schema([
+                    Select::make('cliente_id')
+                        ->label('Cliente')
+                        ->searchable()
+                        ->getSearchResultsUsing(function (string $search): array {
+                            $query = \App\Models\Cliente::query();
 
-                        return $query
-                            ->whereHas('persona', function ($q) use ($search) {
-                                $q->where('dni', 'like', "%{$search}%")
-                                    ->orWhere('primer_nombre', 'like', "%{$search}%")
-                                    ->orWhere('segundo_nombre', 'like', "%{$search}%")
-                                    ->orWhere('primer_apellido', 'like', "%{$search}%")
-                                    ->orWhere('segundo_apellido', 'like', "%{$search}%");
-                            })
-                            ->with('persona')
-                            ->limit(10)
-                            ->get()
-                            ->mapWithKeys(function ($cliente) {
-                                $persona = $cliente->persona;
-                                if (!$persona) return [];
-                                $nombreCompleto = trim("{$persona->primer_nombre} {$persona->segundo_nombre} {$persona->primer_apellido} {$persona->segundo_apellido}");
-                                return [
-                                    $cliente->id => "{$nombreCompleto} ({$persona->dni})"
-                                ];
-                            })
-                            ->toArray();
-                    })
-                    ->getOptionLabelUsing(function ($value) {
-                        $cliente = \App\Models\Cliente::with('persona')->find($value);
-                        if (!$cliente || !$cliente->persona) return null;
-                        $persona = $cliente->persona;
-                        $nombreCompleto = trim("{$persona->primer_nombre} {$persona->segundo_nombre} {$persona->primer_apellido} {$persona->segundo_apellido}");
-                        return "{$nombreCompleto} ({$persona->dni})";
-                    })
-                    ->required()
-                    ->placeholder('Busque por nombre o DNI del cliente...')
-                    ->columnSpan(5),
+                            if (auth()->user()->hasRole('root')) {
+                                $query->withoutGlobalScopes();
+                            }
 
-                
-
-                Select::make('tipo_precio')
-                    ->label('Aplicar Precio Global')
-                    ->options([
-                        'precio_detalle' => 'Precio Detalle',
-                        'precio_mayorista' => 'Precio Mayorista',
-                        'precio_promocion' => 'Precio de Promoción',
-                    ])
-                    ->live()
-                    ->required()
-                    ->columnSpan(5),
-
-                Forms\Components\Toggle::make('usar_cai')
-                    ->label('¿Desea asignar CAI?')
-                    ->default(true)
-                    ->reactive()
-                    ->afterStateUpdated(fn ($state, $set) => $set('numero_factura', null))
-                    ->inline(false)
-                    ->columnSpan(2),
-            ]),
-
-            Grid::make(12)
-                ->extraAttributes(['class' => 'items-end'])
-                ->schema([
-                    TextInput::make('cantidad_busqueda')
-                        ->label('Cantidad')
-                        ->numeric()
-                        ->default(1)
+                            return $query
+                                ->whereHas('persona', function ($q) use ($search) {
+                                    $q->where('dni', 'like', "%{$search}%")
+                                        ->orWhere('primer_nombre', 'like', "%{$search}%")
+                                        ->orWhere('segundo_nombre', 'like', "%{$search}%")
+                                        ->orWhere('primer_apellido', 'like', "%{$search}%")
+                                        ->orWhere('segundo_apellido', 'like', "%{$search}%");
+                                })
+                                ->with('persona')
+                                ->limit(10)
+                                ->get()
+                                ->mapWithKeys(function ($cliente) {
+                                    $persona = $cliente->persona;
+                                    if (!$persona) return [];
+                                    $nombreCompleto = trim("{$persona->primer_nombre} {$persona->segundo_nombre} {$persona->primer_apellido} {$persona->segundo_apellido}");
+                                    return [
+                                        $cliente->id => "{$nombreCompleto} ({$persona->dni})"
+                                    ];
+                                })
+                                ->toArray();
+                        })
+                        ->getOptionLabelUsing(function ($value) {
+                            $cliente = \App\Models\Cliente::with('persona')->find($value);
+                            if (!$cliente || !$cliente->persona) return null;
+                            $persona = $cliente->persona;
+                            $nombreCompleto = trim("{$persona->primer_nombre} {$persona->segundo_nombre} {$persona->primer_apellido} {$persona->segundo_apellido}");
+                            return "{$nombreCompleto} ({$persona->dni})";
+                        })
                         ->required()
-                        ->columnSpan(3),
+                        ->placeholder('Busque por nombre o DNI del cliente...')
+                        ->columnSpan(5),
 
-                    TextInput::make('sku_busqueda')
-                        ->label('Buscar por Código de Barras / SKU')
-                        ->placeholder('Escanee o ingrese el código...')
-                        ->autofocus()
-                        ->live(debounce: 500)
-                        ->extraAttributes(['wire:keydown.enter.prevent' => 'agregarProducto'])
-                        ->columnSpan(6),
+                    
 
-                    Forms\Components\Group::make([
-                        Forms\Components\Actions::make([
-                            Forms\Components\Actions\Action::make('agregar')
-                                ->label('Agregar Producto')
-                                ->icon('heroicon-o-plus-circle')
-                                ->action('agregarProducto')
-                                ->extraAttributes(['class' => 'w-full h-full']),
-                        ]),
-                    ])
-                    ->extraAttributes(['class' => 'mt-6'])
-                    ->columnSpan(['md' => 2.5]),
+                    Select::make('tipo_precio')
+                        ->label('Aplicar Precio Global')
+                        ->options([
+                            'precio_detalle' => 'Precio Detalle',
+                            'precio_mayorista' => 'Precio Mayorista',
+                            'precio_promocion' => 'Precio de Promoción',
+                        ])
+                        ->live()
+                        ->required()
+                        ->columnSpan(5),
+
                 ]),
-        ])
-        ->statePath('data');
-}
+
+                Grid::make(12)
+                    ->extraAttributes(['class' => 'items-end'])
+                    ->schema([
+                        TextInput::make('cantidad_busqueda')
+                            ->label('Cantidad')
+                            ->numeric()
+                            ->default(1)
+                            ->required()
+                            ->columnSpan(3),
+
+                        TextInput::make('sku_busqueda')
+                            ->label('Buscar por Código de Barras / SKU')
+                            ->placeholder('Escanee o ingrese el código...')
+                            ->autofocus()
+                            ->live(debounce: 500)
+                            ->extraAttributes(['wire:keydown.enter.prevent' => 'agregarProducto'])
+                            ->columnSpan(6),
+
+                        Forms\Components\Group::make([
+                            Forms\Components\Actions::make([
+                                Forms\Components\Actions\Action::make('agregar')
+                                    ->label('Agregar Producto')
+                                    ->icon('heroicon-o-plus-circle')
+                                    ->action('agregarProducto')
+                                    ->extraAttributes(['class' => 'w-full h-full']),
+                            ]),
+                        ])
+                        ->extraAttributes(['class' => 'mt-6'])
+                        ->columnSpan(['md' => 2.5]),
+                    ]),
+            ])
+            ->statePath('data');
+    }
 
 
 
@@ -394,7 +415,7 @@ public function form(Form $form): Form
     {
         return [
             Action::make('submit')
-                ->label('Finalizar y Agregar Metodos de Pago')
+                ->label('Agregar Métodos de Pago')
                 ->color('success')
                 ->icon('heroicon-o-document-check')
                 ->requiresConfirmation()
@@ -407,86 +428,62 @@ public function form(Form $form): Form
     {
         $data = $this->form->getState();
 
+        // 1) Validación básica: cliente y líneas de venta
         if (empty($this->lineasVenta) || empty($data['cliente_id'])) {
             Notification::make()
                 ->danger()
                 ->title('Faltan Datos')
                 ->body('Debe seleccionar un cliente y agregar productos.')
                 ->send();
+
             return;
         }
 
         try {
             DB::transaction(function () use ($data) {
-                $cliente = auth()->user()->hasRole('root') 
-                    ? Cliente::withoutGlobalScopes()->find($data['cliente_id']) 
+                // 2) Cargar cliente respetando scopes
+                $cliente = auth()->user()->hasRole('root')
+                    ? Cliente::withoutGlobalScopes()->find($data['cliente_id'])
                     : Cliente::find($data['cliente_id']);
-
-                if (!$cliente) {
+                if (! $cliente) {
                     throw new \Exception('Cliente no encontrado.');
                 }
 
+                // 3) Cargar empleado asociado al usuario
                 $empleado = auth()->user()->empleado;
-
-                if (!$empleado) {
-                    throw new \Exception('El usuario actual no está asociado a ningún empleado. Contacte al administrador del sistema.');
+                if (! $empleado) {
+                    throw new \Exception('Usuario no asociado a ningún empleado.');
                 }
 
-                // 3. Si AÚN no hay empleado (la tabla está vacía), lanza un error claro.
-                if (!$empleado) {
-                    throw new \Exception('No se encontró un empleado para asignar a la factura. Verifique que exista al menos un empleado en el sistema.');
-                }
-                
+                // 4) Obtener apertura de caja
                 $aperturaId = session('apertura_id');
 
-                // 4. Obtener el CAI activo para la empresa del cliente.
-                $cai = null;
-                $numeroFactura = null;
-
-                if (!empty($data['usar_cai'])) {
-                    $cai = \App\Models\Cai::obtenerCaiSeguro($cliente->empresa_id);
-
-                    if (!$cai) {
-                        throw new \Exception('No hay un CAI activo disponible para esta empresa. No se puede emitir factura con CAI.');
-                    }
-
-                    $numeroFactura = $cai->generarNumeroFactura();
-
-                    // Verificación extra de rango por seguridad
-                    if ($cai->numero_actual + 1 > $cai->rango_final) {
-                        throw new \Exception("El CAI ha alcanzado su límite máximo de emisión.");
-                    }
-                } else {
-                    // Generar número alternativo para pruebas u otros casos
-                    $ultimoId = Factura::max('id') + 1;
-                    $numeroFactura = 'TEMP-' . str_pad($ultimoId, 8, '0', STR_PAD_LEFT);
-                }
-
-                // --- Crear Factura ---
+                // 5) Crear la factura en estado "Pendiente" con número temporal
+                /** @var Factura $factura */
                 $factura = Factura::create([
-                    'cliente_id' => $cliente->id,
-                    'empleado_id' => $empleado->id,
-                    'empresa_id' => $cliente->empresa_id,
-                    'fecha_factura' => now(),
-                    'estado' => 'Pendiente',
-                    'subtotal' => $this->subtotal,
-                    'impuestos' => $this->impuestos,
-                    'total' => $this->total,
-                    'numero_factura' => $numeroFactura,
-                    'cai_id' => $cai?->id,
-                    'apertura_id' => $aperturaId,
+                    'cliente_id'      => $cliente->id,
+                    'empleado_id'     => $empleado->id,
+                    'empresa_id'      => $cliente->empresa_id,
+                    'fecha_factura'   => now(),
+                    'estado'          => 'Pendiente',
+                    'subtotal'        => $this->subtotal,
+                    'impuestos'       => $this->impuestos,
+                    'total'           => $this->total,
+                    'numero_factura'  => 'PEND-' . Str::uuid(), // placeholder nunca NULL
+                    'cai_id'          => null,
+                    'apertura_id'     => $aperturaId,
                 ]);
 
-                if ($cai) {
-                    $cai->increment('numero_actual');
-                }
+                // 6) Sobrescribir el número con su propio ID
+                $factura->update([
+                    'numero_factura' => (string) $factura->id,
+                ]);
 
-                // --- Guardar detalles de productos ---
+                // 7) Guardar cada línea de detalle y decrementar stock
                 foreach ($this->lineasVenta as $linea) {
                     $inventario = auth()->user()->hasRole('root')
                         ? InventarioProductos::withoutGlobalScopes()->find($linea['inventario_id'])
                         : InventarioProductos::find($linea['inventario_id']);
-
                     $costo = $inventario?->precio_costo ?? 0;
 
                     DetalleFactura::create([
@@ -498,19 +495,20 @@ public function form(Form $form): Form
                         'sub_total'          => $linea['cantidad'] * $linea['precio_unitario'],
                         'isv_aplicado'       => $linea['isv_producto'] ?? 0,
                         'costo_unitario'     => $costo,
-                        'utilidad_unitaria'  => $linea['precio_unitario'] - $costo,
+                        'utilidad_unitaria'  => round($linea['precio_unitario'] - $costo, 2),
                     ]);
 
                     $inventario?->decrement('cantidad', $linea['cantidad']);
                 }
 
+                // 8) Notificar y redirigir al formulario de pagos
                 Notification::make()
                     ->success()
-                    ->title('¡Factura Generada!')
-                    ->body("Factura No. {$numeroFactura} registrada correctamente.")
+                    ->title('Orden creada como pendiente')
+                    ->body('Ahora puedes registrar el pago para asignar CAI y número.')
                     ->send();
 
-                redirect(FacturaResource::getUrl('registrar-pago', ['record' => $factura]));
+                redirect(FacturaResource::getUrl('registrar-pago', ['record' => $factura->id]));
             });
         } catch (\Exception $e) {
             Notification::make()
@@ -520,9 +518,112 @@ public function form(Form $form): Form
                 ->send();
         }
     }
+
+
+
+    public function guardarPendiente(): void
+    {
+        $data = $this->form->getState();
+
+        if (empty($this->lineasVenta) || empty($data['cliente_id'])) {
+            Notification::make()
+                ->danger()
+                ->title('Faltan Datos')
+                ->body('Debe seleccionar un cliente y agregar productos.')
+                ->send();
+
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($data) {
+                // 1) ¿Estoy re-editando una factura pendiente?
+                $pendienteId = session('factura_pendiente_id');
+
+                if ($pendienteId) {
+                    // 1.a) Actualizo totales en la factura existente
+                    $factura = Factura::findOrFail($pendienteId);
+                    $factura->update([
+                        'subtotal'   => $this->subtotal,
+                        'impuestos' => $this->impuestos,
+                        'total'     => $this->total,
+                    ]);
+
+                    // 1.b) Borro los detalles antiguos
+                    $factura->detalles()->delete();
+                } else {
+                    // 1.c) Creo nueva factura pendiente con valor temporal
+                    $factura = Factura::create([
+                        'cliente_id'     => $data['cliente_id'],
+                        'empleado_id'    => auth()->user()->empleado->id,
+                        'empresa_id'     => Cliente::find($data['cliente_id'])->empresa_id,
+                        'fecha_factura'  => now(),
+                        'estado'         => 'Pendiente',
+                        'subtotal'       => $this->subtotal,
+                        'impuestos'      => $this->impuestos,
+                        'total'          => $this->total,
+                        'numero_factura' => 'TEMP', // nunca null
+                        'cai_id'         => null,
+                        'apertura_id'    => session('apertura_id'),
+                    ]);
+
+                    // 1.d) Asigno el número definitivo: el ID
+                    $factura->update([
+                        'numero_factura' => (string) $factura->id,
+                    ]);
+
+                    // 1.e) Guardo en sesión para futuras ediciones
+                    session(['factura_pendiente_id' => $factura->id]);
+                }
+
+                // 2) Creo detalles
+                foreach ($this->lineasVenta as $linea) {
+                    $inventario = InventarioProductos::find($linea['inventario_id']);
+                    $costo      = $inventario?->precio_costo ?? 0;
+                    $utilidad   = round($linea['precio_unitario'] - $costo, 2);
+
+                    DetalleFactura::create([
+                        'factura_id'         => $factura->id,
+                        'producto_id'        => $linea['inventario_id'],
+                        'cantidad'           => $linea['cantidad'],
+                        'precio_unitario'    => $linea['precio_unitario'],
+                        'descuento_aplicado' => $linea['descuento_aplicado'] ?? 0,
+                        'sub_total'          => $linea['cantidad'] * $linea['precio_unitario'],
+                        'isv_aplicado'       => $linea['isv_producto'] ?? 0,
+                        'costo_unitario'     => $costo,
+                        'utilidad_unitaria'  => $utilidad,
+                    ]);
+                }
+            });
+
+            Notification::make()
+                ->success()
+                ->title('Orden guardada como pendiente')
+                ->send();
+
+            redirect(FacturaResource::getUrl('view', ['record' => session('factura_pendiente_id')]));
+        } catch (\Exception $e) {
+            Notification::make()
+                ->danger()
+                ->title('Error al guardar pendiente')
+                ->body($e->getMessage())
+                ->send();
+        }
+    }
+
+
+
+
+
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('facturaPendiente')
+                ->label('Factura Pendiente')
+                ->icon('heroicon-o-document-text')
+                ->color('warning')
+                ->requiresConfirmation()
+                ->action('guardarPendiente'),
             Action::make('cerrarCaja')
                 ->label('Cerrar Caja / Realizar Arqueo')
                 ->color('danger') 

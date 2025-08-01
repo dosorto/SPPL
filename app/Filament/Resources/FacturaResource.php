@@ -135,12 +135,11 @@ class FacturaResource extends Resource
         return [
             'index' => Pages\ListFacturas::route('/'),
             'edit' => Pages\EditFactura::route('/{record}/edit'),
-            
-            // --- AÑADE ESTAS DOS LÍNEAS ---
             'generar-factura' => Pages\GenerarFactura::route('/generar'),
             'view' => Pages\ViewFactura::route('/{record}'), 
             'registrar-pago' => Pages\RegistrarPago::route('/{record}/pago'),
             'imprimir-factura' => Pages\ImprimirFactura::route('/{record}/imprimir-factura'),
+            'edit-pendiente'   => Pages\GenerarFactura::route('/{record}/editar-pendiente'),
         ];
     }
 
