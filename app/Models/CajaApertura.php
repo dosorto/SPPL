@@ -23,6 +23,10 @@ class CajaApertura extends Model
         'fecha_apertura',
         'fecha_cierre',
         'estado',
+        // --- CAMPOS NUEVOS ---
+        'conteo_usuario',
+        'diferencias_cierre',
+        'notas_cierre',
     ];
 
     /**
@@ -33,8 +37,14 @@ class CajaApertura extends Model
     protected $casts = [
         'fecha_apertura' => 'datetime',
         'fecha_cierre' => 'datetime',
+        // --- CASTS PARA JSON ---
+        'conteo_usuario' => 'array',
+        'diferencias_cierre' => 'array',
     ];
 
+    /**
+     * The "booted" method of the model.
+     */
     protected static function booted()
     {
         // ✅ Se ejecuta JUSTO ANTES de crear un nuevo registro

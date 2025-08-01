@@ -520,13 +520,5 @@ public function form(Form $form): Form
                 ->send();
         }
     }
-    protected function getHeaderActions(): array
-    {
-        return [
-            Action::make('cerrarCaja')
-                ->label('Cerrar Caja / Realizar Arqueo')
-                ->color('danger') 
-                ->url(CierreCaja::getUrl()), 
-        ];
-    }
+    
 }
