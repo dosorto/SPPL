@@ -94,7 +94,14 @@
                     <tbody>
                         @foreach ($record->detalles as $detalle)
                             <tr class="border-b last:border-0">
-                                <td class="px-6 py-3">{{ $detalle->producto->producto->nombre }}</td>
+                                <td class="px-6 py-3">
+                                    {{ $detalle->producto->producto->nombre }}
+                                    @if ($detalle->tipo_descuento === 'producto')
+                                        <br><span class="text-xs text-green-600 font-medium">(Descuento personalizado)</span>
+                                    @elseif ($detalle->tipo_descuento === 'categoria')
+                                        <br><span class="text-xs text-blue-600 font-medium">(Descuento por categoría)</span>
+                                    @endif
+                                </td>
                                 <td class="px-6 py-3">{{ $detalle->producto->producto->sku ?? 'N/A' }}</td>
                                 <td class="px-6 py-3 text-right">{{ number_format($detalle->cantidad, 2) }}</td>
                                 <td class="px-6 py-3 text-right">

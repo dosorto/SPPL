@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Traits\TenantScoped;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
@@ -9,7 +10,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 // El nombre de la clase es "detalle_factura" (minúsculas y guion bajo)
 class DetalleFactura extends Model
 {
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, TenantScoped;
 
     protected $table = 'detalle_factura';
 
@@ -18,14 +19,18 @@ class DetalleFactura extends Model
         'producto_id',
         'cantidad',
         'precio_unitario',
-        'sub_total',
         'descuento_aplicado',
+        'sub_total',
         'isv_aplicado',
         'costo_unitario',
         'utilidad_unitaria',
-        // También es buena práctica añadir los campos de log si los llenas manualmente
+        'tipo_precio_utilizado',
+        'origen_descuento',
+        'nombre_producto_snapshot',
+        'sku_snapshot',
         'created_by',
         'updated_by',
+        'deleted_by',
     ];
 
     /**

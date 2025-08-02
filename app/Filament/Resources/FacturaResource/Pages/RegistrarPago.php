@@ -267,85 +267,101 @@ class RegistrarPago extends EditRecord
 
     
 
-    public function registrarPago(): void
-    {
-        $data    = $this->form->getState();
-        $factura = $this->record;
+public function registrarPago(): void
+{
+    $data    = $this->form->getState();
+    /** @var Factura $factura */
+    $factura = $this->record;
 
-        try {
-            DB::transaction(function () use ($factura, $data) {
-                // 1) Validación de montos
-                $pagosDB                 = $factura->pagos()->sum('monto');
-                $montoTotalFactura       = $factura->total;
-                $pagosFormulario         = collect($data['pagos']);
-                $montoRecibidoFormulario = round($pagosFormulario->sum(fn ($p) => floatval($p['monto_recibido'] ?? 0)), 2);
-                $saldoPendienteInicial   = round($montoTotalFactura - $pagosDB, 2);
+    try {
+        DB::transaction(function () use ($factura, $data) {
+            //
+            // 1) Validación de montos
+            //
+            $pagosDB               = $factura->pagos()->sum('monto');
+            $totalFactura          = $factura->total;
+            $recibidoFormulario    = round(collect($data['pagos'])
+                                        ->sum(fn($p) => floatval($p['monto_recibido'] ?? 0)), 2);
+            $saldoInicial          = round($totalFactura - $pagosDB, 2);
 
-                if (bccomp((string) $montoRecibidoFormulario, (string) $saldoPendienteInicial, 2) === -1) {
-                    throw new \Exception("El monto total recibido (L. {$montoRecibidoFormulario}) es menor al saldo pendiente de la factura (L. {$saldoPendienteInicial}).");
+            if (bccomp((string)$recibidoFormulario, (string)$saldoInicial, 2) === -1) {
+                throw new \Exception("Lo recibido (L. {$recibidoFormulario}) es menor al saldo (L. {$saldoInicial}).");
+            }
+
+            //
+            // 2) Registro de cada Pago y cálculo de cambio
+            //
+            $saldoActual = $saldoInicial;
+            foreach ($data['pagos'] as $pago) {
+                $recibido = round((float)($pago['monto_recibido'] ?? 0), 2);
+                if ($recibido <= 0) {
+                    continue;
                 }
+                $aplicado = min($recibido, $saldoActual);
+                $cambio   = round($recibido - $aplicado, 2);
 
-                // 2) Crear cada Pago y actualizar cambio
-                $saldoActual = $saldoPendienteInicial;
-                foreach ($pagosFormulario as $pago) {
-                    $montoRecibido = round((float) ($pago['monto_recibido'] ?? 0), 2);
-                    if ($montoRecibido <= 0) {
-                        continue;
-                    }
+                Pago::create([
+                    'factura_id'     => $factura->id,
+                    'empresa_id'     => $factura->empresa_id,
+                    'metodo_pago_id' => $pago['metodo_pago_id'],
+                    'monto'          => $aplicado,
+                    'monto_recibido' => $recibido,
+                    'cambio'         => $cambio,
+                    'referencia'     => $pago['referencia'] ?? null,
+                ]);
 
-                    $montoAplicado = min($montoRecibido, $saldoActual);
-                    $cambio        = round($montoRecibido - $montoAplicado, 2);
+                $saldoActual -= $aplicado;
+            }
 
-                    Pago::create([
-                        'factura_id'     => $factura->id,
-                        'empresa_id'     => $factura->empresa_id,
-                        'metodo_pago_id' => $pago['metodo_pago_id'],
-                        'monto'          => $montoAplicado,
-                        'monto_recibido' => $montoRecibido,
-                        'cambio'         => $cambio,
-                        'referencia'     => $pago['referencia'] ?? null,
-                    ]);
+            //
+            // 3) Asignación de folio
+            //
+            if (! empty($data['usar_cai'])) {
+                // Recuperar el CAI activo
+                $cai = \App\Models\Cai::obtenerCaiSeguro($factura->empresa_id)
+                    ?? throw new \Exception('No hay un CAI activo para esta empresa.');
 
-                    $saldoActual -= $montoAplicado;
-                }
-
-                // 3) Asignar número y estado según el toggle
-                if (! empty($data['usar_cai'])) {
-                    // — Factura con CAI —
-                    $cai    = \App\Models\Cai::obtenerCaiSeguro($factura->empresa_id)
-                        ?? throw new \Exception('No hay un CAI activo para esta empresa.');
-                    $numero = $cai->generarNumeroFactura();
+                // Sólo incrementamos si es la primera vez que asignamos CAI a esta factura
+                if (is_null($factura->cai_id)) {
                     $cai->increment('numero_actual');
-
-                    $factura->update([
-                        'numero_factura' => $numero,
-                        'cai_id'         => $cai->id,
-                        'estado'         => 'Pagada',
-                    ]);
-                } else {
-                    // — Orden de Compra: pago sin CAI, número = id de la factura —
-                    $factura->update([
-                        'numero_factura' => (string) $factura->id,
-                        'cai_id'         => null,
-                        'estado'         => 'Pagada',
-                    ]);
                 }
-            });
 
-            Notification::make()
-                ->success()
-                ->title('Pago registrado correctamente.')
-                ->send();
+                // Ahora formateamos con el valor recién incrementado
+                $folio        = $cai->numero_actual;
+                $folioPadded  = str_pad($folio, 8, '0', STR_PAD_LEFT);
+                $numeroFactura = "{$cai->establecimiento}-{$cai->punto_emision}-{$cai->tipo_documento}-{$folioPadded}";
 
-            $this->redirect(FacturaResource::getUrl('view', ['record' => $factura->id]));
-        } catch (\Exception $e) {
-            Notification::make()
-                ->danger()
-                ->title('Error al registrar pago')
-                ->body($e->getMessage())
-                ->send();
-        }
+                // Actualizamos la factura
+                $factura->update([
+                    'numero_factura' => $numeroFactura,
+                    'cai_id'         => $cai->id,
+                    'estado'         => 'Pagada',
+                ]);
+            } else {
+                // Orden de compra sin CAI → usamos el ID de la factura
+                $factura->update([
+                    'numero_factura' => (string) $factura->id,
+                    'cai_id'         => null,
+                    'estado'         => 'Pagada',
+                ]);
+            }
+        });
+
+        Notification::make()
+            ->success()
+            ->title('Pago registrado correctamente.')
+            ->send();
+
+        $this->redirect(FacturaResource::getUrl('view', ['record' => $factura->id]));
+    } catch (\Exception $e) {
+        Notification::make()
+            ->danger()
+            ->title('Error al registrar pago')
+            ->body($e->getMessage())
+            ->send();
     }
+}
+
 
     protected function getListeners(): array
     {
