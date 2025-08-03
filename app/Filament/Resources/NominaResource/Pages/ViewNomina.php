@@ -89,18 +89,18 @@ class ViewNomina extends ViewRecord
             \Filament\Actions\Action::make('imprimirNomina')
                 ->label('Generar PDF')
                 ->icon('heroicon-o-document-arrow-down')
-                ->color('primary')
+                ->color('info')
                 ->action(function () {
                     return $this->generarPDF();
                 }),
 
             EditAction::make()
                 ->visible(fn () => !$this->record->cerrada),
-                
+
             \Filament\Actions\Action::make('cerrarNomina')
                 ->label('Cerrar Nómina')
                 ->icon('heroicon-o-lock-closed')
-                ->color('warning')
+                ->color('danger')
                 ->visible(fn () => !$this->record->cerrada)
                 ->requiresConfirmation()
                 ->modalHeading('Cerrar Nómina')
@@ -110,13 +110,13 @@ class ViewNomina extends ViewRecord
                     $this->record->update([
                         'cerrada' => true
                     ]);
-                    
+
                     \Filament\Notifications\Notification::make()
                         ->title('Nómina cerrada')
                         ->body('La nómina y su historial de pagos han sido cerrados exitosamente.')
                         ->success()
                         ->send();
-                        
+
                     $this->redirect(route('filament.admin.resources.nominas.view', $this->record));
                 }),
         ];
