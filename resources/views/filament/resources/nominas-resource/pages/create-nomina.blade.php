@@ -116,10 +116,10 @@
                                                 <span @if(!$percepcion['aplicada']) style="text-decoration: line-through; color: #888; font-weight: bold;" @endif>
                                                     {{ $percepcion['nombre'] }} ({{ $percepcion['valorMostrado'] }})
                                                 </span>
-                                                <button type="button" class="ml-1" title="Editar valor/porcentaje"
+                                                <button type="button" class="ml-1 hover:scale-110 transition-transform duration-150" title="Editar valor/porcentaje"
                                                     wire:click="abrirModalEditarPercepcion({{ $index }}, {{ $pIndex }})">
-                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="#facc15">
-                                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13h3l8-8a2.828 2.828 0 10-4-4l-8 8v3h3z" />
+                                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="#facc15">
+                                                        <path d="M3 17.25V21h3.75l11-11.03-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 000-1.41l-2.34-2.34a1 1 0 00-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
                                                     </svg>
                                                 </button>
                                                 @if($percepcion['depende_cantidad'] ?? false)
@@ -148,7 +148,6 @@
             </div>
 
             <div class="mt-6 flex justify-end">
-            <!-- El modal de edición de tipo de pago se ha eliminado ya que ahora se gestiona a nivel de nómina -->
             
             <!-- Modal edición percepción -->
             @if($this->modalEditarPercepcionAbierto)

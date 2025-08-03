@@ -268,7 +268,7 @@ class NominaResource extends Resource
                 Tables\Actions\Action::make('generarPdf')
                     ->label('Generar PDF')
                     ->icon('heroicon-o-document-arrow-down')
-                    ->color('success')
+                    ->color('info')
                     ->url(fn (Nominas $record) => route('nominas.generar-pdf', ['nomina' => $record->id]))
                     ->openUrlInNewTab(),
             ])

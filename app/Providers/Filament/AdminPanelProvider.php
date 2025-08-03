@@ -40,6 +40,10 @@ class AdminPanelProvider extends PanelProvider
                 Widgets\AccountWidget::class,
                 Widgets\FilamentInfoWidget::class,
             ])
+            ->renderHook(
+                'panels::topbar.start',
+                fn (): string => view('filament.custom.empresa-selector')->render()
+            )
             ->middleware([
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,
@@ -48,6 +52,7 @@ class AdminPanelProvider extends PanelProvider
                 ShareErrorsFromSession::class,
                 VerifyCsrfToken::class,
                 SubstituteBindings::class,
+                \App\Http\Middleware\SwitchEmpresaMiddleware::class, // Middleware para cambio de empresa
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
             ])

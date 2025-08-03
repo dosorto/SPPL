@@ -19,7 +19,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class User extends Authenticatable //implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasRoles, TenantScoped;  
+    use HasFactory, Notifiable, HasRoles; // Eliminamos TenantScoped para evitar problemas con la autenticación
 
     /**
      * The attributes that are mass assignable.
@@ -90,5 +90,50 @@ class User extends Authenticatable //implements FilamentUser
     public function empleado(): BelongsTo
     {
         return $this->belongsTo(Empleado::class);
+    }
+    
+    /**
+     * Verifica si el usuario puede acceder a una empresa específica.
+     *
+     * @param int $empresaId
+     * @return bool
+     */
+    public function canAccessEmpresa($empresaId): bool
+    {
+        // Los usuarios con rol 'root' pueden acceder a cualquier empresa
+        if ($this->hasRole('root')) {
+            return true;
+        }
+        
+        // Los usuarios con roles admin pueden acceder a su propia empresa y a otras si hay permisos específicos
+        if ($this->hasRole(['super_admin', 'admin'])) {
+            // Por ahora, permitir al admin acceder a cualquier empresa
+            // En el futuro, se podría implementar una tabla de permisos específicos
+            return true;
+        }
+        
+        // Para otros usuarios, solo pueden acceder a su propia empresa
+        return $this->empresa_id == $empresaId;
+    }
+    
+    /**
+     * Obtiene todas las empresas a las que el usuario puede acceder.
+     *
+     * @return \Illuminate\Database\Eloquent\Collection
+     */
+    public function getAccessibleEmpresas()
+    {
+        // Si es 'root', puede ver todas las empresas
+        if ($this->hasRole('root')) {
+            return Empresa::all();
+        }
+        
+        // Si es admin, puede ver todas las empresas (por ahora)
+        if ($this->hasRole(['super_admin', 'admin'])) {
+            return Empresa::all();
+        }
+        
+        // Para otros usuarios, solo su propia empresa
+        return Empresa::where('id', $this->empresa_id)->get();
     }
 }
