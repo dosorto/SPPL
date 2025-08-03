@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\DetalleNominas;
 use App\Observers\DetalleNominasObserver;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\App;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,5 +25,9 @@ class AppServiceProvider extends ServiceProvider
         // Registrar el observer para DetalleNominas
         \App\Models\DetalleNominas::observe(\App\Observers\DetalleNominasObserver::class);
         
+        // Registrar alias para Excel
+        if (class_exists('Maatwebsite\\Excel\\ExcelServiceProvider')) {
+            $this->app->alias('Excel', 'Maatwebsite\\Excel\\Facades\\Excel');
+        }
     }
 }

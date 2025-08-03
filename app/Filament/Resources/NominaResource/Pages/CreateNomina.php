@@ -249,7 +249,7 @@ private function recalcularTotalEmpleado($empleadoIndex)
                     $tipo = trim(strtolower($percepcion->tipo_valor ?? ''));
                     $valorMostrado = $tipo === 'porcentaje'
                         ? rtrim(rtrim($valorUnitario, '0'), '.') . '% por ' . $unidad
-                        : 'L. ' . number_format($valorUnitario, 2) . ' por ' . $unidad;
+                        : 'L. ' . number_format($valorUnitario, 2) ;
                     return [
                         'id' => $percepcion->id,
                         'nombre' => $nombre . ' (0 ' . $unidad . ')',

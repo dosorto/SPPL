@@ -10,6 +10,7 @@ use Filament\Forms\Components\Placeholder;
 use Filament\Forms\Components\View;
 use Filament\Pages\Actions\EditAction;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Maatwebsite\Excel\Facades\Excel;
 use Illuminate\Http\Response;
 
 class ViewNomina extends ViewRecord
@@ -296,7 +297,7 @@ class ViewNomina extends ViewRecord
         if (!$data) {
             return response('No se encontró la nómina solicitada.', 404);
         }
-        return \Maatwebsite\Excel\Facades\Excel::download(
+        return Excel::download(
             new \App\Exports\NominaExport(
                 $data['nomina'],
                 $data['mesNombre'],
