@@ -15,6 +15,7 @@
         "filament/tables": "3.3.33",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
+        "maatwebsite/excel": "^3.1",
         "picqer/php-barcode-generator": "^3.2",
         "solution-forest/filament-translate-field": "^1.4",
         "spatie/laravel-permission": "^6.20"
@@ -34,7 +35,10 @@
             "App\\": "app/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
-        }
+        },
+        "files": [
+            "app/Helpers/AppHelpers.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {

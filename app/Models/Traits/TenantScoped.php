@@ -2,16 +2,10 @@
 
 namespace App\Models\Traits;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Database\Eloquent\Scope;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use App\Models\User;
 
 trait TenantScoped
@@ -22,25 +16,62 @@ trait TenantScoped
      */
     protected static function bootTenantScoped()
     {
-        // Nos aseguramos de que haya un usuario con sesión iniciada.
-        if (Auth::check()) {
-            
-           
-
-            /** @var \App\Models\User $user */ // Pista para el editor
-            $user = Auth::user();
-
-            // Ahora usamos la variable $user que ya tiene la "pista"
-            if (!$user->hasRole('root')) {
-
-            // --- FIN DE LA CORRECCIÓN ---
-
-                // Si se cumplen las condiciones, añadimos un "Global Scope".
-                static::addGlobalScope('empresa', function (Builder $builder) use ($user) {
-                    // Forzamos la consulta a incluir siempre el empresa_id del usuario.
-                    $builder->where('empresa_id', $user->empresa_id);
-                });
-            }
+        // Ignorar la tabla users para evitar problemas con la autenticación
+        if ((new static)->getTable() === 'users') {
+            return;
         }
+        
+        // Verificar si la tabla tiene la columna empresa_id
+        if (!Schema::hasColumn((new static)->getTable(), 'empresa_id')) {
+            Log::warning('Tabla sin columna empresa_id usando TenantScoped', [
+                'modelo' => get_called_class(),
+                'tabla' => (new static)->getTable()
+            ]);
+            return;
+        }
+        
+        // Asegurarnos de que hay un usuario autenticado
+        if (!Auth::check()) {
+            return;
+        }
+        
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        
+        // Obtener empresa_id usando nuestro helper (si existe la función)
+        $empresaId = function_exists('empresa_actual') ? empresa_actual() : session('current_empresa_id');
+        
+        // Registramos información de depuración
+        Log::info('TenantScoped aplicando filtro', [
+            'modelo' => get_called_class(),
+            'user_id' => $user ? $user->id : null,
+            'session_empresa_id' => $empresaId,
+            'user_empresa_id' => $user ? $user->empresa_id : null,
+            'user_roles' => $user ? $user->roles->pluck('name') : [],
+            'session_data' => session()->all()
+        ]);
+        
+        // Si hay una empresa seleccionada en la sesión, aplicar el filtro para todos los usuarios
+        if ($empresaId) {
+            Log::info('Aplicando filtro por empresa_id de sesión: ' . $empresaId);
+            
+            static::addGlobalScope('empresa_filtro', function (Builder $builder) use ($empresaId) {
+                $builder->where('empresa_id', $empresaId);
+            });
+            return;
+        }
+        
+        // Si no hay empresa seleccionada pero no es root, aplicar filtro por la empresa del usuario
+        if (!$user->hasRole('root')) {
+            Log::info('Aplicando filtro por empresa_id del usuario: ' . $user->empresa_id);
+            
+            static::addGlobalScope('empresa_usuario', function (Builder $builder) use ($user) {
+                $builder->where('empresa_id', $user->empresa_id);
+            });
+            return;
+        }
+        
+        // Para root sin empresa seleccionada, no aplicar filtro (ver todo)
+        Log::info('Usuario root sin empresa seleccionada, mostrando todos los registros');
     }
 }
