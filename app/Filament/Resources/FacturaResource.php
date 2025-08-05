@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Tables\Actions;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Session;
 
 
 class FacturaResource extends Resource
@@ -20,6 +21,8 @@ class FacturaResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Ventas';
+    protected static ?string $navigationLabel = 'Facturas';
+    protected static ?int $navigationSort = -3;
     protected static ?string $slug = 'facturas';
 
     
@@ -145,7 +148,14 @@ class FacturaResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->with(['cliente.persona', 'empleado.persona']);
+        $aperturaId = Session::get('apertura_id');
+
+        $query = parent::getEloquentQuery()->with(['cliente.persona', 'empleado.persona']);
+        if (!$aperturaId) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        return $query->where('apertura_id', $aperturaId);
     }
     
 

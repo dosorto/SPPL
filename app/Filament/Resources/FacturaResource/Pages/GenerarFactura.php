@@ -732,10 +732,6 @@ class GenerarFactura extends Page
                 ->color('warning')
                 ->requiresConfirmation()
                 ->action('guardarPendiente'),
-            Action::make('cerrarCaja')
-                ->label('Cerrar Caja / Realizar Arqueo')
-                ->color('danger') 
-                ->url(CierreCaja::getUrl()), 
         ];
     }
 }

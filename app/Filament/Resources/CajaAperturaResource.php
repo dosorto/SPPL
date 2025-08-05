@@ -78,19 +78,25 @@ class CajaAperturaResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),
-                // 👇 NUEVA ACCIÓN PARA IR A FACTURAR
+                
+                // Acción para ir a facturar (solo cajas abiertas)
                 Tables\Actions\Action::make('ir_a_facturar')
                     ->label('Ir a Facturar')
                     ->icon('heroicon-o-document-plus')
                     ->color('success')
                     ->visible(fn (CajaApertura $record): bool => $record->estado === 'ABIERTA')
                     ->action(function (CajaApertura $record) {
-                        // Guardar el ID de la apertura en la sesión
                         session(['apertura_id' => $record->id]);
-                        
-                        // Redirigir a la página de generar factura
                         return redirect(FacturaResource::getUrl('generar-factura'));
                     }),
+                
+                // 👇 NUEVA ACCIÓN PARA VER REPORTE DE CAJA CERRADA
+                Tables\Actions\Action::make('ver_reporte')
+                    ->label('Ver Reporte')
+                    ->icon('heroicon-o-document-text')
+                    ->color('primary')
+                    ->visible(fn (CajaApertura $record): bool => $record->estado === 'CERRADA')
+                    ->url(fn (CajaApertura $record): string => static::getUrl('reporte', ['record' => $record->id])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -99,7 +105,6 @@ class CajaAperturaResource extends Resource
             ]);
     }
          
-    // ... (el resto del archivo no cambia) ...
     public static function getRelations(): array
     {
         return [
@@ -113,6 +118,7 @@ class CajaAperturaResource extends Resource
             'index' => Pages\ListCajaAperturas::route('/'),
             'create' => Pages\CreateCajaApertura::route('/create'),
             'edit' => Pages\EditCajaApertura::route('/{record}/edit'),
+            'reporte' => Pages\ReporteCajaApertura::route('/{record}/reporte'),
         ];
     }
 }
