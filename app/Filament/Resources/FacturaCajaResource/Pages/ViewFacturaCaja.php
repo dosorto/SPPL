@@ -3,10 +3,11 @@
 namespace App\Filament\Resources\FacturaCajaResource\Pages;
 
 use App\Filament\Resources\FacturaCajaResource;
-use Filament\Actions;
-use Filament\Resources\Pages\ViewRecord;
+use App\Filament\Resources\FacturaResource\Pages\ViewFactura;
 
-class ViewFacturaCaja extends ViewRecord
+class ViewFacturaCaja extends \App\Filament\Resources\FacturaResource\Pages\ViewFactura
 {
     protected static string $resource = FacturaCajaResource::class;
+    
+
 }
