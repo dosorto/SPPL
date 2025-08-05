@@ -12,7 +12,7 @@
         }
         .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 20px; /* Reducido el margen */
             border-bottom: 2px solid #333;
             padding-bottom: 10px;
         }
@@ -20,23 +20,40 @@
             font-size: 16px;
             color: #666;
         }
-        .info-section {
+        
+        .info-table {
+            width: 100%;
             margin-bottom: 20px;
         }
-        .info-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 5px;
-            padding: 5px 0;
+        .info-table td {
+            width: 25%;
+            padding: 2px 5px;
+            vertical-align: top;
         }
-        .info-label {
+        .info-table .info-table-label {
             font-weight: bold;
-            width: 50%;
+            text-align: left;
         }
-        .info-value {
-            width: 50%;
-            text-align: right;
+        .info-table .info-table-value {
+            text-align: left;
         }
+        
+        .signature-table {
+            width: 100%;
+            margin-top: 50px;
+        }
+        .signature-table td {
+            width: 50%;
+            text-align: center;
+            padding: 0 20px;
+        }
+        .signature-line {
+            border-bottom: 1px solid #333;
+            margin-bottom: 5px;
+            height: 50px;
+        }
+        /* --- FIN DE ESTILOS MODIFICADOS --- */
+
         .section-title {
             font-size: 14px;
             font-weight: bold;
@@ -50,34 +67,6 @@
             margin-top: 10px;
             font-weight: bold;
             font-size: 14px;
-        }
-        .signature-section {
-            margin-top: 50px;
-            display: flex;
-            justify-content: space-between;
-        }
-        .signature-box {
-            width: 45%;
-            text-align: center;
-        }
-        .signature-line {
-            border-bottom: 1px solid #333;
-            margin-bottom: 5px;
-            height: 50px;
-        }
-        .difference {
-            background-color: #f0f0f0;
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
-        }
-        .difference.positive {
-            background-color: #e8f5e8;
-            color: #2d5a2d;
-        }
-        .difference.negative {
-            background-color: #f5e8e8;
-            color: #5a2d2d;
         }
         .comparison-table {
             width: 100%;
@@ -108,44 +97,48 @@
         <div class="report-title">Reporte de Cierre de Caja</div>
     </div>
 
-    {{-- Información General --}}
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Fecha de Apertura:</span>
-            <span class="info-value">{{ $apertura->created_at->format('d/m/Y H:i:s') }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Fecha de Cierre:</span>
-            <span class="info-value">{{ now()->format('d/m/Y H:i:s') }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Usuario:</span>
-            <span class="info-value">{{ $apertura->user->name ?? 'N/A' }}</span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Caja Nº:</span>
-            <span class="info-value">{{ $apertura->id }}</span>
-        </div>
-    </div>
-
+    {{-- ========================================================== --}}
+    {{--          SECCIÓN DE INFORMACIÓN GENERAL MODIFICADA         --}}
+    {{-- ========================================================== --}}
+    <table class="info-table">
+        <tr>
+            <td class="info-table-label">Usuario:</td>
+            <td class="info-table-value">{{ $apertura->user->name ?? 'N/A' }}</td>
+            <td class="info-table-label">Fecha de Apertura:</td>
+            <td class="info-table-value">{{ $apertura->created_at->format('d/m/Y H:i:s') }}</td>
+        </tr>
+        <tr>
+            <td class="info-table-label">Empresa:</td>
+            <td class="info-table-value">{{ $apertura->user->empresa->nombre ?? 'N/A' }}</td>
+            <td class="info-table-label">Fecha de Cierre:</td>
+            <td class="info-table-value">{{ now()->format('d/m/Y H:i:s') }}</td>
+        </tr>
+        <tr>
+            <td class="info-table-label">Caja Nº:</td>
+            <td class="info-table-value">{{ $apertura->id }}</td>
+            <td></td>
+            <td></td>
+        </tr>
+    </table>
+    
     {{-- Resumen de Ventas --}}
     <div class="section-title">Resumen de Ventas del Sistema</div>
     <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Monto Inicial:</span>
-            <span class="info-value">L {{ number_format($apertura->monto_inicial, 2) }}</span>
+        <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+            <span style="font-weight: bold;">Monto Inicial:</span>
+            <span>L {{ number_format($apertura->monto_inicial, 2) }}</span>
         </div>
         
         @foreach ($reporteSistema as $metodo => $total)
-            <div class="info-row">
-                <span class="info-label">Ventas {{ $metodo }}:</span>
-                <span class="info-value">L {{ number_format($total, 2) }}</span>
+            <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+                <span style="font-weight: bold;">Ventas {{ $metodo }}:</span>
+                <span>L {{ number_format($total, 2) }}</span>
             </div>
         @endforeach
         
-        <div class="info-row total-row">
-            <span class="info-label">Total Esperado en Efectivo:</span>
-            <span class="info-value">L {{ number_format($totalEnCajaEsperado, 2) }}</span>
+        <div class="total-row" style="display: flex; justify-content: space-between;">
+            <span>Total Esperado en Efectivo:</span>
+            <span>L {{ number_format($totalEnCajaEsperado, 2) }}</span>
         </div>
     </div>
 
@@ -187,29 +180,27 @@
     @endphp
 
     <div class="section-title">Estado Final del Cierre</div>
-    <div class="info-section">
-        <div class="info-row">
-            <span class="info-label">Diferencia Total:</span>
-            <span class="info-value" style="color: {{ $totalDiferencias >= 0 ? '#2d5a2d' : '#5a2d2d' }};">
-                @if($totalDiferencias > 0)
-                    +L {{ number_format($totalDiferencias, 2) }} ({{ $estadoCierre }})
-                @elseif($totalDiferencias < 0)
-                    L {{ number_format($totalDiferencias, 2) }} ({{ $estadoCierre }})
-                @else
-                    L 0.00 ({{ $estadoCierre }})
-                @endif
-            </span>
-        </div>
-        <div class="info-row">
-            <span class="info-label">Estado del Cierre:</span>
-            <span class="info-value">
-                @if(abs($totalDiferencias) <= 1)
-                    ✓ Aprobado
-                @else
-                    ⚠ Requiere Revisión
-                @endif
-            </span>
-        </div>
+    <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+        <span style="font-weight: bold;">Diferencia Total:</span>
+        <span style="color: {{ $totalDiferencias >= 0 ? '#2d5a2d' : '#5a2d2d' }};">
+            @if($totalDiferencias > 0)
+                +L {{ number_format($totalDiferencias, 2) }} ({{ $estadoCierre }})
+            @elseif($totalDiferencias < 0)
+                L {{ number_format($totalDiferencias, 2) }} ({{ $estadoCierre }})
+            @else
+                L 0.00 ({{ $estadoCierre }})
+            @endif
+        </span>
+    </div>
+    <div style="display: flex; justify-content: space-between; padding: 5px 0;">
+        <span style="font-weight: bold;">Estado del Cierre:</span>
+        <span>
+            @if(abs($totalDiferencias) <= 1)
+                 Aprobado
+            @else
+                 Requiere Revisión
+            @endif
+        </span>
     </div>
 
     {{-- Notas del Cierre --}}
@@ -220,18 +211,22 @@
         </div>
     @endif
 
-    {{-- Firmas --}}
-    <div class="signature-section">
-        <div class="signature-box">
-            <div class="signature-line"></div>
-            <div>Cajero</div>
-            <div>{{ $apertura->user->name ?? '' }}</div>
-        </div>
-        <div class="signature-box">
-            <div class="signature-line"></div>
-            <div>Supervisor</div>
-            <div>Firma y Sello</div>
-        </div>
-    </div>
+    {{-- ========================================================== --}}
+    {{--             SECCIÓN DE FIRMAS MODIFICADA                   --}}
+    {{-- ========================================================== --}}
+    <table class="signature-table">
+        <tr>
+            <td>
+                <div class="signature-line"></div>
+                <div>Cajero</div>
+                <div>{{ $apertura->user->name ?? '' }}</div>
+            </td>
+            <td>
+                <div class="signature-line"></div>
+                <div>Supervisor</div>
+                <div>Firma y Sello</div>
+            </td>
+        </tr>
+    </table>
 </body>
 </html>

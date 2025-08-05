@@ -13,7 +13,7 @@ use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
-use PDF; 
+use PDF;
 
 class CierreCaja extends Page implements HasForms
 {
@@ -36,7 +36,10 @@ class CierreCaja extends Page implements HasForms
     public function mount(): void
     {
         // Busca la apertura de caja activa para el usuario.
-        $this->apertura = CajaApertura::where('user_id', Auth::id())->where('estado', 'ABIERTA')->first();
+       $this->apertura = CajaApertura::with('user.empresa')
+            ->where('user_id', Auth::id())
+            ->where('estado', 'ABIERTA')
+            ->first();
         if (!$this->apertura) {
             $this->redirect(route('filament.admin.pages.apertura-caja'));
             return;
@@ -109,89 +112,25 @@ class CierreCaja extends Page implements HasForms
     protected function getActions(): array
     {
         return [
-            // Acción para generar y descargar el PDF
-            Action::make('generarPDF')
-                ->label('Generar PDF')
-                ->color('success')
-                ->icon('heroicon-o-arrow-down-tray')
-                ->action(function () {
-                    // Verificar que hay una apertura
-                    if (!$this->apertura) {
-                        Notification::make()
-                            ->title('Error')
-                            ->body('No hay una caja abierta para generar el reporte.')
-                            ->danger()
-                            ->send();
-                        return;
-                    }
+            
 
-                    // Obtener los datos del formulario actual
-                    $formData = $this->form->getState();
-                    $conteoUsuario = $formData['conteo'] ?? [];
-
-                    // Calcular las diferencias
-                    $diferencias = [];
-                    foreach ($this->reporteSistema as $metodo => $monto) {
-                        $montoContado = floatval($conteoUsuario[$metodo] ?? 0);
-                        $montoSistema = ($metodo === 'Efectivo') ? $this->totalEnCajaEsperado : $monto;
-                        $diferencias[$metodo] = [
-                            'contado' => $montoContado,
-                            'sistema' => $montoSistema,
-                            'diferencia' => $montoContado - $montoSistema
-                        ];
-                    }
-
-                    // Preparar datos para el PDF
-                    $data = [
-                        'apertura' => $this->apertura,
-                        'reporteSistema' => $this->reporteSistema,
-                        'totalEnCajaEsperado' => $this->totalEnCajaEsperado,
-                        'conteoUsuario' => $conteoUsuario,
-                        'diferencias' => $diferencias,
-                        'notasCierre' => $formData['notas_cierre'] ?? '',
-                    ];
-
-                    try {
-
-                        $pdf = PDF::loadView('pdf.cierre-caja', $data);
-                        $pdf->setPaper('A4', 'portrait');
-                        
-
-                        $filename = 'cierre-caja-' . $this->apertura->id . '-' . now()->format('Y-m-d-H-i') . '.pdf';
-                        
-
-                        return response()->streamDownload(function () use ($pdf) {
-                            echo $pdf->output();
-                        }, $filename);
-                        
-                    } catch (\Exception $e) {
-                        Notification::make()
-                            ->title('Error al generar PDF')
-                            ->body('Hubo un problema al generar el reporte: ' . $e->getMessage())
-                            ->danger()
-                            ->send();
-                    }
-                }),
-
-
+            // Acción para confirmar el cierre (ahora también genera el PDF)
             Action::make('confirmarCierre')
                 ->label('Confirmar y Cerrar Caja')
                 ->color('danger')
                 ->requiresConfirmation()
                 ->action(function () {
-
                     $formData = $this->form->getState();
                     $conteoUsuario = $formData['conteo'] ?? [];
                     $diferencias = [];
 
- 
                     foreach ($this->reporteSistema as $metodo => $monto) {
                         $montoContado = floatval($conteoUsuario[$metodo] ?? 0);
                         $montoSistema = ($metodo === 'Efectivo') ? $this->totalEnCajaEsperado : $monto;
                         $diferencias[$metodo] = $montoContado - $montoSistema;
                     }
                     
- 
+                    // Actualiza el registro de la apertura en la base de datos
                     $this->apertura->update([
                         'estado' => 'CERRADA',
                         'fecha_cierre' => now(),
@@ -203,8 +142,65 @@ class CierreCaja extends Page implements HasForms
 
                     session()->forget('apertura_id');
                     Notification::make()->title('Caja cerrada exitosamente')->success()->send();
-                    $this->redirect(route('filament.admin.pages.apertura-caja'));
+                    
+                    
+                    return $this->generarReportePdfStream();
                 }),
         ];
+    }
+
+    
+    private function generarReportePdfStream()
+    {
+        if (!$this->apertura) {
+            Notification::make()
+                ->title('Error')
+                ->body('No hay una caja abierta para generar el reporte.')
+                ->danger()
+                ->send();
+            return null;
+        }
+
+        $formData = $this->form->getState();
+        $conteoUsuario = $formData['conteo'] ?? [];
+
+        $diferencias = [];
+        foreach ($this->reporteSistema as $metodo => $monto) {
+            $montoContado = floatval($conteoUsuario[$metodo] ?? 0);
+            $montoSistema = ($metodo === 'Efectivo') ? $this->totalEnCajaEsperado : $monto;
+            $diferencias[$metodo] = [
+                'contado' => $montoContado,
+                'sistema' => $montoSistema,
+                'diferencia' => $montoContado - $montoSistema
+            ];
+        }
+
+        $data = [
+            'apertura' => $this->apertura,
+            'reporteSistema' => $this->reporteSistema,
+            'totalEnCajaEsperado' => $this->totalEnCajaEsperado,
+            'conteoUsuario' => $conteoUsuario,
+            'diferencias' => $diferencias,
+            'notasCierre' => $formData['notas_cierre'] ?? '',
+        ];
+
+        try {
+            $pdf = PDF::loadView('pdf.cierre-caja', $data);
+            $pdf->setPaper('A4', 'portrait');
+            
+            $filename = 'cierre-caja-' . $this->apertura->id . '-' . now()->format('Y-m-d-H-i') . '.pdf';
+            
+            return response()->streamDownload(function () use ($pdf) {
+                echo $pdf->output();
+            }, $filename);
+            
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Error al generar PDF')
+                ->body('Hubo un problema al generar el reporte: ' . $e->getMessage())
+                ->danger()
+                ->send();
+            return null;
+        }
     }
 }
