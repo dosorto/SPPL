@@ -5,7 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CaiResource\Pages;
 use App\Filament\Resources\CaiResource\RelationManagers;
 use App\Models\Cai;
-use App\Models\Empresa; // Asegúrate de importar tu modelo Empresa
+use App\Models\Empresa; 
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;

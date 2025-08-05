@@ -25,6 +25,7 @@
             <p>Tel: {{ $factura->empresa->telefono }}</p>
         </div>
 
+        <!-- Datos factura / cliente / categoría / vendedor -->
         <div class="grid grid-cols-2 gap-4 text-sm mb-4">
             <div>
                 <p><strong>Factura:</strong> {{ $factura->numero_factura }}</p>
@@ -33,8 +34,8 @@
             </div>
             <div>
                 <p><strong>Cliente:</strong> {{ $factura->cliente->persona->primer_nombre }} {{ $factura->cliente->persona->primer_apellido }}</p>
+                <p><strong>Categoría del Cliente:</strong> {{ $factura->cliente->categoriaCliente->nombre ?? 'N/A' }}</p>
                 <p><strong>Vendedor:</strong> {{ $factura->empleado->persona->primer_nombre }} {{ $factura->empleado->persona->primer_apellido }}</p>
-                <p><strong>Categoría:</strong> {{ $factura->cliente->categoriaCliente->nombre ?? 'N/A' }}</p>
             </div>
         </div>
 
@@ -44,35 +45,48 @@
             <p><strong>Fecha Límite:</strong> {{ $factura->cai?->fecha_limite_emision?->format('d/m/Y') ?? 'N/A' }}</p>
         </div>
 
-
-        <!-- Detalles -->
+        <!-- Detalles de productos -->
         <table class="w-full border-collapse mb-4">
-            <thead class="bg-gray-100 text-xs">
-                <tr>
-                    <th class="border px-2 py-1 text-left">Producto</th>
-                    <th class="border px-2 py-1 text-left">SKU</th>
-                    <th class="border px-2 py-1 text-right">Cant</th>
-                    <th class="border px-2 py-1 text-right">P/U</th>
-                    <th class="border px-2 py-1 text-right">Desc (%)</th>
-                    <th class="border px-2 py-1 text-right">ISV (%)</th>
-                    <th class="border px-2 py-1 text-right">Subtotal</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($factura->detalles as $detalle)
-                    <tr>
-                        <td class="border px-2 py-1">{{ $detalle->producto->producto->nombre }}</td>
-                        <td class="border px-2 py-1">{{ $detalle->producto->producto->sku ?? 'N/A' }}</td>
-                        <td class="border px-2 py-1 text-right">{{ number_format($detalle->cantidad, 2) }}</td>
-                        <td class="border px-2 py-1 text-right">L. {{ number_format($detalle->precio_unitario, 2) }}</td>
-                        <td class="border px-2 py-1 text-right">{{ number_format($detalle->descuento_aplicado ?? 0, 2) }}</td>
-                        <td class="border px-2 py-1 text-right">{{ number_format($detalle->isv_aplicado ?? 0, 2) }}</td>
-                        <td class="border px-2 py-1 text-right">L. {{ number_format($detalle->sub_total, 2) }}</td>
-                    </tr>
-                @endforeach
-            </tbody>
-
-        </table>
+    <thead class="bg-gray-100 text-xs">
+        <tr>
+            <th class="border px-2 py-1 text-left">Producto</th>
+            <th class="border px-2 py-1 text-left">Código de Barras</th>
+            <th class="border px-2 py-1 text-right">Cant</th>
+            <th class="border px-2 py-1 text-right">P/U</th>
+            <th class="border px-2 py-1 text-right">Desc (%)</th>
+            <th class="border px-2 py-1 text-right">ISV (%)</th>
+            <th class="border px-2 py-1 text-right">Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach ($factura->detalles as $detalle)
+            <tr>
+                <td class="border px-2 py-1">
+                    {{ $detalle->producto->producto->nombre }}
+                </td>
+                <td class="border px-2 py-1 font-mono tracking-widest">
+                    {{-- Aquí cambiamos a 'codigo', que es el nombre real de la columna --}}
+                    {{ $detalle->producto->producto->codigo ?? 'N/A' }}
+                </td>
+                <td class="border px-2 py-1 text-right">
+                    {{ number_format($detalle->cantidad, 2) }}
+                </td>
+                <td class="border px-2 py-1 text-right">
+                    L. {{ number_format($detalle->precio_unitario, 2) }}
+                </td>
+                <td class="border px-2 py-1 text-right">
+                    {{ number_format($detalle->descuento_aplicado ?? 0, 2) }}
+                </td>
+                <td class="border px-2 py-1 text-right">
+                    {{ number_format($detalle->isv_aplicado ?? 0, 2) }}
+                </td>
+                <td class="border px-2 py-1 text-right">
+                    L. {{ number_format($detalle->sub_total, 2) }}
+                </td>
+            </tr>
+        @endforeach
+    </tbody>
+</table>
 
         <!-- Totales -->
         <div class="flex justify-end space-y-1 text-sm mb-6">
