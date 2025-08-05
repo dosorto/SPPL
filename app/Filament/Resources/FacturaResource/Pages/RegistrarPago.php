@@ -250,11 +250,23 @@ class RegistrarPago extends EditRecord
     protected function getFormActions(): array
     {
         return [
+
             Action::make('volver_a_factura')
-                ->label('Volver a Factura')
-                ->color('gray') // Color diferente para distinguirlo
-                ->url(FacturaResource::getUrl('view', ['record' => $this->record->id]))
-                ->icon('heroicon-o-arrow-uturn-left'), 
+                ->label('Regresar a Edición')
+                ->color('warning')
+                ->icon('heroicon-o-arrow-left')
+                ->url(fn () => 
+                    $this->getRecord()->estado === 'Pendiente'
+                        ? FacturaResource::getUrl('edit-pendiente', ['record' => $this->getRecord()->getKey()])
+                        : FacturaResource::getUrl('view', ['record' => $this->getRecord()->getKey()])
+                ),
+
+            Action::make('ver_factura')
+                ->label('Vista Detallada')
+                ->color('gray')
+                ->icon('heroicon-o-eye')
+                ->url(FacturaResource::getUrl('view', ['record' => $this->record->id])),
+
 
             Action::make('submit')
                 ->label('Registrar Pago')
