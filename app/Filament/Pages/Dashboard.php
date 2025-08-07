@@ -31,10 +31,7 @@ class Dashboard extends BaseDashboard
 
     protected function getHeaderWidgets(): array
     {
-        return [
-            \App\Filament\Widgets\StatsOverview::class,
-            \App\Filament\Widgets\OrdersChart::class,
-        ];
+        return [];
     }
 
     public function filtersForm(Form $form): Form

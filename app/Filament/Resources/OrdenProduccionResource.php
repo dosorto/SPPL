@@ -18,7 +18,12 @@ class OrdenProduccionResource extends Resource
 {
     protected static ?string $model = OrdenProduccion::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-cube';
+    protected static ?string $navigationGroup = 'Insumos y Materia Prima';
+
+    protected static ?string $navigationLabel = 'Órdenes de Producción';
+    protected static ?string $pluralLabel = 'Órdenes de Producción';
+    protected static ?string $label = 'Orden de Producción';
 
     public static function form(Form $form): Form
     {
