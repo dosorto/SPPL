@@ -4,8 +4,10 @@ namespace App\Livewire;
 
 use Livewire\Component;
 use App\Models\Productos;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
 use Filament\Notifications\Notification;
+use Illuminate\Database\QueryException;
 
 class OrdenCompraDetallesForm extends Component
 {
@@ -97,20 +99,52 @@ class OrdenCompraDetallesForm extends Component
 
     public function updated($property)
     {
-        $this->validateOnly($property);
+        // Validar solo si no es producto_nombre para evitar validaciones prematuras
+        if ($property !== 'producto_nombre') {
+            $this->validateOnly($property);
+        }
     }
 
     public function updateProductoId()
     {
-        $productos = Productos::get()->mapWithKeys(function ($p) {
-            return [$p->id => "{$p->sku} - {$p->nombre}"];
-        });
+        if (empty($this->producto_nombre)) {
+            $this->producto_id = null;
+            return;
+        }
 
-        $selectedId = array_search($this->producto_nombre, $productos->all());
-        $this->producto_id = $selectedId !== false ? $selectedId : '';
+        try {
+            // Buscar el producto por SKU, nombre o código de barras, filtrado por empresa_id
+            $producto = Productos::where('empresa_id', Auth::user()->empresa_id)
+                ->where(function ($query) {
+                    $query->where('sku', $this->producto_nombre)
+                          ->orWhere('nombre', $this->producto_nombre)
+                          ->orWhere('codigo', $this->producto_nombre)
+                          ->orWhereRaw("CONCAT(sku, ' - ', nombre) = ?", [$this->producto_nombre]);
+                })
+                ->first();
 
-        // Validar inmediatamente después de actualizar
-        $this->validateOnly('producto_id');
+            $this->producto_id = $producto ? $producto->id : null;
+
+            // Si no se encuentra el producto, mostrar advertencia
+            if (!$producto) {
+                $this->producto_nombre = '';
+                Notification::make()
+                    ->title('Advertencia')
+                    ->body('El producto no se encontró. Por favor, selecciona un producto de la lista o ingresa un SKU, nombre o código de barras válido.')
+                    ->warning()
+                    ->send();
+            }
+        } catch (QueryException $e) {
+            // Manejar errores de base de datos (por ejemplo, columna no encontrada)
+            logger('Error en búsqueda de producto:', ['error' => $e->getMessage(), 'input' => $this->producto_nombre]);
+            $this->producto_id = null;
+            $this->producto_nombre = '';
+            Notification::make()
+                ->title('Error')
+                ->body('Ocurrió un error al buscar el producto. Por favor, intenta de nuevo.')
+                ->danger()
+                ->send();
+        }
     }
 
     public function addProducto()
@@ -121,57 +155,65 @@ class OrdenCompraDetallesForm extends Component
             'precio' => 'required|numeric|min:0',
         ]);
 
-        $producto = Productos::find($this->producto_id);
+        try {
+            $producto = Productos::where('empresa_id', Auth::user()->empresa_id)
+                ->find($this->producto_id);
 
-        if (!$producto) {
-            Notification::make()
-                ->title('Error')
-                ->body('El producto seleccionado no existe.')
-                ->danger()
-                ->send();
-            return;
-        }
+            if (!$producto) {
+                Notification::make()
+                    ->title('Error')
+                    ->body('El producto seleccionado no pertenece a tu empresa.')
+                    ->danger()
+                    ->send();
+                return;
+            }
 
-        // 👉 Si estamos editando, actualizamos la fila en lugar de agregar una nueva
-        if ($this->editIndex !== null) {
-            $this->detalles[$this->editIndex] = [
-                'producto_id' => $producto->id,
-                'nombre_producto' => $producto->nombre,
-                'cantidad' => $this->cantidad,
-                'precio' => $this->precio,
-                'detalle_id' => $this->detalles[$this->editIndex]['detalle_id'] ?? null,
-            ];
-            $this->editIndex = null;
-        } else {
-            // 👉 Buscar si el producto ya está agregado
-            $indexExistente = collect($this->detalles)->search(fn($item) => $item['producto_id'] == $producto->id);
-
-            if ($indexExistente !== false) {
-                // Sumar cantidades si ya existe
-                $this->detalles[$indexExistente]['cantidad'] += $this->cantidad;
-                // Actualizar el precio también si lo deseas
-                $this->detalles[$indexExistente]['precio'] = $this->precio;
-            } else {
-                // Agregar nuevo producto
-                $this->detalles[] = [
+            // Si estamos editando, actualizamos la fila en lugar de agregar una nueva
+            if ($this->editIndex !== null) {
+                $this->detalles[$this->editIndex] = [
                     'producto_id' => $producto->id,
                     'nombre_producto' => $producto->nombre,
                     'cantidad' => $this->cantidad,
                     'precio' => $this->precio,
+                    'detalle_id' => $this->detalles[$this->editIndex]['detalle_id'] ?? null,
                 ];
+                $this->editIndex = null;
+            } else {
+                // Buscar si el producto ya está agregado
+                $indexExistente = collect($this->detalles)->search(fn($item) => $item['producto_id'] == $producto->id);
+
+                if ($indexExistente !== false) {
+                    // Sumar cantidades si ya existe
+                    $this->detalles[$indexExistente]['cantidad'] += $this->cantidad;
+                    // Actualizar el precio también si lo deseas
+                    $this->detalles[$indexExistente]['precio'] = $this->precio;
+                } else {
+                    // Agregar nuevo producto
+                    $this->detalles[] = [
+                        'producto_id' => $producto->id,
+                        'nombre_producto' => $producto->nombre,
+                        'cantidad' => $this->cantidad,
+                        'precio' => $this->precio,
+                    ];
+                }
             }
+
+            session()->put('detalles_orden', $this->detalles);
+
+            $this->reset(['producto_id', 'producto_nombre', 'cantidad', 'precio']);
+            $this->cantidad = 1;
+            $this->precio = 0;
+
+            $this->dispatch('productoAdded');
+        } catch (QueryException $e) {
+            logger('Error al agregar producto:', ['error' => $e->getMessage(), 'producto_id' => $this->producto_id]);
+            Notification::make()
+                ->title('Error')
+                ->body('Ocurrió un error al agregar el producto. Por favor, intenta de nuevo.')
+                ->danger()
+                ->send();
         }
-
-        session()->put('detalles_orden', $this->detalles);
-
-        $this->reset(['producto_id', 'producto_nombre', 'cantidad', 'precio']);
-        $this->cantidad = 1;
-        $this->precio = 0;
-
-        $this->dispatch('productoAdded');
     }
-
-
 
     public function editDetalle($index)
     {
@@ -189,18 +231,26 @@ class OrdenCompraDetallesForm extends Component
         $detalle = $this->detalles[$index] ?? null;
 
         if (isset($detalle['detalle_id'])) {
-            \App\Models\OrdenComprasDetalle::find($detalle['detalle_id'])?->delete();
+            try {
+                \App\Models\OrdenComprasDetalle::find($detalle['detalle_id'])?->delete();
+            } catch (QueryException $e) {
+                logger('Error al eliminar detalle:', ['error' => $e->getMessage(), 'detalle_id' => $detalle['detalle_id']]);
+                Notification::make()
+                    ->title('Error')
+                    ->body('Ocurrió un error al eliminar el detalle. Por favor, intenta de nuevo.')
+                    ->danger()
+                    ->send();
+                return;
+            }
         }
 
         unset($this->detalles[$index]);
         $this->detalles = array_values($this->detalles);
 
-        // 💡 Actualiza la sesión
         session()->put('detalles_orden', $this->detalles);
 
         $this->dispatch('detalleRemoved');
     }
-
 
     public function render()
     {
@@ -209,14 +259,27 @@ class OrdenCompraDetallesForm extends Component
                                !empty($this->formState['empresa_id']) &&
                                !empty($this->formState['fecha_realizada']);
 
-        $productos = Productos::get()->mapWithKeys(function ($p) {
-            return [$p->id => "{$p->sku} - {$p->nombre}"];
-        });
+        // Filtrar productos por la empresa del usuario autenticado
+        try {
+            $productos = Productos::where('empresa_id', Auth::user()->empresa_id)
+                ->get()
+                ->mapWithKeys(function ($p) {
+                    return [$p->id => "{$p->sku} - {$p->nombre}"];
+                });
 
-        if (!empty($this->producto_nombre)) {
-            $productos = $productos->filter(function ($nombre, $id) {
-                return stripos($nombre, $this->producto_nombre) !== false;
-            });
+            if (!empty($this->producto_nombre)) {
+                $productos = $productos->filter(function ($nombre, $id) {
+                    return stripos($nombre, $this->producto_nombre) !== false;
+                });
+            }
+        } catch (QueryException $e) {
+            logger('Error al cargar productos:', ['error' => $e->getMessage()]);
+            $productos = collect([]);
+            Notification::make()
+                ->title('Error')
+                ->body('Ocurrió un error al cargar los productos. Por favor, intenta de nuevo.')
+                ->danger()
+                ->send();
         }
 
         return view('livewire.orden-compra-detalles-form', [

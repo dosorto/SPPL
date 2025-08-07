@@ -7,6 +7,7 @@ use App\Models\Productos;
 use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -32,7 +33,8 @@ class ProductosResource extends Resource
                         Forms\Components\TextInput::make('nombre')
                             ->label('Nombre del producto')
                             ->required()
-                            ->maxLength(100),
+                            ->maxLength(100)
+                            ->unique(ignorable: fn ($record) => $record),
                         Forms\Components\Select::make('unidad_de_medida_id')
                             ->label('Unidad de medida')
                             ->relationship('unidadDeMedida', 'nombre')
@@ -46,36 +48,54 @@ class ProductosResource extends Resource
                             ->searchable()
                             ->preload()
                             ->reactive()
-                            ->afterStateUpdated(function ($state, callable $set) {
-                                $set('subcategoria_id', null); // Resetear subcategoría al cambiar categoría
-                            }),
+                            ->default(request()->query('categoria_id'))
+                            ->afterStateUpdated(fn (callable $set) => $set('subcategoria_id', null)),
                         Forms\Components\Select::make('subcategoria_id')
                             ->label('Subcategoría')
-                            ->relationship('subcategoria', 'nombre', function ($query, $get) {
-                                $categoriaId = $get('categoria_id');
-                                if ($categoriaId) {
-                                    $query->where('categoria_id', $categoriaId);
-                                }
-                            })
+                            ->relationship('subcategoria', 'nombre', fn (Builder $query, $get) => $query->where('categoria_id', $get('categoria_id')))
                             ->required()
                             ->searchable()
                             ->preload()
-                            ->disabled(fn ($get) => !$get('categoria_id')),
+                            ->disabled(fn ($get) => !$get('categoria_id'))
+                            ->default(function () {
+                                $categoriaId = request()->query('categoria_id');
+                                if ($categoriaId) {
+                                    $subcategoria = \App\Models\SubcategoriaProducto::where('categoria_id', $categoriaId)->first();
+                                    return $subcategoria ? $subcategoria->id : null;
+                                }
+                                return null;
+                            }),
+                        Forms\Components\Hidden::make('empresa_id')
+                            ->default(function () {
+                                $user = Filament::auth()->user();
+                                if (!$user->empresa_id) {
+                                    Notification::make()
+                                        ->title('Error')
+                                        ->body('No tienes una empresa asignada. Contacta al administrador.')
+                                        ->danger()
+                                        ->send();
+                                    throw new \Exception('El usuario no tiene una empresa asignada.');
+                                }
+                                return $user->empresa_id;
+                            })
+                            ->required()
+                            ->dehydrated(true),
                         Forms\Components\TextInput::make('sku')
                             ->label('SKU')
-                            ->maxLength(100),
+                            ->maxLength(100)
+                            ->default(fn () => strtoupper(\Illuminate\Support\Str::random(3) . '-' . rand(10000, 99999)))
+                            ->unique(ignorable: fn ($record) => $record),
                         Forms\Components\TextInput::make('codigo')
                             ->label('Código de barras')
-                            ->maxLength(100),
+                            ->maxLength(100)
+                            ->default(fn () => \Illuminate\Support\Str::random(8))
+                            ->unique(ignorable: fn ($record) => $record),
                         Forms\Components\TextInput::make('isv')
                             ->label('ISV')
-                            ->numeric(),
-                        Forms\Components\Select::make('empresa_id')
-                            ->label('Empresa')
-                            ->relationship('empresa', 'nombre')
-                            ->default(fn () => Filament::auth()->user()?->empresa_id)
-                            ->hidden()
-                            ->dehydrated(true),
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(0.15)
+                            ->default(0),
                     ])
                     ->columns(2)
                     ->collapsible(),
@@ -84,10 +104,12 @@ class ProductosResource extends Resource
                     ->schema([
                         Forms\Components\Textarea::make('descripcion_corta')
                             ->label('Descripción corta')
-                            ->rows(2),
+                            ->rows(2)
+                            ->maxLength(255),
                         Forms\Components\Textarea::make('descripcion')
                             ->label('Descripción larga')
-                            ->rows(4),
+                            ->rows(4)
+                            ->maxLength(255),
                         Forms\Components\TextInput::make('color')
                             ->label('Color')
                             ->maxLength(50),
@@ -106,9 +128,15 @@ class ProductosResource extends Resource
                             ->reorderable()
                             ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg', 'image/webp'])
                             ->helperText('Puedes subir varias imágenes')
-                            ->default(fn ($record) => $record?->fotosRelacion?->pluck('url')->toArray() ?? [])
-                            ->afterStateHydrated(function ($component, $state) {
-                                $record = $component->getRecord();
+                            ->saveRelationshipsUsing(function ($component, $state, $record) {
+                                if ($record && $state) {
+                                    $record->fotosRelacion()->delete();
+                                    foreach ($state as $file) {
+                                        $record->fotosRelacion()->create(['url' => $file]);
+                                    }
+                                }
+                            })
+                            ->afterStateHydrated(function ($component, $state, $record) {
                                 if ($record && $record->fotosRelacion) {
                                     $component->state($record->fotosRelacion->pluck('url')->toArray());
                                 }
@@ -139,6 +167,11 @@ class ProductosResource extends Resource
                     ->label('Subcategoría')
                     ->sortable()
                     ->searchable(),
+                Tables\Columns\TextColumn::make('empresa.nombre')
+                    ->label('Empresa')
+                    ->sortable()
+                    ->searchable()
+                    ->visible(fn () => Filament::auth()->user()->hasRole('root')),
                 Tables\Columns\TextColumn::make('sku')
                     ->label('SKU')
                     ->searchable()
@@ -154,22 +187,28 @@ class ProductosResource extends Resource
                     ->label('ISV')
                     ->sortable(),
             ])
-            ->modifyQueryUsing(function (Builder $query, Table $table) {
-                $search = $table->getLivewire()->tableSearch;
-                if ($search) {
-                    $query->where(function (Builder $subQuery) use ($search) {
-                        $subQuery->where('nombre', 'like', "%{$search}%")
-                            ->orWhere('sku', 'like', "%{$search}%")
-                            ->orWhere('codigo', 'like', "%{$search}%");
-                    });
-                }
-            })
+            ->defaultSort('created_at', 'desc')
+            ->filters([
+                //
+            ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make()->label('Editar'),
-                    Tables\Actions\DeleteAction::make()->label('Eliminar'),
-                    Tables\Actions\ViewAction::make()->label('Ver'),
-                ]),
+                    Tables\Actions\ViewAction::make()
+                        ->label('Ver')
+                        ->icon('heroicon-o-eye')
+                        ->color('info'),
+                    Tables\Actions\EditAction::make()
+                        ->label('Editar')
+                        ->icon('heroicon-o-pencil')
+                        ->color('warning'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Eliminar')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger'),
+                ])
+                ->label('Acciones')
+                ->button()
+                ->outlined(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -180,7 +219,9 @@ class ProductosResource extends Resource
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            // Agrega aquí el RelationManager para fotos si es necesario
+        ];
     }
 
     public static function getPages(): array

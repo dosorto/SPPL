@@ -3,8 +3,9 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\CategoriaProductoResource\Pages;
+use App\Filament\Resources\CategoriaProductoResource\RelationManagers\SubcategoriasRelationManager;
+use App\Filament\Resources\ProductosResource;
 use App\Models\CategoriaProducto;
-use Filament\Facades\Filament;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -40,15 +41,19 @@ class CategoriaProductoResource extends Resource
                             ->required()
                             ->maxLength(255)
                             ->unique(ignorable: fn ($record) => $record),
-                        Forms\Components\Select::make('empresa_id')
-                            ->label('Empresa')
-                            ->relationship('empresa', 'nombre')
-                            ->default(fn () => Filament::auth()->user()?->empresa_id)
-                            ->required()
-                            ->hidden(fn () => !Filament::auth()->user()->hasRole('root'))
-                            ->dehydrated(true)
-                            ->searchable()
-                            ->preload(),
+                        Forms\Components\Repeater::make('subcategorias')
+                            ->label('Subcategorías')
+                            ->relationship('subcategorias')
+                            ->schema([
+                                Forms\Components\TextInput::make('nombre')
+                                    ->label('Nombre de la Subcategoría')
+                                    ->required()
+                                    ->maxLength(255)
+                                    ->unique(ignorable: fn ($record) => $record),
+                            ])
+                            ->columns(1)
+                            ->itemLabel(fn (array $state): ?string => $state['nombre'] ?? null)
+                            ->collapsible(),
                     ])
                     ->columns(2)
                     ->collapsible(),
@@ -63,43 +68,54 @@ class CategoriaProductoResource extends Resource
                     ->label('Nombre')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('empresa.nombre')
-                    ->label('Empresa')
-                    ->sortable()
-                    ->visible(fn () => Filament::auth()->user()->hasRole('root')),
                 Tables\Columns\TextColumn::make('subcategorias')
                     ->label('Subcategorías')
                     ->formatStateUsing(fn ($record) => $record->subcategorias->pluck('nombre')->join(', '))
                     ->sortable()
                     ->wrap(),
-                Tables\Columns\TextColumn::make('productos')
-                    ->label('Productos')
-                    ->formatStateUsing(fn ($record) => $record->productos->pluck('nombre')->join(', '))
-                    ->sortable()
-                    ->wrap(),
             ])
-            ->filters([
-                Tables\Filters\SelectFilter::make('empresa_id')
-                    ->label('Empresa')
-                    ->relationship('empresa', 'nombre')
-                    ->visible(fn () => Filament::auth()->user()->hasRole('root')),
-            ])
+            ->defaultSort('created_at', 'desc')
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\EditAction::make()->label('Editar'),
-                    Tables\Actions\DeleteAction::make()->label('Eliminar'),
-                ]),
+                    Tables\Actions\ViewAction::make()
+                        ->label('Ver')
+                        ->icon('heroicon-o-eye')
+                        ->color('info'),
+                    Tables\Actions\EditAction::make()
+                        ->label('Editar')
+                        ->icon('heroicon-o-pencil')
+                        ->color('warning'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Eliminar')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger'),
+                    Tables\Actions\Action::make('create_product')
+                        ->label('Registrar Nuevo Producto')
+                        ->icon('heroicon-o-plus-circle')
+                        ->color('success')
+                        ->url(fn ($record): string => ProductosResource::getUrl('create', [
+                            'categoria_id' => $record->id,
+                            'subcategoria_id' => $record->subcategorias->first()->id ?? null,
+                        ])),
+                ])
+                ->label('Acciones')
+                ->button()
+                ->outlined()
+                ->dropdown(true),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make()->label('Eliminar seleccionados'),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Eliminar seleccionados'),
                 ]),
             ]);
     }
 
     public static function getRelations(): array
     {
-        return [];
+        return [
+            SubcategoriasRelationManager::class,
+        ];
     }
 
     public static function getPages(): array
@@ -108,16 +124,12 @@ class CategoriaProductoResource extends Resource
             'index' => Pages\ListCategoriaProductos::route('/'),
             'create' => Pages\CreateCategoriaProducto::route('/create'),
             'edit' => Pages\EditCategoriaProducto::route('/{record}/edit'),
+            'view' => Pages\ViewCategoriaProductos::route('/{record}'),
         ];
     }
 
     public static function getEloquentQuery(): Builder
     {
-        $user = Filament::auth()->user();
-        $query = parent::getEloquentQuery()->with(['empresa', 'subcategorias', 'productos']);
-        if (!$user->hasRole('root')) {
-            $query->where('empresa_id', $user->empresa_id);
-        }
-        return $query;
+        return parent::getEloquentQuery()->with(['subcategorias']);
     }
 }

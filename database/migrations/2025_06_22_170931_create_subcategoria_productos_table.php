@@ -11,8 +11,7 @@ return new class extends Migration
         Schema::create('subcategorias_productos', function (Blueprint $table) {
             $table->id();
             $table->string('nombre');
-            $table->foreignId('categoria_id')->constrained('categorias_productos')->onDelete('cascade');
-            $table->foreignId('empresa_id')->constrained('empresas')->onDelete('cascade');
+            $table->foreignId('categoria_id')->constrained('categorias_productos')->onDelete('restrict');
             $table->foreignId('created_by')->nullable()->constrained('users')->onDelete('set null');
             $table->foreignId('updated_by')->nullable()->constrained('users')->onDelete('set null');
             $table->timestamps();

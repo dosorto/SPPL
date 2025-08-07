@@ -10,12 +10,12 @@ class CategoriaProductoSeeder extends Seeder
     public function run(): void
     {
         $categorias = ['Producto', 'Materia Prima', 'Insumo', 'Equipo'];
-        $empresaId = 1; // Ajustar según el tenant
+        $userId = \App\Models\User::inRandomOrder()->first()?->id ?? null;
 
         foreach ($categorias as $nombre) {
             CategoriaProducto::firstOrCreate(
-                ['nombre' => $nombre, 'empresa_id' => $empresaId],
-                ['created_by' => 1, 'updated_by' => 1]
+                ['nombre' => $nombre],
+                ['created_by' => $userId, 'updated_by' => $userId]
             );
         }
     }

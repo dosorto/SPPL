@@ -25,7 +25,6 @@ class SubcategoriaProductoFactory extends Factory
         return [
             'nombre' => $this->faker->randomElement($this->subcategorias[$nombreCategoria] ?? ['General']),
             'categoria_id' => $categoria->id,
-            'empresa_id' => $categoria->empresa_id,
             'created_by' => 1,
             'updated_by' => 1,
         ];
