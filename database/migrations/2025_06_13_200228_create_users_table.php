@@ -18,7 +18,8 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->foreignId('empresa_id')->constrained('empresas');
-            $table->foreignId('empleado_id')->constrained('empleados');
+            $table->foreignId('persona_id')->constrained('personas');
+            //$table->foreignId('empleado_id')->constrained('empleados');
             $table->rememberToken();
             $table->timestamps();
         });

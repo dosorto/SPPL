@@ -48,7 +48,6 @@ class Persona extends Model
         'direccion',
         'municipio_id',
         'departamento_id', // debe ser nullable en la migración y en el modelo
-        'departamento_id',
         'telefono',
         'sexo',
         'fecha_nacimiento',

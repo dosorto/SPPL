@@ -6,6 +6,14 @@ use App\Filament\Resources\UserResource\Pages;
 use App\Filament\Resources\UserResource\RelationManagers;
 use App\Models\User;
 use App\Models\Empresa;
+use App\Models\Persona;
+use App\Models\Paises;
+use App\Models\Departamento;
+use App\Models\Municipio;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Textarea;
 use App\Models\Empleado;
 use Spatie\Permission\Models\Role;
 use Filament\Forms;
@@ -22,6 +30,7 @@ use Filament\Forms\Components\TextInput;
 use Filament\Pages\Page;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Get;
+use Filament\Forms\Components\Hidden;
 
 class UserResource extends Resource
 {
@@ -31,96 +40,178 @@ class UserResource extends Resource
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationGroup = 'Configuraciones';
 
+
     public static function form(Form $form): Form
     {
-        return $form
-            ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->label('Nombre')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('email')
-                    ->label('Correo')   
-                    ->email()
-                    ->required()
-                    ->maxLength(255),
-                
+        return $form->schema([
+            TextInput::make('name')
+                ->label('Nombre')
+                ->required()
+                ->unique()
+                ->maxLength(255),
 
-                // Campo para asignar la Empresa (solo visible para el 'root')
-                Forms\Components\Select::make('empresa_id')
-                    ->label('Empresa')
-                    ->options(Empresa::all()->pluck('nombre', 'id'))
-                    ->searchable()
-                    ->live()
-                    ->required()
-                    ->visible(fn () => auth()->user()->hasRole('root')),
+            TextInput::make('email')
+                ->label('Correo')
+                ->email()
+                ->required()
+                ->unique()
+                ->maxLength(255),
 
-                Forms\Components\Select::make('empleado_id')
-    ->label('Empleado')
-    ->searchable()
-    ->options(function (Get $get) {
-        $empresaId = $get('empresa_id');
+            Select::make('empresa_id')
+                ->label('Empresa')
+                ->options(Empresa::pluck('nombre', 'id'))
+                ->searchable()
+                ->live()
+                ->required()
+                ->visible(fn () => auth()->user()->hasRole('root')),
 
-        if (!$empresaId) {
-            return [];
-        }
+            Hidden::make('empresa_id')
+                ->default(fn () => auth()->user()->empresa_id)
+                ->dehydrated()
+                ->visible(fn () => !auth()->user()->hasRole('root')),
 
-        return Empleado::with('persona')
-            ->where('empresa_id', $empresaId)
-            ->get()
-            ->mapWithKeys(function ($empleado) {
-                return [
-                    $empleado->id => $empleado->persona->primer_nombre . ' ' . $empleado->persona->primer_apellido,
-                ];
-            });
-    })
-    ->disabled(fn (Get $get) => !$get('empresa_id'))
-    ->reactive(),
-                Forms\Components\TextInput::make('password') // 1. Nombre del campo: 'password'
-                    ->label('Contraseña') // Esta es la etiqueta que ve el usuario
-                    ->password()
-                    ->revealable() // Extra: Añade un botón para mostrar/ocultar la contraseña
-                    ->confirmed()
-                    
-                    ->dehydrateStateUsing(fn ($state) => Hash::make($state))
-                    ->dehydrated(fn ($state) => filled($state))
-                    
-                    // 3. Requerido solo al crear, no al editar (versión más limpia)
-                    ->required(fn (string $context): bool => $context === 'create')
-                    ->maxLength(255),
+            Select::make('persona_id')
+                ->label('Persona')
+                ->searchable()
+                ->getSearchResultsUsing(function (string $search, Get $get) {
+                    return Persona::where('empresa_id', $get('empresa_id'))
+                        ->where(function ($query) use ($search) {
+                            $query->where('dni', 'like', "%$search%")
+                                ->orWhere('primer_nombre', 'like', "%$search%")
+                                ->orWhere('primer_apellido', 'like', "%$search%");
+                        })
+                        ->limit(10)
+                        ->get()
+                        ->mapWithKeys(fn ($p) => [
+                            $p->id => "{$p->dni} - {$p->primer_nombre} {$p->primer_apellido}"
+                        ]);
+                })
+                ->getOptionLabelUsing(fn ($value) =>
+                    Persona::find($value)?->dni . ' - ' .
+                    Persona::find($value)?->primer_nombre . ' ' .
+                    Persona::find($value)?->primer_apellido
+                )
+                ->createOptionForm([
+                    TextInput::make('dni')->label('DNI')->required(),
+                    Select::make('tipo_persona')
+                        ->label('Tipo de Persona')
+                        ->options([
+                            'natural' => 'Natural',
+                            'juridica' => 'Jurídica',
+                        ])
+                        ->required(),
+                    TextInput::make('primer_nombre')->label('Primer Nombre')->required(),
+                    TextInput::make('segundo_nombre')->label('Segundo Nombre'),
+                    TextInput::make('primer_apellido')->label('Primer Apellido')->required(),
+                    TextInput::make('segundo_apellido')->label('Segundo Apellido'),
+                    Select::make('sexo')
+                        ->label('Sexo')
+                        ->options([
+                            'MASCULINO' => 'Masculino',
+                            'FEMENINO' => 'Femenino',
+                            'OTRO' => 'Otro',
+                        ])
+                        ->required(),
+                    DatePicker::make('fecha_nacimiento')->label('Fecha de nacimiento')->required(),
+                    TextInput::make('telefono')->label('Teléfono'),
+                    Textarea::make('direccion')->label('Dirección')->required(),
+                    Hidden::make('empresa_id')->default(fn () => auth()->user()->empresa_id),
 
-                // CAMPO DE CONFIRMACIÓN DE CONTRASEÑA
-                Forms\Components\TextInput::make('password_confirmation') // 1. Nombre del campo: 'password_confirmation'
-                    ->label('Confirma tu contraseña') // Etiqueta para el usuario
-                    ->password()
-                    ->revealable()
-                    
-                    // 3. Requerido solo al crear
-                    ->required(fn (string $context): bool => $context === 'create')
-                    ->maxLength(255)
-                    
-                    // 4. Correcto: No se guarda en la base de datos
-                    ->dehydrated(false),
-                
-                // --- CAMPO DE ROLES CON EL ARREGLO DE SEGURIDAD ---
-                Forms\Components\Select::make('Roles')
-                    ->label('Roles')
-                    ->multiple()
-                    ->relationship(
-                        'roles',
-                        'name',
-                        // Se modifica la consulta para cargar los roles
-                        function (Builder $query) {
-                            // Si el usuario actual NO es 'root', se excluye el rol 'root' de la lista.
-                            if (!auth()->user()->hasRole('root')) {
-                                $query->where('name', '!=', 'root');
-                            }
-                        }
-                    )
-                    ->preload()
-                    ->reactive()
-                    ->afterStateUpdated(function (callable $set, $state) {
-                        $permissions = Role::whereIn('id', $state)
+                    Select::make('pais_id')
+                        ->label('País')
+                        ->searchable()
+                        ->getSearchResultsUsing(fn (string $search) =>
+                            Paises::where('nombre_pais', 'like', "%$search%")
+                                ->limit(10)
+                                ->pluck('nombre_pais', 'id')
+                        )
+                        ->getOptionLabelUsing(fn ($value) =>
+                            Paises::find($value)?->nombre_pais ?? 'Selecciona...'
+                        )
+                        ->required()
+                        ->reactive(),
+
+                    Select::make('departamento_id')
+                        ->label('Departamento')
+                        ->searchable()
+                        ->getSearchResultsUsing(fn (string $search, Get $get) =>
+                            Departamento::where('pais_id', $get('pais_id'))
+                                ->where('nombre_departamento', 'like', "%$search%")
+                                ->limit(10)
+                                ->pluck('nombre_departamento', 'id')
+                        )
+                        ->getOptionLabelUsing(fn ($value) =>
+                            Departamento::find($value)?->nombre_departamento ?? 'Selecciona...'
+                        )
+                        ->required()
+                        ->reactive(),
+
+                    Select::make('municipio_id')
+                        ->label('Municipio')
+                        ->searchable()
+                        ->getSearchResultsUsing(fn (string $search, Get $get) =>
+                            Municipio::where('departamento_id', $get('departamento_id'))
+                                ->where('nombre_municipio', 'like', "%$search%")
+                                ->limit(10)
+                                ->pluck('nombre_municipio', 'id')
+                        )
+                        ->getOptionLabelUsing(fn ($value) =>
+                            Municipio::find($value)?->nombre_municipio ?? 'Selecciona...'
+                        )
+                        ->required(),
+                ])
+                ->createOptionUsing(function (array $data) {
+                    $personaExistente = \App\Models\Persona::where('dni', $data['dni'])->first();
+
+                    if ($personaExistente) {
+                        return $personaExistente->id; // Ya existe → devolvemos el ID
+                    }
+
+                    $nuevaPersona = \App\Models\Persona::create($data);
+                    return $nuevaPersona->id;
+                })
+
+                ->createOptionAction(function ($action) {
+                    return $action->after(function ($state, callable $set) {
+                        $set('persona_id', is_object($state) ? $state->getKey() : $state);
+                    });
+                })
+
+                ->required()
+                ->reactive()
+                ->rules([\Illuminate\Validation\Rule::unique('users', 'persona_id')]),
+
+            TextInput::make('password')
+                ->label('Contraseña')
+                ->password()
+                ->revealable()
+                ->confirmed()
+                ->dehydrateStateUsing(fn ($state) => Hash::make($state))
+                ->dehydrated(fn ($state) => filled($state))
+                ->required(fn (string $context): bool => $context === 'create')
+                ->maxLength(255),
+
+            TextInput::make('password_confirmation')
+                ->label('Confirma tu contraseña')
+                ->password()
+                ->revealable()
+                ->required(fn (string $context): bool => $context === 'create')
+                ->maxLength(255)
+                ->dehydrated(false),
+
+            Select::make('Roles')
+                ->label('Roles')
+                ->multiple()
+                ->relationship('roles', 'name', function (\Illuminate\Database\Eloquent\Builder $query) {
+                    return auth()->user()->hasRole('root')
+                        ? $query
+                        : $query->where('name', '!=', 'root');
+                })
+
+                ->preload()
+                ->reactive()
+                ->afterStateUpdated(function (callable $set, $state) {
+                    $permisos = Role::whereIn('id', $state)
                         ->with('permissions')
                         ->get()
                         ->pluck('permissions')
@@ -128,22 +219,25 @@ class UserResource extends Resource
                         ->pluck('id')
                         ->unique()
                         ->toArray();
-                        $set('Permisos', $permissions);
-                    }),
-                    
-               Forms\Components\Section::make('Permisos que posee el Rol')
-                ->collapsible() // Esto hace que la sección se pueda abrir y cerrar
-                ->collapsed()   // Esto hace que empiece cerrada por defecto
-                ->schema([
-                    // 2. Metemos el campo de Permisos DENTRO de la sección
-                    Forms\Components\Select::make('Permisos')
-                        ->multiple()
-                        ->relationship('permissions', 'name')->preload()
-                        ->disabled(), // Lo deshabilitamos para que sea solo informativo
-                ]),
+                    $set('Permisos', $permisos);
+                }),
 
-            ]);
+            \Filament\Forms\Components\Section::make('Permisos que posee el Rol')
+                ->collapsible()
+                ->collapsed()
+                ->schema([
+                    Select::make('Permisos')
+                        ->multiple()
+                        ->relationship('permissions', 'name')
+                        ->preload()
+                        ->disabled(),
+                ]),
+        ]);
     }
+
+
+
+
 
     public static function table(Table $table): Table
     {

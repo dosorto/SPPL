@@ -59,8 +59,8 @@ class DatabaseSeeder extends Seeder
             InventarioInsumosSeeder::class,
            // InventarioProductosSeeder::class,
         ]);
-         
-       $this->command->info('Configurando el usuario Root con su empleado base...');
+        
+        $this->command->info('Configurando el usuario Root con su empleado base...');
 
         // --- 1. Asegurar que la empresa "GRUPO B" exista ---
         $empresa = Empresa::firstOrCreate(
@@ -75,6 +75,7 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
+        // --- 2. Crear el "Consumidor Final" (como Persona y Cliente) ---
         $personaConsumidorFinal = Persona::firstOrCreate(
             ['dni' => '0000000000000'],
             [
@@ -84,13 +85,13 @@ class DatabaseSeeder extends Seeder
                 'telefono' => '0000-0000',
                 'sexo' => 'MASCULINO',
                 'fecha_nacimiento' => now(),
-                'municipio_id' => $empresa->municipio_id, // Usamos datos de la empresa
+                'municipio_id' => $empresa->municipio_id,
                 'pais_id' => $empresa->pais_id,
-                'departamento_id' => $empresa->departamento_id, // Añadimos el departamento_id
+                'departamento_id' => $empresa->departamento_id,
+                'empresa_id' => $empresa->id,
             ]
         );
 
-        // Se enlaza esa persona como un cliente a la empresa "GRUPO B".
         Cliente::firstOrCreate(
             [
                 'persona_id' => $personaConsumidorFinal->id,
@@ -100,13 +101,13 @@ class DatabaseSeeder extends Seeder
                 'rtn' => '00000000000000',
             ]
         );
-        
+
         $this->command->info('Cliente "Consumidor Final" creado para GRUPO B.');
 
-        // --- 2. Asegurar que el rol 'root' exista ---
+        // --- 3. Asegurar que el rol 'root' exista ---
         Role::firstOrCreate(['name' => 'root']);
 
-        // --- 3. Asegurar que las dependencias para el empleado existan PARA ESTA EMPRESA ---
+        // --- 4. Asegurar dependencias del empleado ---
         $departamentoAdmin = DepartamentoEmpleado::firstOrCreate(
             [
                 'nombre_departamento_empleado' => 'Administración',
@@ -120,7 +121,7 @@ class DatabaseSeeder extends Seeder
             ['descripcion' => 'Empleados con un puesto fijo y permanente en la organización.']
         );
 
-        // --- 4. Crear la Persona para el empleado root ---
+        // --- 5. Crear la Persona para el empleado root ---
         $personaRoot = Persona::firstOrCreate(
             ['dni' => '9999999999999'],
             [
@@ -133,11 +134,11 @@ class DatabaseSeeder extends Seeder
                 'empresa_id' => $empresa->id,
                 'municipio_id' => $empresa->municipio_id,
                 'pais_id' => $empresa->pais_id,
-                'departamento_id' => $empresa->departamento_id, // Añadimos el departamento_id
+                'departamento_id' => $empresa->departamento_id,
             ]
         );
 
-        // --- 5. Crear el Empleado asociado a la Persona ---
+        // --- 6. Crear el Empleado asociado a la Persona ---
         $empleadoRoot = Empleado::firstOrCreate(
             ['persona_id' => $personaRoot->id],
             [
@@ -150,22 +151,22 @@ class DatabaseSeeder extends Seeder
             ]
         );
 
-        // --- 6. Crear o actualizar el Usuario y enlazarlo todo ---
+        // --- 7. Crear el Usuario root enlazado a la persona (no al empleado) ---
         $user = User::firstOrCreate(
             ['email' => 'root@example.com'],
             [
                 'name' => 'root',
                 'password' => bcrypt('password'),
                 'empresa_id' => $empresa->id,
-                'empleado_id' => $empleadoRoot->id, 
+                'persona_id' => $personaRoot->id, // ✅ nueva forma correcta
             ]
         );
 
-        $user->empleado_id = $empleadoRoot->id;
-        $user->save();
+        // --- 8. Asignar rol ---
         $user->assignRole('root');
 
-        $this->command->info('Usuario Root configurado y enlazado al empleado base correctamente.');
+        $this->command->info('Usuario Root configurado y enlazado correctamente.');
+
 
        
     }

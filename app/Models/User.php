@@ -31,7 +31,7 @@ class User extends Authenticatable //implements FilamentUser
         'email',
         'password',
         'empresa_id',
-        'empleado_id',
+        'persona_id',
     ];
 
     /**
@@ -87,10 +87,17 @@ class User extends Authenticatable //implements FilamentUser
         return $this->belongsTo(Empresa::class);
     }
 
-    public function empleado(): BelongsTo
+    public function persona()
     {
-        return $this->belongsTo(Empleado::class);
+        return $this->belongsTo(Persona::class);
     }
+
+
+    public function getEmpleadoAttribute()
+    {
+        return $this->persona?->empleado;
+    }
+
     
     /**
      * Verifica si el usuario puede acceder a una empresa específica.
