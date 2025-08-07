@@ -65,7 +65,7 @@ class ProductosFactory extends Factory
 
         // Obtener o crear una categoría
         $categoria = CategoriaProducto::firstOrCreate(
-            ['nombre' => $categoriaNombre, 'empresa_id' => $empresaId],
+            ['nombre' => $categoriaNombre],
             ['created_by' => $userId, 'updated_by' => $userId]
         );
 
@@ -94,7 +94,7 @@ class ProductosFactory extends Factory
 
         // Obtener o crear una subcategoría
         $subcategoria = SubcategoriaProducto::firstOrCreate(
-            ['nombre' => $subcategoriaNombre, 'categoria_id' => $categoria->id, 'empresa_id' => $empresaId],
+            ['nombre' => $subcategoriaNombre, 'categoria_id' => $categoria->id],
             ['created_by' => $userId, 'updated_by' => $userId]
         );
 

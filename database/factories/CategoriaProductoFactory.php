@@ -13,7 +13,6 @@ class CategoriaProductoFactory extends Factory
     {
         return [
             'nombre' => $this->faker->randomElement(['Producto', 'Materia Prima', 'Insumo', 'Equipo']),
-            'empresa_id' => 1, // Ajustar según el tenant
             'created_by' => 1,
             'updated_by' => 1,
         ];

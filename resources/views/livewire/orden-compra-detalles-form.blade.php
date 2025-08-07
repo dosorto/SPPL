@@ -3,13 +3,13 @@
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
         <!-- Producto -->
         <div class="flex flex-col">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
             <input 
                 type="text" 
                 wire:model.live="producto_nombre" 
                 list="productoOptions" 
-                placeholder="Escribe SKU o nombre..." 
-                class="w-full border rounded-lg p-2 shadow-sm focus:ring focus:ring-blue-200" 
+                placeholder="Escribe SKU, nombre o código de barras..." 
+                class="w-full border rounded-lg p-2 shadow-sm focus:ring focus:ring-blue-200 focus:outline-none"
                 wire:change="updateProductoId"
             >
             <datalist id="productoOptions">
@@ -21,6 +21,8 @@
                 <span class="text-red-600 text-sm mt-1">{{ $message }}</span> 
             @enderror
         </div>
+
+   
 
         <!-- Cantidad -->
         <div class="flex flex-col">

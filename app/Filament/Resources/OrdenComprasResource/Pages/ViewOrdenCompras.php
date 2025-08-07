@@ -12,6 +12,8 @@ use Filament\Actions\DeleteAction;
 use Filament\Actions\Action;
 use App\Filament\Pages\RecibirOrdenCompra;
 use Carbon\Carbon;
+use Barryvdh\DomPDF\Facade\Pdf;
+use Filament\Notifications\Notification;
 
 class ViewOrdenCompras extends ViewRecord
 {
@@ -100,16 +102,77 @@ class ViewOrdenCompras extends ViewRecord
 
     protected function getHeaderActions(): array
     {
-        return $this->record->estado === 'Pendiente' ? [
-            EditAction::make()
-                ->label('Editar'),
-            DeleteAction::make()
-                ->label('Eliminar'),
-            Action::make('recibirEnInventario')
+        $actions = [];
+
+        if ($this->record->estado === 'Pendiente') {
+            $actions[] = EditAction::make()
+                ->label('Editar');
+            $actions[] = DeleteAction::make()
+                ->label('Eliminar');
+            $actions[] = Action::make('recibirEnInventario')
                 ->label('Recibir en Inventario')
                 ->icon('heroicon-o-inbox-arrow-down')
                 ->color('success')
-                ->url(fn () => RecibirOrdenCompra::getUrl(['orden_id' => $this->record->id])),
-        ] : [];
+                ->url(fn () => RecibirOrdenCompra::getUrl(['orden_id' => $this->record->id]));
+        } elseif ($this->record->estado === 'Recibida') {
+            $actions[] = Action::make('generatePdf')
+                ->label('Generar PDF')
+                ->icon('heroicon-o-document-arrow-down')
+                ->color('primary')
+                ->action(function () {
+                    // Validate required relationships and data
+                    if (!$this->record->proveedor) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No se puede generar el PDF: El proveedor no está definido.')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+                    if (!$this->record->empresa) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No se puede generar el PDF: La empresa no está definida.')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+                    if (!$this->record->tipoOrdenCompra) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No se puede generar el PDF: El tipo de orden no está definido.')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+                    if ($this->record->detalles->isEmpty()) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('No se puede generar el PDF: No hay detalles registrados para esta orden.')
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
+                    // Generate PDF if all validations pass
+                    try {
+                        $pdf = Pdf::loadView('pdf.orden-compra', [
+                            'orden' => $this->record->load(['empresa', 'proveedor', 'tipoOrdenCompra', 'detalles.producto']),
+                            'fechaGeneracion' => now()->format('d/m/Y H:i:s'),
+                        ]);
+                        return response()->streamDownload(function () use ($pdf) {
+                            echo $pdf->output();
+                        }, "orden-compra-{$this->record->id}.pdf");
+                    } catch (\Exception $e) {
+                        Notification::make()
+                            ->title('Error')
+                            ->body('Ocurrió un error al generar el PDF: ' . $e->getMessage())
+                            ->danger()
+                            ->send();
+                    }
+                });
+        }
+
+        return $actions;
     }
 }

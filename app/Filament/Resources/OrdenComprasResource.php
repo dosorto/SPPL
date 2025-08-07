@@ -105,17 +105,12 @@ class OrdenComprasResource extends Resource
                     Forms\Components\Section::make('Detalles de la Orden')
                         ->icon('heroicon-o-shopping-cart')
                         ->schema([
-                       
-
                         Forms\Components\View::make('livewire.wrap-orden-compra-detalles-form')
-                        ->label('Detalles de la Orden')
-                        ->viewData(fn (\Filament\Forms\Get $get) => [
-                            'record' => $get('id') ? \App\Models\OrdenCompras::with('detalles.producto')->find($get('id')) : null,
-                        ])
-
-                        ->columnSpanFull()
-
-
+                            ->label('Detalles de la Orden')
+                            ->viewData(fn (\Filament\Forms\Get $get) => [
+                                'record' => $get('id') ? \App\Models\OrdenCompras::with('detalles.producto')->find($get('id')) : null,
+                            ])
+                            ->columnSpanFull()
                     ])
                     ->collapsible(),
             ])
@@ -169,6 +164,7 @@ class OrdenComprasResource extends Resource
                         };
                     }),
             ])
+            ->defaultSort('id', 'desc')
             ->actions([
                 Tables\Actions\ActionGroup::make([
                     Tables\Actions\ViewAction::make()->label('Ver'),
@@ -186,13 +182,56 @@ class OrdenComprasResource extends Resource
                         ->color('primary')
                         ->hidden(fn (OrdenCompras $record): bool => $record->estado !== 'Recibida')
                         ->action(function (OrdenCompras $record) {
-                            $pdf = Pdf::loadView('pdf.orden-compra', [
-                                'orden' => $record->load(['empresa', 'proveedor', 'tipoOrdenCompra', 'detalles.producto']),
-                                'fechaGeneracion' => now()->format('d/m/Y H:i:s'),
-                            ]);
-                            return response()->streamDownload(function () use ($pdf) {
-                                echo $pdf->output();
-                            }, "orden-compra-{$record->id}.pdf");
+                            // Validate required relationships and data
+                            if (!$record->proveedor) {
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body('No se puede generar el PDF: El proveedor no está definido.')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
+                            if (!$record->empresa) {
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body('No se puede generar el PDF: La empresa no está definida.')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
+                            if (!$record->tipoOrdenCompra) {
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body('No se puede generar el PDF: El tipo de orden no está definido.')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
+                            if ($record->detalles->isEmpty()) {
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body('No se puede generar el PDF: No hay detalles registrados para esta orden.')
+                                    ->danger()
+                                    ->send();
+                                return;
+                            }
+
+                            // Generate PDF if all validations pass
+                            try {
+                                $pdf = Pdf::loadView('pdf.orden-compra', [
+                                    'orden' => $record->load(['empresa', 'proveedor', 'tipoOrdenCompra', 'detalles.producto']),
+                                    'fechaGeneracion' => now()->format('d/m/Y H:i:s'),
+                                ]);
+                                return response()->streamDownload(function () use ($pdf) {
+                                    echo $pdf->output();
+                                }, "orden-compra-{$record->id}.pdf");
+                            } catch (\Exception $e) {
+                                Notification::make()
+                                    ->title('Error')
+                                    ->body('Ocurrió un error al generar el PDF: ' . $e->getMessage())
+                                    ->danger()
+                                    ->send();
+                            }
                         }),
                     Tables\Actions\DeleteAction::make()->label('Eliminar')
                         ->disabled(fn (OrdenCompras $record): bool => $record->estado === 'Recibida'),

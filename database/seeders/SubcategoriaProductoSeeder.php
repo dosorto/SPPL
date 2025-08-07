@@ -17,18 +17,17 @@ class SubcategoriaProductoSeeder extends Seeder
             'Equipo' => ['Maquinaria', 'Equipos'],
         ];
 
-        $empresaId = 1; // Ajustar según el tenant
         $userId = \App\Models\User::inRandomOrder()->first()?->id ?? null;
 
         foreach ($subcategorias as $categoriaNombre => $subs) {
             $categoria = CategoriaProducto::firstOrCreate(
-                ['nombre' => $categoriaNombre, 'empresa_id' => $empresaId],
+                ['nombre' => $categoriaNombre],
                 ['created_by' => $userId, 'updated_by' => $userId]
             );
 
             foreach ($subs as $subcategoriaNombre) {
                 SubcategoriaProducto::firstOrCreate(
-                    ['nombre' => $subcategoriaNombre, 'categoria_id' => $categoria->id, 'empresa_id' => $empresaId],
+                    ['nombre' => $subcategoriaNombre, 'categoria_id' => $categoria->id],
                     ['created_by' => $userId, 'updated_by' => $userId]
                 );
             }

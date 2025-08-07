@@ -1,29 +1,37 @@
-@php
-    use App\Models\Empresa;
-    $user = auth()->user();
-    $currentEmpresaId = session('current_empresa_id', $user?->empresa_id);
-    $currentEmpresa = $currentEmpresaId ? Empresa::find($currentEmpresaId) : null;
-@endphp
-
-<x-filament-panels::page>
-    <div class="mb-4">
-        @if($currentEmpresa)
-            <div class="flex items-center gap-2">
-                <span class="text-sm text-gray-600 dark:text-gray-300">Empresa activa:</span>
-                <span class="inline-flex items-center px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-xs font-semibold">
-                    {{ $currentEmpresa->nombre }}
-                </span>
-            </div>
-            @if(session('filament.notification'))
-                <div class="mt-2">
-                    <x-filament::notification
-                        :status="session('filament.notification.status')"
-                        :message="session('filament.notification.message')"
-                        :duration="session('filament.notification.duration') ?? 3000"
-                    />
+<x-filament-panels::page :show-header="false"> <!-- Desactiva la cabecera predeterminada -->
+    <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-600">
+        <!-- Cabecera Personalizada -->
+        <div class="flex justify-between items-center mb-6">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Panel de Control</h1>
+            <div class="flex items-center space-x-4">
+                <x-filament::avatar :user="auth()->user()" size="lg" />
+                <div>
+                    <p class="text-lg text-gray-700 dark:text-gray-300">
+                        {{ __('Bienvenido, :name', ['name' => auth()->user()->name]) }}
+                    </p>
+                    <x-filament::button :href="filament()->getLogoutUrl()" color="danger" size="sm" class="mt-2">
+                        {{ __('Cerrar Sesión') }}
+                    </x-filament::button>
                 </div>
-            @endif
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        @if ($this->hasFiltersForm())
+            <div class="mb-6">
+                <x-filament::form wire:model="filters">
+                    {{ $this->filtersForm }}
+                </x-filament::form>
+            </div>
         @endif
-    </div>
-    {{-- ...el resto del contenido de la página... --}}
+
+        <!-- Widgets -->
+        <div class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+            @foreach ($this->getHeaderWidgets() as $widget)
+                <x-filament::widget :widget="$widget" />
+            @endforeach
+        </div>
+
+        <!-- Enlaces Personalizados -->
+        
 </x-filament-panels::page>
