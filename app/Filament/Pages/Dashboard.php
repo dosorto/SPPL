@@ -12,9 +12,9 @@ class Dashboard extends BaseDashboard
 {
     use HasFiltersForm;
 
-    protected static ?string $title = 'Panel de Control';
+    //protected static ?string $title = 'Panel de Control';
     protected static ?string $navigationIcon = 'heroicon-o-home';
-    protected static string $view = 'filament.pages.dashboard';
+    //protected static string $view = 'filament.pages.dashboard';
 
     // Desactiva la cabecera predeterminada (opcional, depende de la versión)
     protected static bool $shouldRegisterNavigation = true;

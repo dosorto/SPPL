@@ -37,10 +37,12 @@ class AdminPanelProvider extends PanelProvider
                 Pages\Dashboard::class,
                 RecibirOrdenCompraInsumos::class,
             ])
+
+            //MUESTAR PANEL DE ADMINISTRADOR EN EL NAVEGADOR
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->widgets([
-                Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+               // Widgets\AccountWidget::class,
+                //Widgets\FilamentInfoWidget::class,
             ])
             ->renderHook(
                 'panels::topbar.start',

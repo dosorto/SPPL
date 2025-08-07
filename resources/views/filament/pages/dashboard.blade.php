@@ -2,7 +2,7 @@
     <div class="p-6 bg-white dark:bg-gray-800 rounded-xl shadow-md border border-gray-200 dark:border-gray-600">
         <!-- Cabecera Personalizada -->
         <div class="flex justify-between items-center mb-6">
-            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Panel de Control</h1>
+             <!-- <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200">Panel de Control</h1>-->
             <div class="flex items-center space-x-4">
                 <x-filament::avatar :user="auth()->user()" size="lg" />
                 <div>
