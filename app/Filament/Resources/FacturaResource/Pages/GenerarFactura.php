@@ -108,9 +108,17 @@ class GenerarFactura extends Page
             // --- CREACIÓN DE UNA NUEVA ORDEN ---
             session()->forget('factura_pendiente_id');
 
-            $consumidorFinal = Cliente::whereHas('persona', fn($q) =>
-                $q->where('dni', '0000000000000')
-            )->first();
+            $empresaId = auth()->user()->empresa_id;
+
+            $consumidorFinal = Cliente::where('empresa_id', $empresaId)
+                ->whereHas('persona', fn($q) =>
+                    $q->where('dni', '0000000000000')
+                )
+                ->first();
+
+            if (! $consumidorFinal) {
+                throw new \Exception("No se encontró un cliente consumidor final para esta empresa.");
+            }   
 
             // 1) Valores por defecto del formulario
             $this->form->fill([
@@ -565,7 +573,7 @@ class GenerarFactura extends Page
                     throw new \Exception("No se encontró un empleado asociado a este usuario.");
                 }
                 $factura->empleado_id = $empleado->id;
-                $factura->empresa_id    = Cliente::find($data['cliente_id'])->empresa_id;
+                $factura->empresa_id = auth()->user()->empresa_id;
                 $factura->fecha_factura = now();
                 $factura->estado        = 'Pendiente';
                 $factura->subtotal      = $this->subtotal;
@@ -666,7 +674,7 @@ class GenerarFactura extends Page
                     $factura = Factura::create([
                         'cliente_id'     => $data['cliente_id'],
                         'empleado_id'    => $empleado->id,
-                        'empresa_id'     => Cliente::find($data['cliente_id'])->empresa_id,
+                        'empresa_id'     => auth()->user()->empresa_id,
                         'fecha_factura'  => now(),
                         'estado'         => 'Pendiente',
                         'subtotal'       => $this->subtotal,
