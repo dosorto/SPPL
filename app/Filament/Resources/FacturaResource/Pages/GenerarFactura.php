@@ -535,96 +535,6 @@ class GenerarFactura extends Page
     }
 
     public function submit(): void
-{
-    $data = $this->form->getState();
-
-    if (empty($this->lineasVenta) || empty($data['cliente_id'])) {
-        Notification::make()
-            ->danger()
-            ->title('Faltan Datos')
-            ->body('Debe seleccionar un cliente y agregar productos.')
-            ->send();
-        return;
-    }
-
-    try {
-        DB::transaction(function () use ($data) {
-            $pendienteId = session('factura_pendiente_id');
-
-            /** @var Factura $factura */
-            $factura = $pendienteId
-                ? Factura::findOrFail($pendienteId)
-                : new Factura();
-
-            $esNueva = !$factura->exists;
-
-            // Datos comunes
-            $factura->cliente_id    = $data['cliente_id'];
-            $factura->empleado_id   = auth()->user()->empleado->id;
-            $factura->empresa_id    = Cliente::find($data['cliente_id'])->empresa_id;
-            $factura->fecha_factura = now();
-            $factura->estado        = 'Pendiente';
-            $factura->subtotal      = $this->subtotal;
-            $factura->impuestos     = $this->impuestos;
-            $factura->total         = $this->total;
-            $factura->cai_id        = null;
-            $factura->apertura_id   = session('apertura_id');
-
-            if ($esNueva) {
-                $factura->numero_factura = 'TEMP';
-                $factura->save();
-                $factura->update(['numero_factura' => (string) $factura->id]);
-                session(['factura_pendiente_id' => $factura->id]);
-            } else {
-                $factura->save();
-                $factura->detalles()->delete();
-            }
-
-            foreach ($this->lineasVenta as $linea) {
-                $inventario = InventarioProductos::find($linea['inventario_id']);
-                $costo = $inventario?->precio_costo ?? 0;
-                $precioUnitario = $linea['precio_unitario'];
-
-                DetalleFactura::create([
-                    'factura_id'         => $factura->id,
-                    'producto_id'        => $linea['inventario_id'],
-                    'cantidad'           => $linea['cantidad'],
-                    'precio_unitario'    => $precioUnitario,
-                    'descuento_aplicado' => $linea['descuento_aplicado'] ?? 0,
-                    'sub_total'          => $linea['cantidad'] * $precioUnitario,
-                    'isv_aplicado'       => $linea['isv_producto'] ?? 0,
-                    'costo_unitario'     => $costo,
-                    'utilidad_unitaria'  => round($precioUnitario - $costo, 2),
-                    'tipo_precio_utilizado'   => $linea['tipo_precio_key'] ?? null,
-                    'origen_descuento'        => $linea['origen_descuento'] ?? 'ninguno',
-                    'nombre_producto_snapshot'=> $inventario->producto->nombre ?? null,
-                    'sku_snapshot'            => $inventario->producto->sku ?? null,
-                ]);
-
-                $inventario?->decrement('cantidad', $linea['cantidad']);
-            }
-
-            Notification::make()
-                ->success()
-                ->title('Orden actualizada como pendiente')
-                ->body('Ahora puedes registrar el pago para asignar CAI y número.')
-                ->send();
-
-            redirect(FacturaResource::getUrl('registrar-pago', ['record' => $factura->id]));
-        });
-    } catch (\Exception $e) {
-        Notification::make()
-            ->danger()
-            ->title('Error al generar la factura')
-            ->body($e->getMessage())
-            ->send();
-    }
-}
-
-
-
-
-    public function guardarPendiente(): void
     {
         $data = $this->form->getState();
 
@@ -634,17 +544,107 @@ class GenerarFactura extends Page
                 ->title('Faltan Datos')
                 ->body('Debe seleccionar un cliente y agregar productos.')
                 ->send();
-
             return;
         }
 
         try {
             DB::transaction(function () use ($data) {
-                // 1) ¿Estoy re-editando una factura pendiente?
+                $pendienteId = session('factura_pendiente_id');
+
+                /** @var Factura $factura */
+                $factura = $pendienteId
+                    ? Factura::findOrFail($pendienteId)
+                    : new Factura();
+
+                $esNueva = !$factura->exists;
+
+                // Datos comunes
+                $factura->cliente_id    = $data['cliente_id'];
+                $empleado = auth()->user()->empleado;
+                if (! $empleado) {
+                    throw new \Exception("No se encontró un empleado asociado a este usuario.");
+                }
+                $factura->empleado_id = $empleado->id;
+                $factura->empresa_id    = Cliente::find($data['cliente_id'])->empresa_id;
+                $factura->fecha_factura = now();
+                $factura->estado        = 'Pendiente';
+                $factura->subtotal      = $this->subtotal;
+                $factura->impuestos     = $this->impuestos;
+                $factura->total         = $this->total;
+                $factura->cai_id        = null;
+                $factura->apertura_id   = session('apertura_id');
+
+                if ($esNueva) {
+                    $factura->numero_factura = 'TEMP';
+                    $factura->save();
+                    $factura->update(['numero_factura' => (string) $factura->id]);
+                    session(['factura_pendiente_id' => $factura->id]);
+                } else {
+                    $factura->save();
+                    $factura->detalles()->delete();
+                }
+
+                foreach ($this->lineasVenta as $linea) {
+                    $inventario = InventarioProductos::find($linea['inventario_id']);
+                    $costo = $inventario?->precio_costo ?? 0;
+                    $precioUnitario = $linea['precio_unitario'];
+
+                    DetalleFactura::create([
+                        'factura_id'         => $factura->id,
+                        'producto_id'        => $linea['inventario_id'],
+                        'cantidad'           => $linea['cantidad'],
+                        'precio_unitario'    => $precioUnitario,
+                        'descuento_aplicado' => $linea['descuento_aplicado'] ?? 0,
+                        'sub_total'          => $linea['cantidad'] * $precioUnitario,
+                        'isv_aplicado'       => $linea['isv_producto'] ?? 0,
+                        'costo_unitario'     => $costo,
+                        'utilidad_unitaria'  => round($precioUnitario - $costo, 2),
+                        'tipo_precio_utilizado'   => $linea['tipo_precio_key'] ?? null,
+                        'origen_descuento'        => $linea['origen_descuento'] ?? 'ninguno',
+                        'nombre_producto_snapshot'=> $inventario->producto->nombre ?? null,
+                        'sku_snapshot'            => $inventario->producto->sku ?? null,
+                    ]);
+
+                    $inventario?->decrement('cantidad', $linea['cantidad']);
+                }
+
+                Notification::make()
+                    ->success()
+                    ->title('Orden actualizada como pendiente')
+                    ->body('Ahora puedes registrar el pago para asignar CAI y número.')
+                    ->send();
+
+                redirect(FacturaResource::getUrl('registrar-pago', ['record' => $factura->id]));
+            });
+        } catch (\Exception $e) {
+            Notification::make()
+                ->danger()
+                ->title('Error al generar la factura')
+                ->body($e->getMessage())
+                ->send();
+        }
+    }
+
+
+   public function guardarPendiente(): void
+    {
+        $data = $this->form->getState();
+
+        if (empty($this->lineasVenta) || empty($data['cliente_id'])) {
+            Notification::make()
+                ->danger()
+                ->title('Faltan Datos')
+                ->body('Debe seleccionar un cliente y agregar productos.')
+                ->send();
+            return;
+        }
+
+        try {
+            DB::transaction(function () use ($data) {
                 $pendienteId = session('factura_pendiente_id');
 
                 if ($pendienteId) {
-                    // 1.a) Actualizo totales en la factura existente
+                    // Editar factura existente
                     $factura = Factura::findOrFail($pendienteId);
                     $factura->update([
                         'subtotal'   => $this->subtotal,
@@ -652,34 +652,40 @@ class GenerarFactura extends Page
                         'total'     => $this->total,
                     ]);
 
-                    // 1.b) Borro los detalles antiguos
                     $factura->detalles()->delete();
                 } else {
-                    // 1.c) Creo nueva factura pendiente con valor temporal
+                    // Nuevo: obtener empleado desde el usuario autenticado
+                    $user     = auth()->user()->load('persona.empleado');
+                    $empleado = $user->persona->empleado ?? null;
+
+                    if (! $empleado) {
+                        throw new \Exception("No se encontró un empleado asociado al usuario actual.");
+                    }
+
+                    // Crear nueva factura pendiente
                     $factura = Factura::create([
                         'cliente_id'     => $data['cliente_id'],
-                        'empleado_id'    => auth()->user()->empleado->id,
+                        'empleado_id'    => $empleado->id,
                         'empresa_id'     => Cliente::find($data['cliente_id'])->empresa_id,
                         'fecha_factura'  => now(),
                         'estado'         => 'Pendiente',
                         'subtotal'       => $this->subtotal,
                         'impuestos'      => $this->impuestos,
                         'total'          => $this->total,
-                        'numero_factura' => 'TEMP', // nunca null
+                        'numero_factura' => 'TEMP',
                         'cai_id'         => null,
                         'apertura_id'    => session('apertura_id'),
                     ]);
 
-                    // 1.d) Asigno el número definitivo: el ID
+                    // Actualizar con número temporal
                     $factura->update([
                         'numero_factura' => (string) $factura->id,
                     ]);
 
-                    // 1.e) Guardo en sesión para futuras ediciones
                     session(['factura_pendiente_id' => $factura->id]);
                 }
 
-                // 2) Creo detalles
+                // Registrar detalles
                 foreach ($this->lineasVenta as $linea) {
                     $inventario = InventarioProductos::find($linea['inventario_id']);
                     $costo      = $inventario?->precio_costo ?? 0;
@@ -695,12 +701,11 @@ class GenerarFactura extends Page
                         'isv_aplicado'       => $linea['isv_producto'] ?? 0,
                         'costo_unitario'     => $costo,
                         'utilidad_unitaria'  => $utilidad,
-                        'tipo_precio_utilizado'   => $linea['tipo_precio_key'] ?? null,
-                        'origen_descuento'        => $linea['origen_descuento'] ?? 'ninguno',
-                        'nombre_producto_snapshot'=> $inventario->producto->nombre ?? null,
-                        'sku_snapshot'            => $inventario->producto->sku ?? null,
+                        'tipo_precio_utilizado'    => $linea['tipo_precio_key'] ?? null,
+                        'origen_descuento'         => $linea['origen_descuento'] ?? 'ninguno',
+                        'nombre_producto_snapshot' => $inventario->producto->nombre ?? null,
+                        'sku_snapshot'             => $inventario->producto->sku ?? null,
                     ]);
-
                 }
             });
 

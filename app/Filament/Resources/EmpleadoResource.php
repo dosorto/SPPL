@@ -319,4 +319,10 @@ class EmpleadoResource extends Resource
             'view' => Pages\ViewEmpleado::route('/{record}'),
         ];
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->orderByDesc('id'); 
+    }
 }

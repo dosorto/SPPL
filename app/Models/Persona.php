@@ -92,6 +92,7 @@ class Persona extends Model
         return $this->hasOne(Empleado::class);
     }
 
+
     /**
      * Una persona pertenece a una empresa (relación 1:1).
      */

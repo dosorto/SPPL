@@ -151,12 +151,16 @@ class FacturaResource extends Resource
         $aperturaId = Session::get('apertura_id');
 
         $query = parent::getEloquentQuery()->with(['cliente.persona', 'empleado.persona']);
-        if (!$aperturaId) {
+
+        if (! $aperturaId) {
             return $query->whereRaw('1 = 0');
         }
 
-        return $query->where('apertura_id', $aperturaId);
+        return $query
+            ->where('apertura_id', $aperturaId)
+            ->orderByDesc('id'); // 👈 Aquí defines el orden descendente por ID
     }
+
     
 
 }

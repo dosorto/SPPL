@@ -508,4 +508,5 @@ class ClienteResource extends Resource
             'view' => Pages\ViewCliente::route('/{record}'),
         ];
     }
+
 }

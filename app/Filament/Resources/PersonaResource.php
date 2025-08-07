@@ -284,4 +284,11 @@ class PersonaResource extends Resource
             ])->columnSpanFull(),
         ]);
     }
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->orderByDesc('id'); 
+    }
+
 }

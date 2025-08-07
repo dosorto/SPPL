@@ -98,6 +98,10 @@ class User extends Authenticatable //implements FilamentUser
         return $this->persona?->empleado;
     }
 
+    // App\Models\User.php
+
+
+
     
     /**
      * Verifica si el usuario puede acceder a una empresa específica.
@@ -143,4 +147,10 @@ class User extends Authenticatable //implements FilamentUser
         // Para otros usuarios, solo su propia empresa
         return Empresa::where('id', $this->empresa_id)->get();
     }
+
+    public function empleado()
+    {
+        return $this->hasOneThrough(Empleado::class, Persona::class, 'id', 'persona_id', 'persona_id', 'id');
+    }
+
 }

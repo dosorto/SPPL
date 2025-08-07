@@ -210,6 +210,7 @@ class CaiResource extends Resource
         return parent::getEloquentQuery()
             ->withoutGlobalScopes([
                 SoftDeletingScope::class,
-            ]);
+            ])
+            ->orderBy('created_at', 'desc'); 
     }
 }
