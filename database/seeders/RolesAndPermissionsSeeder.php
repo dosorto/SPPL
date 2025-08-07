@@ -29,16 +29,15 @@ class RolesAndPermissionsSeeder extends Seeder
             'empleados', //9
             'categoria_unidades', //10
             'orden_compras', //11
-            'personas', //12
             'productos', //13
             'tipo_empleados', //14
             'tipo_orden_compras', //15
             'unidad_de_medidas', //16
-            '', //17
             'inventario_productos',
             'facturas', //18
             'categoria_productos', // Agregado
             'subcategoria_productos', // Agregado
+            'cais'
         ];
 
         // Acciones comunes de las políticas
