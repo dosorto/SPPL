@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('salario', 10, 2);
             $table->json('deducciones_aplicables')->nullable();
 
-            $table->foreignId('persona_id')->unique()->constrained('personas');
+            $table->foreignId('persona_id')->constrained('personas');
             $table->foreignId('departamento_empleado_id')->constrained('departamento_empleados');
             $table->foreignId('empresa_id')->constrained('empresas');
             $table->foreignId('tipo_empleado_id')->constrained('tipo_empleados');
