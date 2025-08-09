@@ -13,7 +13,7 @@ class MunicipioPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_municipios');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -21,7 +21,7 @@ class MunicipioPolicy
      */
     public function view(User $user, Municipio $municipio): bool
     {
-        return $user->can('view_municipios');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -29,7 +29,7 @@ class MunicipioPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_municipios');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -37,7 +37,7 @@ class MunicipioPolicy
      */
     public function update(User $user, Municipio $municipio): bool
     {
-        return $user->can('update_municipios');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -45,7 +45,7 @@ class MunicipioPolicy
      */
     public function delete(User $user, Municipio $municipio): bool
     {
-        return $user->can('delete_municipios');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -53,7 +53,7 @@ class MunicipioPolicy
      */
     public function restore(User $user, Municipio $municipio): bool
     {
-        return $user->can('restore_municipios');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -61,6 +61,6 @@ class MunicipioPolicy
      */
     public function forceDelete(User $user, Municipio $municipio): bool
     {
-        return $user->can('force_delete_municipios');
+        return $user->hasRole(['root']);
     }
 }
