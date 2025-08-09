@@ -10,11 +10,18 @@ use Illuminate\Support\Facades\DB;
 
 class EmpresaObserver
 {
+    /**
+     * Handle the Empresa "created" event.
+     *
+     * @param  \App\Models\Empresa  $empresa
+     * @return void
+     */
     public function created(Empresa $empresa): void
     {
         DB::transaction(function () use ($empresa) {
 
-            // Personas globales (sin tenant). No seteamos empresa_id aquí.
+            // Obtener o crear la persona de Consumidor Final
+            // Asegurarse de incluir los IDs de ubicación directamente en la creación
             $personaCF = Persona::firstOrCreate(
                 ['dni' => '0000000000000'],
                 [
@@ -25,9 +32,16 @@ class EmpresaObserver
                     'fecha_nacimiento' => now(),
                     'direccion'        => 'Ciudad',
                     'telefono'         => '0000-0000',
+                    // ¡IMPORTANTE! Asegurarse de que estos campos obligatorios existan y tengan un valor.
+                    // Usamos los IDs de la empresa que se acaba de crear.
+                    'pais_id'          => $empresa->pais_id,
+                    'departamento_id'  => $empresa->departamento_id,
+                    'municipio_id'     => $empresa->municipio_id,
                 ]
             );
 
+            // Obtener o crear la persona de Consumidor Mayorista
+            // Asegurarse de incluir los IDs de ubicación directamente en la creación
             $personaMayorista = Persona::firstOrCreate(
                 ['dni' => '1111111111111'],
                 [
@@ -38,24 +52,26 @@ class EmpresaObserver
                     'fecha_nacimiento' => now(),
                     'direccion'        => 'Ciudad',
                     'telefono'         => '0000-0000',
+                    // ¡IMPORTANTE! Asegurarse de que estos campos obligatorios existan y tengan un valor.
+                    // Usamos los IDs de la empresa que se acaba de crear.
+                    'pais_id'          => $empresa->pais_id,
+                    'departamento_id'  => $empresa->departamento_id,
+                    'municipio_id'     => $empresa->municipio_id,
                 ]
             );
 
-            // Si se acaban de crear, puedes opcionalmente setear ubicación inicial.
+            // Las siguientes líneas de fill()->save() para personaCF y personaMayorista
+            // ya no son estrictamente necesarias para asignar los IDs de ubicación si se pasaron
+            // en firstOrCreate. Sin embargo, no causan daño y podrían ser útiles si
+            // decides asignar otros atributos *después* de la creación inicial
+            // (aunque en este caso, es mejor pasarlos todos en la primera creación).
+            // Las mantenemos por si acaso hay alguna otra lógica en el futuro.
             if ($personaCF->wasRecentlyCreated) {
-                $personaCF->fill([
-                    'pais_id'         => $empresa->pais_id,
-                    'departamento_id' => $empresa->departamento_id,
-                    'municipio_id'    => $empresa->municipio_id,
-                ])->save();
+                // Aquí podrías añadir cualquier otra lógica que dependa de que la persona se haya creado en esta llamada.
             }
 
             if ($personaMayorista->wasRecentlyCreated) {
-                $personaMayorista->fill([
-                    'pais_id'         => $empresa->pais_id,
-                    'departamento_id' => $empresa->departamento_id,
-                    'municipio_id'    => $empresa->municipio_id,
-                ])->save();
+                // Aquí podrías añadir cualquier otra lógica que dependa de que la persona se haya creado en esta llamada.
             }
 
             // Categorías GLOBALes (categorias_clientes no tiene empresa_id).
@@ -66,7 +82,6 @@ class EmpresaObserver
             // Generador robusto para numero_cliente (único global por tu schema).
             $genNumero = function (): string {
                 do {
-                    // usa el próximo id + padding, o genera como prefieras
                     $next = (Cliente::max('id') ?? 0) + 1;
                     $numero = str_pad((string)$next, 6, '0', STR_PAD_LEFT);
                 } while (Cliente::where('numero_cliente', $numero)->exists());
@@ -101,4 +116,49 @@ class EmpresaObserver
             );
         });
     }
+
+    /**
+     * Handle the Empresa "updated" event.
+     *
+     * @param  \App\Models\Empresa  $empresa
+     * @return void
+     */
+    public function updated(Empresa $empresa): void
+    {
+        //
+    }
+
+    /**
+     * Handle the Empresa "deleted" event.
+     *
+     * @param  \App\Models\Empresa  $empresa
+     * @return void
+     */
+    public function deleted(Empresa $empresa): void
+    {
+        //
+    }
+
+    /**
+     * Handle the Empresa "restored" event.
+     *
+     * @param  \App\Models\Empresa  $empresa
+     * @return void
+     */
+    public function restored(Empresa $empresa): void
+    {
+        //
+    }
+
+    /**
+     * Handle the Empresa "force deleted" event.
+     *
+     * @param  \App\Models\Empresa  $empresa
+     * @return void
+     */
+    public function forceDeleted(Empresa $empresa): void
+    {
+        //
+    }
 }
+
