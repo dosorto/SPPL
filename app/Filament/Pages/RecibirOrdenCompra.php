@@ -262,6 +262,57 @@ class RecibirOrdenCompra extends Page implements HasForms, HasActions
         }
     }
 
+
+    public function actualizarPrecioPorPorcentaje($index, $tipoPorcentaje): void
+    {
+        if (!isset($this->productosData[$index])) {
+            return;
+        }
+
+        $costo = (float) $this->productosData[$index]['precio'];
+        
+        if ($tipoPorcentaje === 'porcentaje_ganancia') {
+
+            $this->productosData[$index]['precio_detalle_manual'] = false;
+            
+            $porcentajeGanancia = (float) $this->productosData[$index]['porcentaje_ganancia'];
+            if ($costo > 0) {
+                $precioDetalle = $costo * (1 + $porcentajeGanancia / 100);
+                $this->productosData[$index]['precio_detalle'] = number_format($precioDetalle, 2, '.', '');
+                
+
+                if (!isset($this->productosData[$index]['precio_promocion_manual']) || !$this->productosData[$index]['precio_promocion_manual']) {
+                    $porcentajeDescuento = (float) $this->productosData[$index]['porcentaje_descuento'];
+                    $precioPromocion = $precioDetalle * (1 - $porcentajeDescuento / 100);
+                    $this->productosData[$index]['precio_promocion'] = number_format($precioPromocion, 2, '.', '');
+                }
+            }
+        }
+        
+        if ($tipoPorcentaje === 'porcentaje_ganancia_mayorista') {
+            // Resetear el flag manual para precio mayorista
+            $this->productosData[$index]['precio_mayorista_manual'] = false;
+            
+            $porcentajeGananciaMayorista = (float) $this->productosData[$index]['porcentaje_ganancia_mayorista'];
+            if ($costo > 0) {
+                $precioMayorista = $costo * (1 + $porcentajeGananciaMayorista / 100);
+                $this->productosData[$index]['precio_mayorista'] = number_format($precioMayorista, 2, '.', '');
+            }
+        }
+        
+        if ($tipoPorcentaje === 'porcentaje_descuento') {
+            // Resetear el flag manual para precio promoción
+            $this->productosData[$index]['precio_promocion_manual'] = false;
+            
+            $precioDetalle = (float) $this->productosData[$index]['precio_detalle'];
+            $porcentajeDescuento = (float) $this->productosData[$index]['porcentaje_descuento'];
+            if ($precioDetalle > 0) {
+                $precioPromocion = $precioDetalle * (1 - $porcentajeDescuento / 100);
+                $this->productosData[$index]['precio_promocion'] = number_format($precioPromocion, 2, '.', '');
+            }
+        }
+    }
+
     // Método para filtrar productos
     public function getProductosFiltrados()
     {

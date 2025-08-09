@@ -22,19 +22,15 @@ class ListCajaAperturas extends ListRecords
     protected function getTableQuery(): Builder
     {
         $currentUser = Auth::user();
-        $currentUserId = $currentUser->id;
-        
-
-        $isRoot = $currentUser->email === 'root@example.com'; 
         
         
-        
-        if ($isRoot) {
+        if ($currentUser->hasAnyRole(['root', 'admin'])) {
+            
             return parent::getTableQuery()->orderBy('created_at', 'desc');
         } else {
-
+            
             return parent::getTableQuery()
-                ->where('user_id', $currentUserId)
+                ->where('user_id', $currentUser->id)
                 ->orderBy('created_at', 'desc');
         }
     }

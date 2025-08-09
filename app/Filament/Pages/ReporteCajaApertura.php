@@ -9,6 +9,8 @@ use App\Models\Pago;
 use Filament\Resources\Pages\Page;
 use Illuminate\Support\Facades\DB;
 use Filament\Actions;
+use Filament\Notifications\Notification;
+use PDF; // Asegúrate de tener este import
 
 class ReporteCajaApertura extends Page
 {
@@ -21,6 +23,9 @@ class ReporteCajaApertura extends Page
     public array $conteoUsuario = [];
     public array $diferencias = [];
     public ?string $notasCierre = null;
+    public float $totalDiferencias = 0;
+    public string $estadoCierre = '';
+    public string $estadoAprobacion = '';
 
     public function mount(CajaApertura $record): void
     {
@@ -30,7 +35,7 @@ class ReporteCajaApertura extends Page
 
     protected function calcularDatos(): void
     {
-
+        
         $ventasAgrupadas = \App\Models\Pago::query()
             ->whereHas('factura', fn($q) => $q->where('apertura_id', $this->record->id))
             ->with('metodoPago')
@@ -40,23 +45,59 @@ class ReporteCajaApertura extends Page
 
         $this->reporteSistema = $ventasAgrupadas->toArray();
 
-
+        
         $totalEfectivoSistema = $this->reporteSistema['Efectivo'] ?? 0;
         $this->totalEnCajaEsperado = $this->record->monto_inicial + $totalEfectivoSistema;
 
-
+        
         $this->conteoUsuario = $this->record->conteo_usuario ?? [];
-        $this->diferencias = $this->record->diferencias_cierre ?? [];
         $this->notasCierre = $this->record->notas_cierre;
 
+        
+        $this->calcularDiferencias();
+    }
 
-        \Log::info('DEBUG Reporte Caja:', [
-            'apertura_id' => $this->record->id,
-            'reporteSistema' => $this->reporteSistema,
-            'totalEnCajaEsperado' => $this->totalEnCajaEsperado,
-            'conteoUsuario' => $this->conteoUsuario,
-            'diferencias' => $this->diferencias
-        ]);
+    protected function calcularDiferencias(): void
+    {
+        if (!empty($this->conteoUsuario)) {
+            
+            $this->diferencias = $this->record->diferencias_cierre ?? [];
+        } else {
+            
+            foreach ($this->reporteSistema as $metodo => $monto) {
+                $montoSistema = ($metodo === 'Efectivo') ? $this->totalEnCajaEsperado : $monto;
+                $this->diferencias[$metodo] = [
+                    'sistema' => $montoSistema,
+                    'contado' => 0,
+                    'diferencia' => 0 - $montoSistema
+                ];
+            }
+        }
+
+        
+        foreach ($this->diferencias as $metodo => $valor) {
+            if (is_numeric($valor)) {
+                
+                $montoSistema = ($metodo === 'Efectivo') ? $this->totalEnCajaEsperado : ($this->reporteSistema[$metodo] ?? 0);
+                $montoContado = $montoSistema + $valor;
+                
+                $this->diferencias[$metodo] = [
+                    'sistema' => $montoSistema,
+                    'contado' => $montoContado,
+                    'diferencia' => $valor
+                ];
+            }
+        }
+
+        
+        $this->totalDiferencias = collect($this->diferencias)->sum('diferencia');
+        
+       
+        $this->estadoCierre = abs($this->totalDiferencias) <= 1 ? 'Correcto' : 
+                             ($this->totalDiferencias > 0 ? 'Sobrante' : 'Faltante');
+        
+        
+        $this->estadoAprobacion = abs($this->totalDiferencias) <= 1 ? 'Aprobado' : 'Requiere Revisión';
     }
 
     protected function getHeaderActions(): array
@@ -76,17 +117,43 @@ class ReporteCajaApertura extends Page
         ];
     }
 
+    
     public function generarPDF()
     {
+        try {
+            
+            $data = [
+                'apertura' => $this->record,
+                'reporteSistema' => $this->reporteSistema,
+                'totalEnCajaEsperado' => $this->totalEnCajaEsperado,
+                'conteoUsuario' => $this->conteoUsuario,
+                'diferencias' => $this->diferencias,
+                'notasCierre' => $this->notasCierre ?? '',
+            ];
 
-        
-        $this->js('window.print()'); 
-        
-
+            
+            $pdf = PDF::loadView('pdf.cierre-caja', $data);
+            $pdf->setPaper('A4', 'portrait');
+            
+            $filename = 'reporte-caja-' . $this->record->id . '-' . now()->format('Y-m-d-H-i') . '.pdf';
+            
+            // Descargar el PDF
+            return response()->streamDownload(function () use ($pdf) {
+                echo $pdf->output();
+            }, $filename);
+            
+        } catch (\Exception $e) {
+            Notification::make()
+                ->title('Error al generar PDF')
+                ->body('Hubo un problema al generar el reporte: ' . $e->getMessage())
+                ->danger()
+                ->send();
+            return null;
+        }
     }
 
     public function getTitle(): string
     {
-        return "Reporte de Caja - " . $this->record->fecha_apertura->format('d/m/Y H:i');
+        return "Reporte de Caja #" . $this->record->id . " - " . $this->record->fecha_apertura->format('d/m/Y H:i');
     }
 }

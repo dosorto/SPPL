@@ -21,9 +21,15 @@ class AperturaCaja extends Page
 
     public function mount(): void
     {
+        $user = Auth::user();
+
+        if (!$user || !$user->empresa_id) {
+            return;
+        }
 
         $this->aperturaActiva = CajaApertura::where('user_id', Auth::id())
                                           ->where('estado', 'ABIERTA')
+                                          ->where('empresa_id', $user->empresa_id)
                                           ->first();
         
    
@@ -38,7 +44,7 @@ class AperturaCaja extends Page
         return Action::make('aperturarCaja')
             ->label('Aperturar Caja')
             ->url(fn (): string => CajaAperturaResource::getUrl('create')) 
-            ->visible(!$this->aperturaActiva);
+            ->visible(!$this->aperturaActiva && Auth::user()?->empresa_id);
     }
     
 

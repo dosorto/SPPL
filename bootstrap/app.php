@@ -13,6 +13,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware) {
         $middleware->web(append: [
             \App\Http\Middleware\LivewireRequestFixer::class,
+            \App\Http\Middleware\CheckCajaAbierta::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

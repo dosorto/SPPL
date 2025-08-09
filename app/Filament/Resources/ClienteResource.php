@@ -42,7 +42,8 @@ class ClienteResource extends Resource
                           ->orderBy('fecha_factura', 'desc')
                           ->orderBy('id', 'desc');
                 }
-            ]);
+            ])
+            ->orderByDesc('id');
     }
     
     protected static ?string $model = Cliente::class;

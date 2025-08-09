@@ -104,7 +104,7 @@
                                             type="number" 
                                             class="block w-full pr-6 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                                             wire:model.live="productosData.{{ $index }}.porcentaje_ganancia"
-                                            wire:change="actualizarPrecios({{ $index }})"
+                                            wire:change="actualizarPrecioPorPorcentaje({{ $index }}, 'porcentaje_ganancia')"
                                             min="0"
                                             step="5"
                                         />
@@ -135,7 +135,7 @@
                                             type="number" 
                                             class="block w-full pr-6 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                                             wire:model.live="productosData.{{ $index }}.porcentaje_ganancia_mayorista"
-                                            wire:change="actualizarPrecios({{ $index }})"
+                                            wire:change="actualizarPrecioPorPorcentaje({{ $index }}, 'porcentaje_ganancia_mayorista')"
                                             min="0"
                                             step="5"
                                         />
@@ -166,7 +166,7 @@
                                             type="number" 
                                             class="block w-full pr-6 py-2.5 text-sm border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 text-center dark:bg-gray-700 dark:border-gray-600 dark:text-white appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none [-moz-appearance:textfield]"
                                             wire:model.live="productosData.{{ $index }}.porcentaje_descuento"
-                                            wire:change="actualizarPrecios({{ $index }})"
+                                            wire:change="actualizarPrecioPorPorcentaje({{ $index }}, 'porcentaje_descuento')"
                                             min="0"
                                             max="100"
                                             step="5"
