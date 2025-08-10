@@ -34,7 +34,7 @@ class DetalleNominaResource extends Resource
     }
     protected static ?string $model = DetalleNominas::class;
 
-    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationGroup = 'Nominas';
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Historial de Pagos';
     protected static ?string $modelLabel = 'Historial de Pago';

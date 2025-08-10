@@ -21,6 +21,9 @@ use Illuminate\Validation\Rule;
 
 class ClienteResource extends Resource
 {
+
+    protected static ?string $navigationGroup = 'Comercial';
+
     public static function getRelations(): array
     {
        

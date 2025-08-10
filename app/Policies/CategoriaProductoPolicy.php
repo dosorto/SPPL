@@ -12,18 +12,12 @@ class CategoriaProductoPolicy
 
     public function viewAny(User $user): bool
     {
-        if ($user->hasRole('root')) {
-            return true; // El usuario root puede ver todas las categorías
-        }
-        return $user->hasPermissionTo('view_any_categoria_productos') && $user->empresa_id !== null;
+        return false; // No se permite ver todos los registros
     }
 
     public function view(User $user, CategoriaProducto $categoriaProducto): bool
     {
-        if ($user->hasRole('root')) {
-            return true;
-        }
-        return $user->hasPermissionTo('view_categoria_productos') && $categoriaProducto->empresa_id === $user->empresa_id;
+         return false; 
     }
 
     public function create(User $user): bool

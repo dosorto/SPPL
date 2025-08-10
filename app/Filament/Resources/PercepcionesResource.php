@@ -19,7 +19,7 @@ use Filament\Forms\Get;
 class PercepcionesResource extends Resource
 {
     protected static ?string $model = Percepciones::class;
-    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationGroup = 'Nominas';
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     public static function form(Form $form): Form

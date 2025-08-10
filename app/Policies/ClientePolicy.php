@@ -13,7 +13,7 @@ class ClientePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_clientes');
+        return $user->can('comercial_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class ClientePolicy
      */
     public function view(User $user, Cliente $cliente): bool
     {
-        return $user->can('view_clientes');
+        return $user->can('comercial_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class ClientePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_clientes');
+        return $user->can('comercial_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class ClientePolicy
      */
     public function update(User $user, Cliente $cliente): bool
     {
-        return $user->can('update_clientes');
+        return $user->can('comercial_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class ClientePolicy
      */
     public function delete(User $user, Cliente $cliente): bool
     {
-        return $user->can('delete_clientes');
+        return $user->can('comercial_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class ClientePolicy
      */
     public function restore(User $user, Cliente $cliente): bool
     {
-        return $user->can('restore_clientes');
+        return $user->can('comercial_actualizar');
     }
 
     /**
@@ -61,6 +61,6 @@ class ClientePolicy
      */
     public function forceDelete(User $user, Cliente $cliente): bool
     {
-        return $user->can('force_delete_clientes');
+        return $user->can('comercial_eliminar');
     }
 }

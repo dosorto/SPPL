@@ -20,7 +20,7 @@ use Filament\Forms\Components\Checkbox;
 
 class NominaResource extends Resource
 {
-    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationGroup = 'Nominas';
     protected static ?string $model = Nominas::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
