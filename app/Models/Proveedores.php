@@ -2,20 +2,14 @@
 
 namespace App\Models;
 
-// 1. ---> AÑADE ESTA LÍNEA PARA IMPORTAR EL TRAIT
 use App\Models\Traits\TenantScoped;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Auth;
-use App\Models\Paises;
 
 class Proveedores extends Model
 {
-    /** @use HasFactory<\Database\Factories\ProveedoresFactory> */
-
-    // 2. ---> AÑADE 'TenantScoped' A ESTA LÍNEA
     use HasFactory, SoftDeletes, TenantScoped;
 
     protected $table = 'proveedores';
@@ -25,9 +19,9 @@ class Proveedores extends Model
         'telefono',
         'rtn',
         'direccion',
-        'municipio_id',      // FK a municipios
+        'municipio_id',
         'persona_contacto',
-        'empresa_id',        // FK a empresas
+        'empresa_id',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -76,9 +70,8 @@ class Proveedores extends Model
         static::deleting(function ($model) {
             if (Auth::check()) {
                 $model->deleted_by = Auth::id();
-                $model->save(); // Guardar el deleted_by antes del soft delete
+                $model->save();
             }
         });
-
     }
 }

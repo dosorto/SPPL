@@ -26,14 +26,20 @@ class DepartamentoEmpleadoResource extends Resource
     {
         return $form
             ->schema([
+                // Campo empresa_id modificado para usuarios root
+                // - Para usuarios normales: se muestra deshabilitado con su empresa asignada
+                // - Para usuarios root: se muestra habilitado permitiendo cambiar entre empresas
+                // - Usa session('current_empresa_id') para recordar la última empresa seleccionada por el usuario root
+                // - Las propiedades reactive() y live() permiten que el campo responda a cambios en tiempo real
                 Forms\Components\Select::make('empresa_id')
                     ->label('Empresa')
                     ->relationship('empresa', 'nombre')
                     ->required()
-                    ->default(fn () => Filament::auth()->user()?->empresa_id) // asigna por defecto la empresa del usuario autenticado
-                    ->disabled(fn () => true)                                 // evita que el usuario la cambie
-                    ->dehydrated(true)                                        // envía el valor aunque esté deshabilitado
+                    ->default(fn () => session('current_empresa_id') ?? Filament::auth()->user()?->empresa_id)
+                    ->disabled(fn () => !Filament::auth()->user()?->hasRole('root'))
+                    ->dehydrated(true)
                     ->reactive()
+                    ->live()
                     ->columnSpanFull(),               
                 // cambio jessuri: Campo para el nombre del departamento, único y requerido
                 Forms\Components\TextInput::make('nombre_departamento_empleado')

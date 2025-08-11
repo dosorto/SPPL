@@ -40,12 +40,7 @@ class EmpresaResource extends Resource
                                 ->placeholder('Ej. 08011985123960')
                                 ->required()
                                 ->maxLength(20)
-                                ->unique(ignoreRecord: true)
-                                ->rules(['regex:/^\d{14}$/'])
-                                ->validationMessages([
-                                    'unique' => 'El RTN ya está registrado.',
-                                    'regex' => 'El RTN debe tener exactamente 14 dígitos numéricos.',
-                                ]),
+                                ->unique(ignoreRecord: true),
                             TextInput::make('nombre')
                                 ->label('Nombre de la empresa')
                                 ->required()
@@ -58,12 +53,14 @@ class EmpresaResource extends Resource
                             Select::make('pais_id')
                                 ->label('País')
                                 ->options(\App\Models\Paises::pluck('nombre_pais', 'id'))
+                                ->searchable()
                                 ->reactive()
                                 ->required(),
 
                             Select::make('departamento_id')
                                 ->label('Departamento')
                                 ->reactive()
+                                ->searchable()
                                 ->required()
                                 ->options(function (callable $get) {
                                     $paisId = $get('pais_id');
@@ -75,6 +72,7 @@ class EmpresaResource extends Resource
                             Select::make('municipio_id')
                                 ->label('Municipio')
                                 ->required()
+                                ->searchable()
                                 ->options(function (callable $get) {
                                     $departamentoId = $get('departamento_id');
                                     if (!$departamentoId) return [];

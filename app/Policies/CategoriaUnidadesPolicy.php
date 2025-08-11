@@ -13,7 +13,7 @@ class CategoriaUnidadesPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_categoria_unidades');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -21,7 +21,7 @@ class CategoriaUnidadesPolicy
      */
     public function view(User $user, CategoriaUnidades $categoriaUnidades): bool
     {
-        return $user->can('view_categoria_unidades');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -29,7 +29,7 @@ class CategoriaUnidadesPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_categoria_unidades');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -37,7 +37,7 @@ class CategoriaUnidadesPolicy
      */
     public function update(User $user, CategoriaUnidades $categoriaUnidades): bool
     {
-        return $user->can('update_categoria_unidades');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -45,7 +45,7 @@ class CategoriaUnidadesPolicy
      */
     public function delete(User $user, CategoriaUnidades $categoriaUnidades): bool
     {
-        return $user->can('delete_categoria_unidades');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -53,7 +53,7 @@ class CategoriaUnidadesPolicy
      */
     public function restore(User $user, CategoriaUnidades $categoriaUnidades): bool
     {
-        return $user->can('restore_categoria_unidades');
+        return $user->hasRole(['root']);
     }
 
     /**
@@ -61,6 +61,6 @@ class CategoriaUnidadesPolicy
      */
     public function forceDelete(User $user, CategoriaUnidades $categoriaUnidades): bool
     {
-        return $user->can('force_delete_categoria_unidades');
+        return $user->hasRole(['root']);
     }
 }

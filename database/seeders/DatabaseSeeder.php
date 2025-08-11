@@ -116,8 +116,8 @@ class DatabaseSeeder extends Seeder
             ['descripcion' => 'Departamento administrativo']
         );
 
-        $tipoEmpleadoPlaza = TipoEmpleado::firstOrCreate(
-            ['nombre_tipo' => 'Con Plaza'],
+        $tipoEmpleadoPermanente = TipoEmpleado::firstOrCreate(
+            ['nombre_tipo' => 'Permanente'],
             ['descripcion' => 'Empleados con un puesto fijo y permanente en la organización.']
         );
 
@@ -147,7 +147,7 @@ class DatabaseSeeder extends Seeder
                 'salario' => 99999.99,
                 'departamento_empleado_id' => $departamentoAdmin->id,
                 'empresa_id' => $empresa->id,
-                'tipo_empleado_id' => $tipoEmpleadoPlaza->id,
+                'tipo_empleado_id' => $tipoEmpleadoPermanente->id,
             ]
         );
 

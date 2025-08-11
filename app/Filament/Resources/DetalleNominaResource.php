@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\NumberColumn;
+use Filament\Facades\Filament;
 
 class DetalleNominaResource extends Resource
 {
@@ -21,20 +22,36 @@ class DetalleNominaResource extends Resource
     {
         $query = parent::getEloquentQuery();
         if (auth()->check()) {
-            // Aseguramos que exista empresa_id en la consulta
-            $query->where('empresa_id', auth()->user()->empresa_id);
+            $user = auth()->user();
             
-            // Agregamos logging para depuración
-            \Illuminate\Support\Facades\Log::info('Filtrando DetalleNominas', [
-                'empresa_id' => auth()->user()->empresa_id,
-                'user_id' => auth()->id(),
-            ]);
+            // Si es root y tiene una empresa seleccionada en la sesión
+            if ($user->hasRole('root') && session('current_empresa_id')) {
+                $query->where('empresa_id', session('current_empresa_id'));
+                
+                \Illuminate\Support\Facades\Log::info('Filtrando DetalleNominas como root con empresa en sesión', [
+                    'empresa_id' => session('current_empresa_id'),
+                    'user_id' => $user->id,
+                ]);
+            }
+            // Si no es root, filtrar por la empresa del usuario
+            elseif (!$user->hasRole('root')) {
+                $query->where('empresa_id', $user->empresa_id);
+                
+                \Illuminate\Support\Facades\Log::info('Filtrando DetalleNominas por empresa del usuario', [
+                    'empresa_id' => $user->empresa_id,
+                    'user_id' => $user->id,
+                ]);
+            }
+            // Si es root pero no tiene empresa seleccionada, no aplicar filtro
+            else {
+                \Illuminate\Support\Facades\Log::info('Usuario root sin empresa seleccionada, mostrando todos los detalles de nóminas');
+            }
         }
         return $query;
     }
     protected static ?string $model = DetalleNominas::class;
 
-    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationGroup = 'Nominas';
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
     protected static ?string $navigationLabel = 'Historial de Pagos';
     protected static ?string $modelLabel = 'Historial de Pago';
@@ -53,8 +70,15 @@ class DetalleNominaResource extends Resource
                     ->relationship('empleado', 'nombre_completo')
                     ->required(),
                     
-                \Filament\Forms\Components\Hidden::make('empresa_id')
-                    ->default(fn() => auth()->user()->empresa_id),
+                \Filament\Forms\Components\Select::make('empresa_id')
+                    ->label('Empresa')
+                    ->relationship('empresa', 'nombre')
+                    ->required()
+                    ->default(fn () => session('current_empresa_id') ?? auth()->user()->empresa_id)
+                    ->disabled(fn () => !\Filament\Facades\Filament::auth()->user()?->hasRole('root'))
+                    ->dehydrated(true)
+                    ->reactive()
+                    ->live(),
 
                 \Filament\Forms\Components\TextInput::make('sueldo_bruto')
                     ->label('Sueldo bruto')

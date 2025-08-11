@@ -76,6 +76,7 @@ class CajaAperturaResource extends Resource
                 //
             ])
             ->actions([
+                Tables\Actions\ActionGroup::make([
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\ViewAction::make(),
                 
@@ -84,7 +85,9 @@ class CajaAperturaResource extends Resource
                     ->label('Ir a Facturar')
                     ->icon('heroicon-o-document-plus')
                     ->color('success')
-                    ->visible(fn (CajaApertura $record): bool => $record->estado === 'ABIERTA')
+                    ->visible(function (CajaApertura $record): bool {
+                     return $record->estado === 'ABIERTA' && $record->user_id === auth()->id();
+                })
                     ->action(function (CajaApertura $record) {
                         session(['apertura_id' => $record->id]);
                         return redirect(FacturaResource::getUrl('generar-factura'));
@@ -97,6 +100,7 @@ class CajaAperturaResource extends Resource
                     ->color('primary')
                     ->visible(fn (CajaApertura $record): bool => $record->estado === 'CERRADA')
                     ->url(fn (CajaApertura $record): string => static::getUrl('reporte', ['record' => $record->id])),
+                ]),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

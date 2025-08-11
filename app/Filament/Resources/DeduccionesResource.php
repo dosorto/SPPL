@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 class DeduccionesResource extends Resource
 {
     protected static ?string $model = Deducciones::class;
-    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationGroup = 'Nominas';
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
     public static function form(Form $form): Form

@@ -64,6 +64,39 @@ class ClienteSeeder extends Seeder
         }
         $this->command->info('Cliente "Consumidor Final" verificado/creado para ' . $empresas->count() . ' empresas.');
 
+        $this->command->info('Asegurando la existencia del cliente "Consumidor Mayorista"...');
+
+        $personaConsumidorMayorista = Persona::firstOrCreate(
+            ['dni' => '1111111111111'],
+            [
+                'primer_nombre' => 'Consumidor',
+                'primer_apellido' => 'Mayorista',
+                'direccion' => 'Ciudad',
+                'telefono' => '0000-0000',
+                'sexo' => 'MASCULINO',
+                'fecha_nacimiento' => now(),
+                'empresa_id' => $empresaDefaultParaPersona->id,
+                'municipio_id' => $municipioDefault->id,
+                'departamento_id' => $departamentoIdDefault,
+                'pais_id' => $municipioDefault->departamento->pais_id,
+            ]
+        );
+
+        foreach ($empresas as $empresa) {
+            // Consumidor Final
+            Cliente::firstOrCreate(
+                ['persona_id' => $personaConsumidorFinal->id, 'empresa_id' => $empresa->id],
+                ['rtn' => '00000000000000']
+            );
+
+            // Consumidor Mayorista
+            Cliente::firstOrCreate(
+                ['persona_id' => $personaConsumidorMayorista->id, 'empresa_id' => $empresa->id],
+                ['rtn' => null]
+            );
+        }
+        $this->command->info('Clientes "Consumidor Final" y "Mayorista" verificados/creados para todas las empresas.');
+
 
         // --- Creación de Clientes de Ejemplo (Lógica Corregida) ---
         $this->command->info('Creando 50 clientes de ejemplo...');

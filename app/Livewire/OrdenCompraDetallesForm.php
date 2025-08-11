@@ -20,7 +20,6 @@ class OrdenCompraDetallesForm extends Component
     public ?int $ordenId = null;
     public $editIndex = null;
 
-    // Estado de los campos básicos
     public $formState = [
         'tipo_orden_compra_id' => null,
         'proveedor_id' => null,
@@ -99,7 +98,6 @@ class OrdenCompraDetallesForm extends Component
 
     public function updated($property)
     {
-        // Validar solo si no es producto_nombre para evitar validaciones prematuras
         if ($property !== 'producto_nombre') {
             $this->validateOnly($property);
         }
@@ -113,29 +111,28 @@ class OrdenCompraDetallesForm extends Component
         }
 
         try {
-            // Buscar el producto por SKU, nombre o código de barras, filtrado por empresa_id
+            $nombre = $this->producto_nombre;
+
             $producto = Productos::where('empresa_id', Auth::user()->empresa_id)
-                ->where(function ($query) {
-                    $query->where('sku', $this->producto_nombre)
-                          ->orWhere('nombre', $this->producto_nombre)
-                          ->orWhere('codigo', $this->producto_nombre)
-                          ->orWhereRaw("CONCAT(sku, ' - ', nombre) = ?", [$this->producto_nombre]);
+                ->where(function ($query) use ($nombre) {
+                    $query->where('sku', 'LIKE', "%{$nombre}%")
+                          ->orWhere('nombre', 'LIKE', "%{$nombre}%")
+                          ->orWhere('codigo', 'LIKE', "%{$nombre}%")
+                          ->orWhereRaw("CONCAT(sku, ' - ', nombre) LIKE ?", ["%{$nombre}%"]);
                 })
                 ->first();
 
             $this->producto_id = $producto ? $producto->id : null;
 
-            // Si no se encuentra el producto, mostrar advertencia
             if (!$producto) {
                 $this->producto_nombre = '';
                 Notification::make()
                     ->title('Advertencia')
-                    ->body('El producto no se encontró. Por favor, selecciona un producto de la lista o ingresa un SKU, nombre o código de barras válido.')
+                    ->body('El producto no se encontró. Por favor, selecciona un producto de la lista o ingresa un SKU, nombre o código válido.')
                     ->warning()
                     ->send();
             }
         } catch (QueryException $e) {
-            // Manejar errores de base de datos (por ejemplo, columna no encontrada)
             logger('Error en búsqueda de producto:', ['error' => $e->getMessage(), 'input' => $this->producto_nombre]);
             $this->producto_id = null;
             $this->producto_nombre = '';
@@ -168,7 +165,6 @@ class OrdenCompraDetallesForm extends Component
                 return;
             }
 
-            // Si estamos editando, actualizamos la fila en lugar de agregar una nueva
             if ($this->editIndex !== null) {
                 $this->detalles[$this->editIndex] = [
                     'producto_id' => $producto->id,
@@ -179,16 +175,12 @@ class OrdenCompraDetallesForm extends Component
                 ];
                 $this->editIndex = null;
             } else {
-                // Buscar si el producto ya está agregado
                 $indexExistente = collect($this->detalles)->search(fn($item) => $item['producto_id'] == $producto->id);
 
                 if ($indexExistente !== false) {
-                    // Sumar cantidades si ya existe
                     $this->detalles[$indexExistente]['cantidad'] += $this->cantidad;
-                    // Actualizar el precio también si lo deseas
                     $this->detalles[$indexExistente]['precio'] = $this->precio;
                 } else {
-                    // Agregar nuevo producto
                     $this->detalles[] = [
                         'producto_id' => $producto->id,
                         'nombre_producto' => $producto->nombre,
@@ -259,19 +251,20 @@ class OrdenCompraDetallesForm extends Component
                                !empty($this->formState['empresa_id']) &&
                                !empty($this->formState['fecha_realizada']);
 
-        // Filtrar productos por la empresa del usuario autenticado
         try {
             $productos = Productos::where('empresa_id', Auth::user()->empresa_id)
+                ->when(!empty($this->producto_nombre), function ($query) {
+                    $nombre = $this->producto_nombre;
+                    $query->where(function ($q) use ($nombre) {
+                        $q->where('sku', 'LIKE', "%{$nombre}%")
+                          ->orWhere('nombre', 'LIKE', "%{$nombre}%")
+                          ->orWhere('codigo', 'LIKE', "%{$nombre}%")
+                          ->orWhereRaw("CONCAT(sku, ' - ', nombre) LIKE ?", ["%{$nombre}%"]);
+                    });
+                })
                 ->get()
-                ->mapWithKeys(function ($p) {
-                    return [$p->id => "{$p->sku} - {$p->nombre}"];
-                });
+                ->mapWithKeys(fn($p) => [$p->id => "{$p->sku} - {$p->nombre}"]);
 
-            if (!empty($this->producto_nombre)) {
-                $productos = $productos->filter(function ($nombre, $id) {
-                    return stripos($nombre, $this->producto_nombre) !== false;
-                });
-            }
         } catch (QueryException $e) {
             logger('Error al cargar productos:', ['error' => $e->getMessage()]);
             $productos = collect([]);

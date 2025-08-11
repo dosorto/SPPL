@@ -17,7 +17,8 @@ class TipoEmpleadoResource extends Resource
 {
     protected static ?string $model = TipoEmpleado::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+    protected static ?string $navigationIcon = 'heroicon-o-identification';
+    protected static ?string $navigationGroup = 'Recursos Humanos';
 
 
     public static function form(Form $form): Form

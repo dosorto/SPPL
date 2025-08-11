@@ -13,7 +13,7 @@ class ProveedoresPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_proveedores');
+        return $user->can('comercial_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class ProveedoresPolicy
      */
     public function view(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('view_proveedores');
+        return $user->can('comercial_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class ProveedoresPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_proveedores');
+        return $user->can('comercial_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class ProveedoresPolicy
      */
     public function update(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('update_proveedores');
+        return $user->can('comercial_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class ProveedoresPolicy
      */
     public function delete(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('delete_proveedores');
+        return $user->can('comercial_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class ProveedoresPolicy
      */
     public function restore(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('restore_proveedores');
+        return $user->can('comercial_actualizar');
     }
 
     /**
@@ -61,6 +61,6 @@ class ProveedoresPolicy
      */
     public function forceDelete(User $user, Proveedores $proveedores): bool
     {
-        return $user->can('force_delete_proveedores');
+        return $user->can('comercial_eliminar');
     }
 }

@@ -37,6 +37,13 @@ class EmpleadoResource extends Resource
                         ->schema([
                             Forms\Components\Hidden::make('persona_autocompletada')
                                 ->default(false),
+                            Forms\Components\Hidden::make('advertencia_empleado')
+                                ->default(false),
+                            // Mensaje de advertencia si la persona ya es empleado en otra empresa
+                            Forms\Components\Placeholder::make('empleado_otra_empresa')
+                                ->content(new \Illuminate\Support\HtmlString('<div style="color: red; font-weight: bold; padding: 10px; border: 1px solid red; background-color: #ffeeee; border-radius: 5px;">ADVERTENCIA: Esta persona ya está registrada como empleado en otra empresa</div>'))
+                                ->visible(fn (callable $get) => $get('advertencia_empleado'))
+                                ->columnSpanFull(),
                             Forms\Components\TextInput::make('persona.dni')
                                 ->label('DNI')
                                 ->required()
@@ -69,7 +76,7 @@ class EmpleadoResource extends Resource
                                     if ($persona) {
                                         // Marcar como autocompletada
                                         $set('persona_autocompletada', true);
-                                        
+
                                         // Auto-completar todos los datos de la persona
                                         $set('persona.primer_nombre', $persona->primer_nombre);
                                         $set('persona.segundo_nombre', $persona->segundo_nombre);
@@ -78,7 +85,7 @@ class EmpleadoResource extends Resource
                                         $set('persona.sexo', $persona->sexo);
                                         $set('persona.fecha_nacimiento', $persona->fecha_nacimiento);
                                         $set('persona.fotografia', $persona->fotografia);
-                                        
+
                                         // Auto-completar datos de dirección
                                         $set('persona.pais_id', $persona->pais_id);
                                         // Obtener departamento_id desde la relación municipio -> departamento o directo
@@ -88,12 +95,30 @@ class EmpleadoResource extends Resource
                                         $set('persona.direccion', $persona->direccion);
                                         $set('persona.telefono', $persona->telefono);
                                         
-                                        // Mostrar notificación de éxito
-                                        \Filament\Notifications\Notification::make()
-                                            ->title('Persona encontrada')
-                                            ->body('Se han completado automáticamente los datos de: ' . $persona->primer_nombre . ' ' . $persona->primer_apellido . '. Los campos de persona están bloqueados.')
-                                            ->success()
-                                            ->send();
+                                        // Verificar si ya es empleado en otra empresa
+                                        $empleado = \App\Models\Empleado::where('persona_id', $persona->id)->first();
+                                        if ($empleado && $empleado->empresa_id != session('current_empresa_id')) {
+                                            // Mostrar mensaje de advertencia en una notificación
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Advertencia')
+                                                ->body('Esta persona ya está registrada como empleado en otra empresa.')
+                                                ->warning()
+                                                ->persistent()
+                                                ->send();
+                                            
+                                            // Crear un evento personalizado para mostrar la advertencia
+                                            $set('advertencia_empleado', true);
+                                        } else {
+                                            // Ocultar mensaje de advertencia
+                                            $set('advertencia_empleado', false);
+                                            
+                                            // Mostrar notificación de éxito
+                                            \Filament\Notifications\Notification::make()
+                                                ->title('Persona encontrada')
+                                                ->body('Se han completado automáticamente los datos de: ' . $persona->primer_nombre . ' ' . $persona->primer_apellido . '. Los campos de persona están bloqueados.')
+                                                ->success()
+                                                ->send();
+                                        }
                                     } else {
                                         // No se encontró persona, permitir edición
                                         $set('persona_autocompletada', false);
@@ -239,9 +264,9 @@ class EmpleadoResource extends Resource
                                 ->label('Empresa')
                                 ->relationship('empresa', 'nombre')
                                 ->required()
-                                ->default(fn () => Filament::auth()->user()?->empresa_id) // asigna por defecto la empresa del usuario autenticado
-                                ->disabled(fn () => true)                                 // evita que el usuario la cambie
-                                ->dehydrated(true)                                        // envía el valor aunque esté deshabilitado
+                                ->default(fn () => session('current_empresa_id') ?? Filament::auth()->user()?->empresa_id)
+                                ->disabled(fn () => !Filament::auth()->user()?->hasRole('root'))
+                                ->dehydrated(true)
                                 ->reactive()
                                 ->columnSpanFull(),
                     Forms\Components\Select::make('departamento_empleado_id')

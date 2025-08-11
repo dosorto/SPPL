@@ -27,9 +27,9 @@ class CategoriaClienteResource extends Resource
     protected static ?string $model = CategoriaCliente::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
-    protected static ?string $navigationGroup = 'Ventas';
+    protected static ?string $navigationGroup = 'Comercial';
     protected static ?string $navigationLabel = 'Categorías de Clientes';
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 2;
 
     public static function form(Form $form): Form
     {

@@ -20,7 +20,7 @@ use Filament\Facades\Filament;
 class EmpleadoPersepcionesResource extends Resource
 {
     protected static ?string $model = EmpleadoPercepciones::class;
-    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationGroup = 'Nominas';
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
 
 

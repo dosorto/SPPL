@@ -20,7 +20,7 @@ use Filament\Forms\Components\Checkbox;
 
 class NominaResource extends Resource
 {
-    protected static ?string $navigationGroup = 'Recursos Humanos';
+    protected static ?string $navigationGroup = 'Nominas';
     protected static ?string $model = Nominas::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
@@ -37,9 +37,11 @@ class NominaResource extends Resource
                 ->label('Empresa')
                 ->relationship('empresa', 'nombre')
                 ->required()
-                ->default(fn () => Filament::auth()->user()?->empresa_id)
-                ->disabled()
-                ->dehydrated(fn ($state) => filled($state))
+                ->default(fn () => session('current_empresa_id') ?? Filament::auth()->user()?->empresa_id)
+                ->disabled(fn () => !Filament::auth()->user()?->hasRole('root'))
+                ->dehydrated(true)
+                ->reactive()
+                ->live()
                 ->columnSpanFull(),
 
                 Select::make('mes')

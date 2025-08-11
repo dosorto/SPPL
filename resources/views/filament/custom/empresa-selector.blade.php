@@ -1,3 +1,4 @@
+
 @php
     use App\Models\Empresa;
     use Illuminate\Support\Facades\Auth;
@@ -47,7 +48,7 @@
             class="absolute left-0 mt-2 w-56 rounded-md shadow-lg bg-white dark:bg-gray-800 ring-1 ring-black ring-opacity-5 z-50"
             style="min-width: 200px; top: 100%;"
         >
-            <div class="py-1" role="menu" aria-orientation="vertical">
+            <div class="py-1 overflow-y-auto" role="menu" aria-orientation="vertical" style="max-height: 200px;">
                 <!-- Opción para ver todas las empresas (elimina filtro) -->
                 <a 
                     href="{{ request()->fullUrlWithQuery(['switch_empresa' => 'clear']) }}" 

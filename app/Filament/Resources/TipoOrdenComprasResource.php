@@ -9,13 +9,9 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Filament\Tables\Actions\DeleteAction;
-use Filament\Tables\Actions\EditAction;
-use Filament\Tables\Actions\ViewAction;
+use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Auth;
 
 class TipoOrdenComprasResource extends Resource
 {
@@ -32,12 +28,18 @@ class TipoOrdenComprasResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\TextInput::make('nombre')
-                    ->label('Nombre del Tipo')
-                    ->required()
-                    ->maxLength(100)
-                    ->unique(ignoreRecord: true),
-
+                Forms\Components\Section::make('Detalles del Tipo de Orden')
+                    ->icon('heroicon-o-receipt-refund')
+                    ->description('Configure el tipo de orden de compra.')
+                    ->schema([
+                        Forms\Components\TextInput::make('nombre')
+                            ->label('Nombre del Tipo de Orden')
+                            ->required()
+                            ->maxLength(100)
+                            ->placeholder('Ej. Insumos, Materia Prima, Urgente...')
+                            ->unique(ignoreRecord: true)
+                            ->helperText('Ejemplo: Insumos, Materia Prima'),
+                    ]),
             ]);
     }
 
@@ -45,59 +47,96 @@ class TipoOrdenComprasResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('nombre')
-                    ->searchable(),
-
-                Tables\Columns\TextColumn::make('creadoPor.name')
-                    ->label('Creado por')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('actualizadoPor.name')
-                    ->label('Actualizado por')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('eliminadoPor.name')
-                    ->label('Eliminado por')
+                TextColumn::make('nombre')
+                    ->searchable()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                    
-
-                Tables\Columns\TextColumn::make('created_at')
+                    ->label('Tipo de Orden')
+                    ->badge()
+                    ->color('primary')
+                    ->tooltip('Nombre del tipo de orden.'),
+                TextColumn::make('empresa_id')
+                    ->label('ID de Empresa')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->tooltip('ID de la empresa asociada.'),
+                TextColumn::make('created_at')
                     ->label('Creado el')
-                    ->dateTime()
+                    ->dateTime('M d, Y H:i A')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('updated_at')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->color(fn ($record) => now()->diffInDays($record->created_at) <= 7 ? 'success' : null)
+                    ->tooltip('Fecha de creación del registro.'),
+                TextColumn::make('updated_at')
                     ->label('Actualizado el')
-                    ->dateTime()
+                    ->dateTime('M d, Y H:i A')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('deleted_at')
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->color(fn ($record) => now()->diffInDays($record->updated_at) <= 7 ? 'warning' : null)
+                    ->tooltip('Fecha de última actualización.'),
+                TextColumn::make('deleted_at')
                     ->label('Eliminado el')
-                    ->dateTime()
+                    ->dateTime('M d, Y H:i A')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->color('danger')
+                    ->tooltip('Fecha de eliminación, si aplica.'),
             ])
             ->filters([
-                TrashedFilter::make(),
+                TrashedFilter::make()
+                    ->label('Ver Eliminados'),
             ])
             ->actions([
-                EditAction::make() ->label('Editar'),
-                ViewAction::make() ->label('Ver'),
-                DeleteAction::make() ->label('Eliminar'),
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->label('Ver')
+                        ->icon('heroicon-o-eye')
+                        ->color('info'),
+                    Tables\Actions\EditAction::make()
+                        ->label('Editar')
+                        ->icon('heroicon-o-pencil')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->modalHeading('Editar Tipo de Orden')
+                        ->modalDescription('Confirme los cambios en el tipo de orden.'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Eliminar')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Eliminar Tipo de Orden')
+                        ->modalDescription('¿Está seguro de eliminar este tipo de orden?'),
+                    Tables\Actions\RestoreAction::make()
+                        ->label('Restaurar')
+                        ->icon('heroicon-o-arrow-uturn-left')
+                        ->color('success')
+                        ->requiresConfirmation(),
+                    Tables\Actions\ForceDeleteAction::make()
+                        ->label('Eliminar Definitivamente')
+                        ->icon('heroicon-o-x-circle')
+                        ->color('danger')
+                        ->requiresConfirmation(),
+                ])
+                    ->label('Acciones')
+                    ->button()
+                    ->outlined()
+                    ->dropdown(true),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make()->label('Eliminar'),
-                Tables\Actions\RestoreBulkAction::make()->label('Restaurar'),
-                Tables\Actions\ForceDeleteBulkAction::make()->label('Eliminar Definitivamente'),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Eliminar')
+                        ->requiresConfirmation(),
+                    Tables\Actions\RestoreBulkAction::make()
+                        ->label('Restaurar')
+                        ->requiresConfirmation(),
+                    Tables\Actions\ForceDeleteBulkAction::make()
+                        ->label('Eliminar Definitivamente')
+                        ->requiresConfirmation(),
                 ]),
-            ]);
+            ])
+           
+            ->defaultSort('nombre', 'asc')
+            ->paginated([10, 25, 50]);
     }
 
     public static function getRelations(): array
@@ -116,8 +155,6 @@ class TipoOrdenComprasResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withoutGlobalScopes([
-            SoftDeletes::class,
-        ]);
+        return parent::getEloquentQuery();
     }
 }

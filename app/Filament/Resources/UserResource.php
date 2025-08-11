@@ -119,22 +119,22 @@ class UserResource extends Resource
 
                     Select::make('pais_id')
                         ->label('País')
+                        ->options(Paises::pluck('nombre_pais', 'id'))
                         ->searchable()
-                        ->getSearchResultsUsing(fn (string $search) =>
-                            Paises::where('nombre_pais', 'like', "%$search%")
-                                ->limit(10)
-                                ->pluck('nombre_pais', 'id')
-                        )
-                        ->getOptionLabelUsing(fn ($value) =>
-                            Paises::find($value)?->nombre_pais ?? 'Selecciona...'
-                        )
+                        ->preload()
+                        ->optionsLimit(15)
                         ->required()
                         ->reactive(),
 
                     Select::make('departamento_id')
                         ->label('Departamento')
                         ->searchable()
-                        ->getSearchResultsUsing(fn (string $search, Get $get) =>
+                        ->options(fn (Get $get) =>
+                            Departamento::where('pais_id', $get('pais_id'))
+                                ->limit(15) // Aplicamos el límite aquí para precarga
+                                ->pluck('nombre_departamento', 'id')
+                        )
+                        ->getSearchResultsUsing(fn (string $search, Get $get) => // Mantener para la búsqueda
                             Departamento::where('pais_id', $get('pais_id'))
                                 ->where('nombre_departamento', 'like', "%$search%")
                                 ->limit(10)
@@ -143,13 +143,20 @@ class UserResource extends Resource
                         ->getOptionLabelUsing(fn ($value) =>
                             Departamento::find($value)?->nombre_departamento ?? 'Selecciona...'
                         )
+                        ->preload()
+                        ->optionsLimit(15) // Límite de 15 opciones precargadas
                         ->required()
                         ->reactive(),
 
                     Select::make('municipio_id')
                         ->label('Municipio')
                         ->searchable()
-                        ->getSearchResultsUsing(fn (string $search, Get $get) =>
+                        ->options(fn (Get $get) =>
+                            Municipio::where('departamento_id', $get('departamento_id'))
+                                ->limit(15) // Aplicamos el límite aquí para precarga
+                                ->pluck('nombre_municipio', 'id')
+                        )
+                        ->getSearchResultsUsing(fn (string $search, Get $get) => // Mantener para la búsqueda
                             Municipio::where('departamento_id', $get('departamento_id'))
                                 ->where('nombre_municipio', 'like', "%$search%")
                                 ->limit(10)
@@ -158,6 +165,8 @@ class UserResource extends Resource
                         ->getOptionLabelUsing(fn ($value) =>
                             Municipio::find($value)?->nombre_municipio ?? 'Selecciona...'
                         )
+                        ->preload()
+                        ->optionsLimit(15) // Límite de 15 opciones precargadas
                         ->required(),
                 ])
                 ->createOptionUsing(function (array $data) {
@@ -300,10 +309,14 @@ class UserResource extends Resource
         $user = auth()->user();
 
         if ($user->hasRole('root')) {
-            return parent::getEloquentQuery();
+            // Si es 'root', ordena todos los usuarios por 'created_at' en descendente
+            return parent::getEloquentQuery()->orderBy('created_at', 'desc');
         }
 
-        return parent::getEloquentQuery()->where('empresa_id', $user->empresa_id);
+        // Si no es 'root', filtra por empresa_id y luego ordena por 'created_at' en descendente
+        return parent::getEloquentQuery()
+                    ->where('empresa_id', $user->empresa_id)
+                    ->orderBy('created_at', 'desc');
     }
 
     public static function getRelations(): array
