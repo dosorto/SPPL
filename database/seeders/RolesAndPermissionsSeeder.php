@@ -37,6 +37,8 @@ class RolesAndPermissionsSeeder extends Seeder
         foreach ($modulos as $modulo) {
             foreach ($acciones as $accion) {
                 Permission::firstOrCreate(['name' => "{$modulo}_{$accion}"]);
+            }
+        }
         // Definir modelos con nombres estándar
         $models = [
             'users', //1
