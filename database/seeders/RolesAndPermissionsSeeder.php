@@ -66,15 +66,19 @@ class RolesAndPermissionsSeeder extends Seeder
         $specialModels = [
             'categoria::producto' => 'categorias_productos', // Modelo CategoriaProducto
             'subcategoria::producto' => 'subcategorias_productos', // Modelo SubcategoriaProducto
-            'categoria_productos', // Agregado
-            'subcategoria_productos', // Agregado
+        ];
+        
+        // Definir modelos adicionales
+        $additionalModels = [
+            'categoria_productos', 
+            'subcategoria_productos',
             'cais',
             'empleado_deducciones',
             'deducciones',
             'percepciones', 
             'empleado_percepciones',
             'nominas', 
-            'detalle_nominas' 
+            'detalle_nominas'
         ];
 
         // Acciones comunes de las políticas
@@ -102,6 +106,16 @@ class RolesAndPermissionsSeeder extends Seeder
         foreach ($specialModels as $permModel => $table) {
             foreach ($actions as $action) {
                 $permName = "{$action}_{$permModel}";
+                if (!Permission::where('name', $permName)->exists()) {
+                    Permission::create(['name' => $permName, 'guard_name' => 'web']);
+                }
+            }
+        }
+        
+        // Crear permisos para modelos adicionales
+        foreach ($additionalModels as $model) {
+            foreach ($actions as $action) {
+                $permName = "{$action}_{$model}";
                 if (!Permission::where('name', $permName)->exists()) {
                     Permission::create(['name' => $permName, 'guard_name' => 'web']);
                 }
