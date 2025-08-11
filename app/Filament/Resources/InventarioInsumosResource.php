@@ -10,6 +10,10 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\Filter;
+use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Builder;
 
 class InventarioInsumosResource extends Resource
 {
@@ -21,10 +25,9 @@ class InventarioInsumosResource extends Resource
     protected static ?string $navigationGroup = 'Insumos y Materia Prima';
     protected static bool $shouldRegisterNavigation = true;
 
-    // ❌ No se permite crear registros manuales
     public static function canCreate(): bool
     {
-        return false;
+        return false; // No manual creation allowed
     }
 
     public static function form(Form $form): Form
@@ -32,6 +35,8 @@ class InventarioInsumosResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Información del Insumo')
+                    ->icon('heroicon-o-information-circle')
+                    ->description('Detalles del insumo en inventario.')
                     ->schema([
                         Forms\Components\Select::make('empresa_id')
                             ->label('Empresa')
@@ -42,25 +47,28 @@ class InventarioInsumosResource extends Resource
                             ->default(fn () => Filament::auth()->user()?->empresa_id)
                             ->disabled()
                             ->dehydrated(true),
-
                         Forms\Components\Select::make('producto_id')
                             ->relationship('producto', 'nombre')
                             ->label('Insumo')
-                            ->disabled(), // se gestiona desde orden de compra
-
+                            ->disabled()
+                            ->helperText('El insumo se asigna automáticamente desde la orden de compra.'),
                         Forms\Components\TextInput::make('cantidad')
                             ->numeric()
                             ->required()
-                            ->label('Cantidad Disponible'),
+                            ->label('Cantidad Disponible')
+                            ->minValue(0)
+                            ->helperText('Cantidad actual en inventario.'),
                     ])->columns(2),
-
                 Forms\Components\Section::make('Costo')
+                    ->icon('heroicon-o-currency-dollar')
                     ->schema([
                         Forms\Components\TextInput::make('precio_costo')
                             ->label('Precio de Costo')
                             ->numeric()
                             ->required()
-                            ->prefix('HNL'),
+                            ->prefix('HNL')
+                            ->minValue(0)
+                            ->helperText('Precio por unidad en Lempiras.'),
                     ])->columns(1),
             ]);
     }
@@ -69,51 +77,105 @@ class InventarioInsumosResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('producto.sku')
+                TextColumn::make('producto.sku')
                     ->label('SKU')
                     ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('producto.nombre')
+                    ->sortable()
+                    ->tooltip('Código único del producto.'),
+                TextColumn::make('producto.nombre')
                     ->label('Insumo')
                     ->searchable()
-                    ->sortable(),
-
-                Tables\Columns\TextColumn::make('empresa.nombre')
+                    ->sortable()
+                    ->description(fn ($record) => $record->producto->descripcion_corta ?? '')
+                    ->tooltip('Nombre del insumo.'),
+                TextColumn::make('empresa.nombre')
                     ->label('Empresa')
                     ->searchable()
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('cantidad')
+                TextColumn::make('cantidad')
                     ->numeric()
                     ->sortable()
-                    ->label('Cantidad'),
-
-                Tables\Columns\TextColumn::make('precio_costo')
+                    ->label('Cantidad')
+                    ->badge()
+                    ->color(fn ($state) => $state <= 10 ? 'danger' : ($state <= 50 ? 'warning' : 'success'))
+                    ->tooltip(fn ($state) => $state <= 10 ? 'Stock crítico' : ($state <= 50 ? 'Stock bajo' : 'Stock suficiente')),
+                TextColumn::make('precio_costo')
                     ->numeric()
                     ->sortable()
                     ->money('HNL')
-                    ->label('Precio de Costo'),
+                    ->label('Precio de Costo')
+                    ->tooltip('Precio unitario en Lempiras.'),
+                TextColumn::make('total_valor')
+                    ->label('Valor Total')
+                    ->getStateUsing(fn ($record) => $record->cantidad * $record->precio_costo)
+                    ->money('HNL')
+                    ->tooltip('Valor total del inventario (Cantidad x Precio de Costo).'),
             ])
             ->filters([
-                //
+                Filter::make('stock_bajo')
+                    ->label('Stock Bajo')
+                    ->query(fn (Builder $query) => $query->where('cantidad', '<=', 50))
+                    ->toggle(),
+                Filter::make('sin_stock')
+                    ->label('Sin Stock')
+                    ->query(fn (Builder $query) => $query->where('cantidad', '=', 0))
+                    ->toggle(),
             ])
             ->headerActions([
-                //
+                Tables\Actions\Action::make('resumen_inventario')
+                    ->label('Resumen de Inventario')
+                    ->icon('heroicon-o-chart-bar')
+                    ->action(function () {
+                        $totalItems = InventarioInsumos::count();
+                        $totalCantidad = InventarioInsumos::sum('cantidad');
+                        $totalValor = InventarioInsumos::sum(\Illuminate\Support\Facades\DB::raw('cantidad * precio_costo'));
+                        Notification::make()
+                            ->title('Resumen de Inventario')
+                            ->body("Total de insumos: {$totalItems}\nCantidad total: {$totalCantidad}\nValor total: HNL " . number_format($totalValor, 2))
+                            ->success()
+                            ->send();
+                    })
+                    ->color('info'),
             ])
             ->actions([
                 Tables\Actions\ActionGroup::make([
-                    Tables\Actions\ViewAction::make()->label('Ver'),
-                    Tables\Actions\EditAction::make()->label('Editar'),
-                    Tables\Actions\DeleteAction::make()->label('Eliminar'),
-                ]),
+                    Tables\Actions\ViewAction::make()
+                        ->label('Ver')
+                        ->icon('heroicon-o-eye')
+                        ->color('info'),
+                    Tables\Actions\EditAction::make()
+                        ->label('Editar')
+                        ->icon('heroicon-o-pencil')
+                        ->color('warning')
+                        ->requiresConfirmation()
+                        ->modalHeading('Editar Insumo')
+                        ->modalDescription('Confirme los cambios en el inventario.'),
+                    Tables\Actions\DeleteAction::make()
+                        ->label('Eliminar')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->requiresConfirmation()
+                        ->modalHeading('Eliminar Insumo')
+                        ->modalDescription('¿Está seguro de eliminar este registro de inventario?'),
+                ])
+                    ->label('Acciones')
+                    ->button()
+                    ->outlined()
+                    ->dropdown(true),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                    Tables\Actions\DeleteBulkAction::make()
+                        ->label('Eliminar Seleccionados')
+                        ->requiresConfirmation()
+                        ->modalHeading('Eliminar Registros')
+                        ->modalDescription('¿Está seguro de eliminar los registros seleccionados?'),
                 ]),
-            ]);
+            ])
+            ->defaultSort('cantidad', 'desc')
+            ->paginated([10, 25, 50])
+            ->recordClasses(fn ($record) => $record->cantidad <= 10 ? 'bg-red-50' : null);
     }
 
     public static function getPages(): array

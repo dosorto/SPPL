@@ -309,10 +309,10 @@ class ProductosResource extends Resource
                             ->default(fn () => \Illuminate\Support\Str::random(8))
                             ->unique(ignorable: fn ($record) => $record),
                         Forms\Components\TextInput::make('isv')
-                            ->label('ISV')
+                            ->label('ISV (%)')
                             ->numeric()
                             ->minValue(0)
-                            ->maxValue(0.15)
+                            ->maxValue(20)
                             ->default(0),
                     ])
                     ->columns(2)

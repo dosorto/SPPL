@@ -3,7 +3,7 @@
         @if($orden)
             <h2 class="text-xl font-bold">Recibir Orden de Compra Insumos #{{ $orden->id }}</h2>
             <p><strong>Proveedor:</strong> {{ $orden->proveedor->nombre_proveedor }}</p>
-            <p><strong>Fecha:</strong> {{ $orden->fecha_realizada->format('d/m/Y') }}</p>
+            <p><strong>Fecha:</strong> {{ \Carbon\Carbon::parse($orden->fecha_realizada)->format('d/m/Y') }}</p>
             <p><strong>Estado:</strong> {{ $orden->estado }}</p>
 
             <h3 class="mt-4 text-lg font-semibold">Detalles</h3>
