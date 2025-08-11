@@ -66,6 +66,15 @@ class RolesAndPermissionsSeeder extends Seeder
         $specialModels = [
             'categoria::producto' => 'categorias_productos', // Modelo CategoriaProducto
             'subcategoria::producto' => 'subcategorias_productos', // Modelo SubcategoriaProducto
+            'categoria_productos', // Agregado
+            'subcategoria_productos', // Agregado
+            'cais',
+            'empleado_deducciones',
+            'deducciones',
+            'percepciones', 
+            'empleado_percepciones',
+            'nominas', 
+            'detalle_nominas' 
         ];
 
         // Acciones comunes de las políticas
