@@ -34,7 +34,7 @@ class CreateRole extends CreateRecord
             foreach ($actions as $action) {
                 $checkboxKey = "permission_{$action}_{$module}";
                 if (isset($data[$checkboxKey]) && $data[$checkboxKey]) {
-                    $permissions[] = "{$module}.{$action}";
+                    $permissions[] = "{$module}_{$action}";
                 }
                 // Remover el checkbox del array de datos
                 unset($data[$checkboxKey]);
