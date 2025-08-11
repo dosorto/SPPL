@@ -10,18 +10,11 @@ return new class extends Migration
     {
         Schema::create('orden_compras_insumos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('tipo_orden_compra_id')->constrained('tipo_orden_compras');
-            $table->foreignId('proveedor_id')->constrained('proveedores');
-            $table->foreignId('empresa_id')->constrained('empresas');
+            $table->foreignId('proveedor_id')->constrained('proveedores')->onDelete('restrict');
+            $table->foreignId('empresa_id')->constrained('empresas')->onDelete('restrict');
             $table->date('fecha_realizada');
             $table->string('estado')->default('Pendiente');
             $table->text('descripcion')->nullable();
-            // Quality Analysis Fields
-            $table->decimal('porcentaje_grasa', 5, 2)->nullable(); // e.g., 3.50%
-            $table->decimal('porcentaje_proteina', 5, 2)->nullable(); // e.g., 2.80%
-            $table->decimal('porcentaje_humedad', 5, 2)->nullable(); // e.g., 87.00%
-            $table->boolean('anomalias')->default(false); // Checklist: true (with anomalies), false (no anomalies)
-            $table->text('detalles_anomalias')->nullable(); // Description of anomalies, if any
             $table->timestamps();
             $table->softDeletes();
             $table->integer('created_by')->nullable();

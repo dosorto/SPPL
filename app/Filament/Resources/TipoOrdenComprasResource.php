@@ -33,11 +33,11 @@ class TipoOrdenComprasResource extends Resource
         return $form
             ->schema([
                 Forms\Components\TextInput::make('nombre')
-                    ->label('Nombre del Tipo')
+                    ->label('Nombre del Tipo de Orden')
                     ->required()
                     ->maxLength(100)
+                    ->placeholder('Ej. Orden de Compra Estándar, Urgente...')
                     ->unique(ignoreRecord: true),
-
             ]);
     }
 
@@ -46,56 +46,49 @@ class TipoOrdenComprasResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('nombre')
-                    ->searchable(),
+                    ->searchable()
+                    ->sortable()
+                    ->label('Tipo de Orden'),
 
-                Tables\Columns\TextColumn::make('creadoPor.name')
-                    ->label('Creado por')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('actualizadoPor.name')
-                    ->label('Actualizado por')
-                    ->toggleable(isToggledHiddenByDefault: true),
-
-                Tables\Columns\TextColumn::make('eliminadoPor.name')
-                    ->label('Eliminado por')
+                Tables\Columns\TextColumn::make('empresa_id')
+                    ->label('ID de Empresa')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-                    
 
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Creado el')
-                    ->dateTime()
+                    ->dateTime('M d, Y H:i A')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
 
                 Tables\Columns\TextColumn::make('updated_at')
                     ->label('Actualizado el')
-                    ->dateTime()
+                    ->dateTime('M d, Y H:i A')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
+                
                 Tables\Columns\TextColumn::make('deleted_at')
                     ->label('Eliminado el')
-                    ->dateTime()
+                    ->dateTime('M d, Y H:i A')
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
-
             ])
             ->filters([
-                TrashedFilter::make(),
+                TrashedFilter::make()
+                    ->label('Ver eliminados'),
             ])
             ->actions([
-                EditAction::make() ->label('Editar'),
-                ViewAction::make() ->label('Ver'),
-                DeleteAction::make() ->label('Eliminar'),
-                Tables\Actions\RestoreAction::make(),
-                Tables\Actions\ForceDeleteAction::make(),
+                EditAction::make()->label('Editar'),
+                ViewAction::make()->label('Ver'),
+                DeleteAction::make()->label('Eliminar'),
+                Tables\Actions\RestoreAction::make()->label('Restaurar'),
+                Tables\Actions\ForceDeleteAction::make()->label('Eliminar Definitivamente'),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                Tables\Actions\DeleteBulkAction::make()->label('Eliminar'),
-                Tables\Actions\RestoreBulkAction::make()->label('Restaurar'),
-                Tables\Actions\ForceDeleteBulkAction::make()->label('Eliminar Definitivamente'),
+                    Tables\Actions\DeleteBulkAction::make()->label('Eliminar'),
+                    Tables\Actions\RestoreBulkAction::make()->label('Restaurar'),
+                    Tables\Actions\ForceDeleteBulkAction::make()->label('Eliminar Definitivamente'),
                 ]),
             ]);
     }
@@ -114,10 +107,13 @@ class TipoOrdenComprasResource extends Resource
         ];
     }
 
+    /**
+     * Aplica el scoping para que solo se muestren los registros de la empresa del usuario.
+     * La lógica está en el modelo, este método solo asegura que se use.
+     * Además, se elimina el `withoutGlobalScopes` para que el `TrashedFilter` funcione correctamente.
+     */
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->withoutGlobalScopes([
-            SoftDeletes::class,
-        ]);
+        return parent::getEloquentQuery();
     }
 }

@@ -5,34 +5,35 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use App\Models\Traits\TenantScoped;
-use App\Models\Productos;
-use App\Models\OrdenComprasInsumos;
-
 
 class OrdenComprasInsumosDetalle extends Model
 {
-    use HasFactory, SoftDeletes, TenantScoped;
+    use HasFactory, SoftDeletes;
+
+    protected $table = 'orden_compras_insumos_detalles';
 
     protected $fillable = [
         'orden_compra_insumo_id',
+        'tipo_orden_compra_id',
         'producto_id',
         'cantidad',
         'precio_unitario',
         'subtotal',
+        'porcentaje_grasa',
+        'porcentaje_proteina',
+        'porcentaje_humedad',
+        'anomalias',
+        'detalles_anomalias',
     ];
 
-    protected $casts = [
-        'precio_unitario' => 'decimal:2',
-        'subtotal' => 'decimal:2',
-        'created_at' => 'datetime',
-        'updated_at' => 'datetime',
-        'deleted_at' => 'datetime',
-    ];
-
-    public function ordenCompraInsumo()
+    public function ordenComprasInsumos()
     {
         return $this->belongsTo(OrdenComprasInsumos::class, 'orden_compra_insumo_id');
+    }
+
+    public function tipoOrdenCompra()
+    {
+        return $this->belongsTo(TipoOrdenCompras::class, 'tipo_orden_compra_id');
     }
 
     public function producto()

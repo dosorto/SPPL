@@ -9,6 +9,7 @@ use Filament\Forms\Form;
 use Filament\Forms;
 use Filament\Notifications\Notification;
 use App\Models\OrdenComprasInsumos;
+use App\Models\OrdenComprasInsumosDetalle;
 use App\Models\InventarioInsumos;
 use Livewire\Attributes\Url;
 
@@ -49,15 +50,17 @@ class RecibirOrdenCompraInsumos extends Page implements HasForms
 
     public function cargarOrden(int $ordenId): void
     {
-        $orden = OrdenComprasInsumos::with(['detalles.producto', 'proveedor'])->find($ordenId);
+        $orden = OrdenComprasInsumos::with(['detalles.producto', 'detalles.tipoOrdenCompra', 'proveedor'])->find($ordenId);
 
         if (!$orden) {
             Notification::make()->danger()->title('Error')->body('Orden no encontrada.')->send();
+            $this->redirectRoute('filament.admin.resources.orden-compras-insumos.index');
             return;
         }
 
         if ($orden->estado === 'Recibida') {
             Notification::make()->warning()->title('Advertencia')->body('Esta orden ya fue recibida.')->send();
+            $this->redirectRoute('filament.admin.resources.orden-compras-insumos.index');
             return;
         }
 
@@ -92,6 +95,6 @@ class RecibirOrdenCompraInsumos extends Page implements HasForms
 
         Notification::make()->success()->title('Éxito')->body('La orden ha sido recibida y el inventario actualizado.')->send();
 
-        redirect()->route('filament.admin.resources.orden-compras-insumos.index');
+        $this->redirectRoute('filament.admin.resources.orden-compras-insumos.index');
     }
 }

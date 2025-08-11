@@ -6,6 +6,10 @@ use App\Filament\Resources\OrdenComprasResource\Pages;
 use App\Models\OrdenCompras;
 use App\Models\TipoOrdenCompras;
 use App\Models\OrdenComprasDetalle;
+use App\Models\Proveedores; // Asegurarse de importar el modelo de Proveedores
+use App\Models\Paises;
+use App\Models\Departamento;
+use App\Models\Municipio;
 use Filament\Tables\Actions\Action;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -17,6 +21,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Filament\Pages\RecibirOrdenCompra;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Livewire\Livewire;
+use Filament\Facades\Filament;
 
 class OrdenComprasResource extends Resource
 {
@@ -54,9 +59,94 @@ class OrdenComprasResource extends Resource
                             ->searchable()
                             ->preload()
                             ->optionsLimit(100)
+                            ->placeholder('Seleccione un proveedor o presione "+"')
+                            ->suffixAction(
+                                Forms\Components\Actions\Action::make('createProveedor') // Utilizando el namespace completo
+                                    ->label('Agregar')
+                                    ->icon('heroicon-o-plus')
+                                    ->tooltip('Agregar un nuevo proveedor')
+                                    ->modalHeading('Crear Nuevo Proveedor')
+                                    // CORRECCIÓN: Definimos los campos directamente para evitar el error de inicialización
+                                    ->form([
+                                        Forms\Components\TextInput::make('nombre_proveedor')
+                                            ->label('Nombre del Proveedor')
+                                            ->required()
+                                            ->maxLength(255),
+                                        Forms\Components\TextInput::make('telefono')
+                                            ->label('Teléfono')
+                                            ->tel()
+                                            ->required()
+                                            ->maxLength(20),
+                                        Forms\Components\TextInput::make('rtn')
+                                            ->label('RTN')
+                                            ->maxLength(20),
+                                        Forms\Components\TextInput::make('persona_contacto')
+                                            ->label('Persona de Contacto')
+                                            ->maxLength(255),
+                                        Forms\Components\Select::make('empresa_id')
+                                            ->label('Empresa')
+                                            ->relationship('empresa', 'nombre')
+                                            ->searchable()
+                                            ->required()
+                                            ->default(fn () => Filament::auth()->user()?->empresa_id)
+                                            ->disabled(fn () => true)
+                                            ->dehydrated(true)
+                                            ->suffix(null),
+                                        Forms\Components\Select::make('pais_id')
+                                            ->label('País')
+                                            ->searchable()
+                                            ->options(Paises::pluck('nombre_pais', 'id'))
+                                            ->placeholder('Seleccione un país')
+                                            ->reactive()
+                                            ->afterStateUpdated(fn (callable $set) => [
+                                                $set('departamento_id', null),
+                                                $set('municipio_id', null),
+                                            ]),
+                                        Forms\Components\Select::make('departamento_id')
+                                            ->label('Departamento')
+                                            ->searchable()
+                                            ->placeholder('Seleccione un Departamento')
+                                            ->options(fn (callable $get) =>
+                                                Departamento::where('pais_id', $get('pais_id'))
+                                                    ->pluck('nombre_departamento', 'id')
+                                            )
+                                            ->reactive()
+                                            ->afterStateUpdated(fn (callable $set) => $set('municipio_id', null))
+                                            ->disabled(fn (callable $get) => !$get('pais_id')),
+                                        Forms\Components\Select::make('municipio_id')
+                                            ->label('Municipio')
+                                            ->searchable()
+                                            ->placeholder('Seleccione un Municipio')
+                                            ->options(fn (callable $get) =>
+                                                Municipio::where('departamento_id', $get('departamento_id'))
+                                                    ->pluck('nombre_municipio', 'id')
+                                            )
+                                            ->required()
+                                            ->disabled(fn (callable $get) => !$get('departamento_id')),
+                                        Forms\Components\Textarea::make('direccion')
+                                            ->label('Dirección')
+                                            ->columnSpanFull(),
+                                    ])
+                                    ->action(function (array $data, Forms\Components\Actions\Action $action, callable $set) {
+                                        $newProveedor = Proveedores::create($data);
+
+                                        Notification::make()
+                                            ->title('Proveedor Creado')
+                                            ->body("El proveedor {$newProveedor->nombre_proveedor} ha sido creado con éxito.")
+                                            ->success()
+                                            ->send();
+                                        
+                                        $set('proveedor_id', $newProveedor->id);
+                                        $set('empresa_id', $newProveedor->empresa_id); // Asumiendo que la empresa se asigna automáticamente al crear
+                                    })
+                                    ->slideOver()
+                                    ->after(function () {
+                                        // No se necesita ninguna acción aquí, Filament cerrará el modal automáticamente.
+                                    })
+                            )
                             ->live()
                             ->afterStateUpdated(function ($state, callable $set, $livewire) {
-                                $proveedor = \App\Models\Proveedores::find($state);
+                                $proveedor = Proveedores::find($state);
                                 $set('empresa_id', $proveedor?->empresa_id ?? null);
                                 $livewire->dispatch('updateFormState', [
                                     'proveedor_id' => $state,
@@ -64,7 +154,7 @@ class OrdenComprasResource extends Resource
                                 ]);
                             })
                             ->afterStateHydrated(function ($state, callable $set, $livewire) {
-                                $proveedor = \App\Models\Proveedores::find($state);
+                                $proveedor = Proveedores::find($state);
                                 $set('empresa_id', $proveedor?->empresa_id ?? null);
                                 $livewire->dispatch('updateFormState', [
                                     'proveedor_id' => $state,
@@ -102,9 +192,9 @@ class OrdenComprasResource extends Resource
                     ])
                     ->columns(2)
                     ->collapsible(),
-                    Forms\Components\Section::make('Detalles de la Orden')
-                        ->icon('heroicon-o-shopping-cart')
-                        ->schema([
+                Forms\Components\Section::make('Detalles de la Orden')
+                    ->icon('heroicon-o-shopping-cart')
+                    ->schema([
                         Forms\Components\View::make('livewire.wrap-orden-compra-detalles-form')
                             ->label('Detalles de la Orden')
                             ->viewData(fn (\Filament\Forms\Get $get) => [

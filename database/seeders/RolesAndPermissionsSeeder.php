@@ -14,10 +14,11 @@ class RolesAndPermissionsSeeder extends Seeder
      */
     public function run(): void
     {
+        // Limpiar caché de permisos
         app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
 
-        // Crear permisos
-         $models = [
+        // Definir modelos con nombres estándar
+        $models = [
             'users', //1
             'roles', //2
             'paises', //3
@@ -35,10 +36,14 @@ class RolesAndPermissionsSeeder extends Seeder
             'unidad_de_medidas', //16
             'inventario_productos',
             'facturas', //18
-            'categoria_productos', // Agregado
-            'subcategoria_productos', // Agregado
             'cais',
-            'caja_aperturas' ,
+            'caja_aperturas',
+        ];
+
+        // Definir modelos con convención especial para Filament (usando ::)
+        $specialModels = [
+            'categoria::producto' => 'categorias_productos', // Modelo CategoriaProducto
+            'subcategoria::producto' => 'subcategorias_productos', // Modelo SubcategoriaProducto
         ];
 
         // Acciones comunes de las políticas
@@ -52,34 +57,50 @@ class RolesAndPermissionsSeeder extends Seeder
             'force_delete',
         ];
 
-        // Crear permisos para cada modelo y acción
+        // Crear permisos para modelos estándar
         foreach ($models as $model) {
             foreach ($actions as $action) {
                 $permName = "{$action}_{$model}";
                 if (!Permission::where('name', $permName)->exists()) {
-                    Permission::create(['name' => $permName]);
+                    Permission::create(['name' => $permName, 'guard_name' => 'web']);
                 }
             }
         }
 
-        // Crear rol de Administrador
-        $adminRole = Role::where('name', 'root')->first();
-        if (!$adminRole) {
-            $adminRole = Role::create(['name' => 'root']);
-        }
-        $adminRole1 = Role::where('name', 'admin')->first();
-        if (!$adminRole1) {
-            $adminRole1 = Role::create(['name' => 'admin']);
+        // Crear permisos para modelos con convención especial
+        foreach ($specialModels as $permModel => $table) {
+            foreach ($actions as $action) {
+                $permName = "{$action}_{$permModel}";
+                if (!Permission::where('name', $permName)->exists()) {
+                    Permission::create(['name' => $permName, 'guard_name' => 'web']);
+                }
+            }
         }
 
-        // Asignar TODOS los permisos al rol de Administrador
+        // Crear y asignar permisos al rol root
+        $adminRole = Role::firstOrCreate(['name' => 'root', 'guard_name' => 'web']);
         $adminRole->givePermissionTo(Permission::all());
+
+        // Crear y asignar permisos al rol admin
+        $adminRole1 = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'web']);
         $adminRole1->givePermissionTo(Permission::all());
 
-        $roleEditor = Role::where('name', 'editor')->first();
-        if (!$roleEditor) {
-            $roleEditor = Role::create(['name' => 'editor']);
-        }
-        $roleEditor->givePermissionTo(['view_paises',]);
+        // Crear y asignar permisos al rol editor
+        $roleEditor = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
+        $editorPermissions = [
+            'view_any_paises',
+            'view_paises',
+            'view_any_categoria::producto',
+            'view_categoria::producto',
+            'create_categoria::producto',
+            'update_categoria::producto',
+            'delete_categoria::producto',
+            'view_any_subcategoria::producto',
+            'view_subcategoria::producto',
+            'create_subcategoria::producto',
+            'update_subcategoria::producto',
+            'delete_subcategoria::producto',
+        ];
+        $roleEditor->givePermissionTo($editorPermissions);
     }
 }
