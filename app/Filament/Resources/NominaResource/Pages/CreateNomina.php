@@ -192,8 +192,10 @@ private function recalcularTotalEmpleado($empleadoIndex)
     public ?string $tipo_pago = 'mensual';
     public $año;
     public ?string $empresaNombre = null;
+    public ?int $empresa_id = null;
     public ?string $mesNombre = null;
     public $mostrarErrorMes = false;
+    public $isRoot = false;
     
     protected static string $view = 'filament.resources.nominas-resource.pages.create-nomina';
     
@@ -202,8 +204,16 @@ private function recalcularTotalEmpleado($empleadoIndex)
         parent::mount();
         $this->año = date('Y');
         
-        // Cargar nombre de empresa
-        $empresa = Empresa::find(Filament::auth()->user()?->empresa_id);
+        // Verificar si el usuario es root
+        $this->isRoot = Filament::auth()->user()->hasRole('root');
+        
+        // Cargar nombre de empresa (considerando current_empresa_id para usuarios root)
+        $empresaId = $this->isRoot
+            ? (session('current_empresa_id') ?? Filament::auth()->user()->empresa_id)
+            : Filament::auth()->user()->empresa_id;
+            
+        $this->empresa_id = $empresaId;
+        $empresa = Empresa::find($empresaId);
         $this->empresaNombre = $empresa ? $empresa->nombre : '';
         
         // Cargar empleados con sus deducciones y percepciones
@@ -218,7 +228,12 @@ private function recalcularTotalEmpleado($empleadoIndex)
     // Método para cargar los datos de los empleados
     protected function cargarEmpleados(): void
     {
-        $this->empleadosSeleccionados = \App\Models\Empleado::with(['deduccionesAplicadas.deduccion', 'percepcionesAplicadas.percepcion'])->get()->map(function ($empleado) {
+        // Filtrar empleados por la empresa actual
+        $empleados = \App\Models\Empleado::with(['deduccionesAplicadas.deduccion', 'percepcionesAplicadas.percepcion'])
+            ->where('empresa_id', $this->empresa_id)
+            ->get();
+            
+        $this->empleadosSeleccionados = $empleados->map(function ($empleado) {
             $salario = $empleado->salario;
             $deduccionesArray = $empleado->deduccionesAplicadas->map(function ($relacion) use ($salario) {
                 $deduccion = $relacion->deduccion;
@@ -394,6 +409,22 @@ private function recalcularTotalEmpleado($empleadoIndex)
             $this->recalcularTotalEmpleado($index);
         }
     }
+    
+    // Método para actualizar cuando se cambia la empresa
+    public function updatedEmpresaId($value): void
+    {
+        // Actualizar el nombre de empresa
+        $empresa = Empresa::find($value);
+        $this->empresaNombre = $empresa ? $empresa->nombre : '';
+        
+        // Actualizar la sesión con la empresa seleccionada (para usuarios root)
+        if ($this->isRoot) {
+            session()->put('current_empresa_id', $value);
+        }
+        
+        // Recargar empleados según la nueva empresa
+        $this->cargarEmpleados();
+    }
 
     public function create(bool $another = false): void
     {
@@ -417,7 +448,7 @@ private function recalcularTotalEmpleado($empleadoIndex)
 
         // Crear la nómina
         $nomina = \App\Models\Nominas::create([
-            'empresa_id' => Filament::auth()->user()?->empresa_id,
+            'empresa_id' => $this->empresa_id,
             'mes' => $this->mes,
             'año' => $this->año,
             'descripcion' => $this->descripcion,
@@ -521,5 +552,17 @@ private function recalcularTotalEmpleado($empleadoIndex)
         // Este método se mantiene para compatibilidad con Filament,
         // pero la creación real ocurre en el método create()
         return new \App\Models\Nominas();
+    }
+    
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        // Asignar empresa_id según el usuario actual o la sesión
+        if (Filament::auth()->user()->hasRole('root')) {
+            $data['empresa_id'] = session('current_empresa_id') ?? Filament::auth()->user()->empresa_id;
+        } else {
+            $data['empresa_id'] = Filament::auth()->user()->empresa_id;
+        }
+        
+        return $data;
     }
 }

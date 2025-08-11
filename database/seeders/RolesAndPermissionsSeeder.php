@@ -37,7 +37,13 @@ class RolesAndPermissionsSeeder extends Seeder
             'facturas', //18
             'categoria_productos', // Agregado
             'subcategoria_productos', // Agregado
-            'cais'
+            'cais',
+            'empleado_deducciones',
+            'deducciones',
+            'percepciones', 
+            'empleado_percepciones',
+            'nominas', 
+            'detalle_nominas' 
         ];
 
         // Acciones comunes de las políticas

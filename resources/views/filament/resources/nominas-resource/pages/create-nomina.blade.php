@@ -9,8 +9,17 @@
             <!-- Información general de la nómina -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-2">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-white">Empresa</label>
-                    <input type="text" class="block w-full mt-1 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white" value="{{ $this->empresaNombre ?? '' }}" disabled />
+                    @if($this->isRoot)
+                        <label class="block text-sm font-medium text-gray-700 dark:text-white">Empresa</label>
+                        <select wire:model.live="empresa_id" class="block w-full mt-1 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white">
+                            @foreach(\App\Models\Empresa::all() as $empresa)
+                                <option value="{{ $empresa->id }}">{{ $empresa->nombre }}</option>
+                            @endforeach
+                        </select>
+                    @else
+                        <label class="block text-sm font-medium text-gray-700 dark:text-white">Empresa</label>
+                        <input type="text" class="block w-full mt-1 border-gray-300 rounded-md dark:bg-gray-700 dark:text-white" value="{{ $this->empresaNombre ?? '' }}" disabled />
+                    @endif
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 dark:text-white">Año</label>

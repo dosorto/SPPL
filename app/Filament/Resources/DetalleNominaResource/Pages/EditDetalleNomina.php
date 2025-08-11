@@ -5,6 +5,7 @@ namespace App\Filament\Resources\DetalleNominaResource\Pages;
 use App\Filament\Resources\DetalleNominaResource;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
+use Filament\Facades\Filament;
 
 class EditDetalleNomina extends EditRecord
 {
@@ -19,12 +20,13 @@ class EditDetalleNomina extends EditRecord
     
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        // Si no se proporciona empresa_id, obtenerlo de la nómina
-        if (empty($data['empresa_id']) && !empty($data['nomina_id'])) {
-            $nomina = \App\Models\Nominas::find($data['nomina_id']);
-            if ($nomina) {
-                $data['empresa_id'] = $nomina->empresa_id;
-            }
+        // Si el usuario es root, usamos el valor de empresa_id de la sesión
+        if (Filament::auth()->user()->hasRole('root')) {
+            $data['empresa_id'] = session('current_empresa_id') ?? Filament::auth()->user()->empresa_id;
+        }
+        // Si no es root, asignamos la empresa del usuario
+        else {
+            $data['empresa_id'] = Filament::auth()->user()->empresa_id;
         }
         
         return $data;
