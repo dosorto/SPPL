@@ -16,6 +16,11 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OrdenProduccionResource extends Resource
 {
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('empresa_id', auth()->user()->empresa_id);
+    }
     protected static ?string $model = OrdenProduccion::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-cube';
@@ -120,6 +125,7 @@ class OrdenProduccionResource extends Resource
             'index' => Pages\ListOrdenProduccions::route('/'),
             'create' => Pages\CreateOrdenProduccion::route('/create'),
             'edit' => Pages\EditOrdenProduccion::route('/{record}/edit'),
+            'view' => Pages\ViewOrdenProduccion::route('/{record}'),
         ];
     }
 }

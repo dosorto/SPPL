@@ -19,6 +19,11 @@ use Filament\Forms\Components\Repeater;
 
 class CategoriaClienteResource extends Resource
 {
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()
+            ->where('empresa_id', auth()->user()->empresa_id);
+    }
     protected static ?string $model = CategoriaCliente::class;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
@@ -30,6 +35,9 @@ class CategoriaClienteResource extends Resource
     {
         return $form
             ->schema([
+                Forms\Components\Hidden::make('empresa_id')
+                    ->default(fn () => auth()->user()->empresa_id)
+                    ->required(),
                 Wizard::make([
                     Wizard\Step::make('Información Básica')
                         ->schema([
