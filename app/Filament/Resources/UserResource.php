@@ -39,6 +39,8 @@ class UserResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
     protected static ?int $navigationSort = 1;
     protected static ?string $navigationGroup = 'Configuraciones';
+    protected static ?string $modelLabel = 'Usuario';
+    protected static ?string $pluralModelLabel = 'Usuarios';
 
 
     public static function form(Form $form): Form
@@ -47,14 +49,14 @@ class UserResource extends Resource
             TextInput::make('name')
                 ->label('Nombre')
                 ->required()
-                ->unique()
+                ->unique(ignoreRecord: true) // <- ignora el registro en edición
                 ->maxLength(255),
 
             TextInput::make('email')
                 ->label('Correo')
                 ->email()
                 ->required()
-                ->unique()
+                ->unique(ignoreRecord: true) // <- ignora el registro en edición
                 ->maxLength(255),
 
             Select::make('empresa_id')
@@ -68,7 +70,7 @@ class UserResource extends Resource
             Hidden::make('empresa_id')
                 ->default(fn () => auth()->user()->empresa_id)
                 ->dehydrated()
-                ->visible(fn () => !auth()->user()->hasRole('root')),
+                ->visible(fn () => ! auth()->user()->hasRole('root')),
 
             Select::make('persona_id')
                 ->label('Persona')
@@ -76,42 +78,37 @@ class UserResource extends Resource
                 ->getSearchResultsUsing(function (string $search, Get $get) {
                     return Persona::where('empresa_id', $get('empresa_id'))
                         ->where(function ($query) use ($search) {
-                            $query->where('dni', 'like', "%$search%")
-                                ->orWhere('primer_nombre', 'like', "%$search%")
-                                ->orWhere('primer_apellido', 'like', "%$search%");
+                            $query->where('dni', 'like', "%{$search}%")
+                                ->orWhere('primer_nombre', 'like', "%{$search}%")
+                                ->orWhere('primer_apellido', 'like', "%{$search}%");
                         })
                         ->limit(10)
                         ->get()
                         ->mapWithKeys(fn ($p) => [
-                            $p->id => "{$p->dni} - {$p->primer_nombre} {$p->primer_apellido}"
+                            $p->id => "{$p->dni} - {$p->primer_nombre} {$p->primer_apellido}",
                         ]);
                 })
-                ->getOptionLabelUsing(fn ($value) =>
-                    Persona::find($value)?->dni . ' - ' .
-                    Persona::find($value)?->primer_nombre . ' ' .
-                    Persona::find($value)?->primer_apellido
-                )
+                ->getOptionLabelUsing(function ($value) {
+                    $p = Persona::find($value);
+                    return $p ? "{$p->dni} - {$p->primer_nombre} {$p->primer_apellido}" : null;
+                })
                 ->createOptionForm([
                     TextInput::make('dni')->label('DNI')->required(),
                     Select::make('tipo_persona')
                         ->label('Tipo de Persona')
                         ->options([
-                            'natural' => 'Natural',
+                            'natural'  => 'Natural',
                             'juridica' => 'Jurídica',
-                        ])
-                        ->required(),
+                        ])->required(),
                     TextInput::make('primer_nombre')->label('Primer Nombre')->required(),
                     TextInput::make('segundo_nombre')->label('Segundo Nombre'),
                     TextInput::make('primer_apellido')->label('Primer Apellido')->required(),
                     TextInput::make('segundo_apellido')->label('Segundo Apellido'),
-                    Select::make('sexo')
-                        ->label('Sexo')
-                        ->options([
-                            'MASCULINO' => 'Masculino',
-                            'FEMENINO' => 'Femenino',
-                            'OTRO' => 'Otro',
-                        ])
-                        ->required(),
+                    Select::make('sexo')->label('Sexo')->options([
+                        'MASCULINO' => 'Masculino',
+                        'FEMENINO'  => 'Femenino',
+                        'OTRO'      => 'Otro',
+                    ])->required(),
                     DatePicker::make('fecha_nacimiento')->label('Fecha de nacimiento')->required(),
                     TextInput::make('telefono')->label('Teléfono'),
                     Textarea::make('direccion')->label('Dirección')->required(),
@@ -131,20 +128,18 @@ class UserResource extends Resource
                         ->searchable()
                         ->options(fn (Get $get) =>
                             Departamento::where('pais_id', $get('pais_id'))
-                                ->limit(15) // Aplicamos el límite aquí para precarga
-                                ->pluck('nombre_departamento', 'id')
+                                ->limit(15)->pluck('nombre_departamento', 'id')
                         )
-                        ->getSearchResultsUsing(fn (string $search, Get $get) => // Mantener para la búsqueda
+                        ->getSearchResultsUsing(fn (string $search, Get $get) =>
                             Departamento::where('pais_id', $get('pais_id'))
-                                ->where('nombre_departamento', 'like', "%$search%")
-                                ->limit(10)
-                                ->pluck('nombre_departamento', 'id')
+                                ->where('nombre_departamento', 'like', "%{$search}%")
+                                ->limit(10)->pluck('nombre_departamento', 'id')
                         )
                         ->getOptionLabelUsing(fn ($value) =>
                             Departamento::find($value)?->nombre_departamento ?? 'Selecciona...'
                         )
                         ->preload()
-                        ->optionsLimit(15) // Límite de 15 opciones precargadas
+                        ->optionsLimit(15)
                         ->required()
                         ->reactive(),
 
@@ -153,42 +148,41 @@ class UserResource extends Resource
                         ->searchable()
                         ->options(fn (Get $get) =>
                             Municipio::where('departamento_id', $get('departamento_id'))
-                                ->limit(15) // Aplicamos el límite aquí para precarga
-                                ->pluck('nombre_municipio', 'id')
+                                ->limit(15)->pluck('nombre_municipio', 'id')
                         )
-                        ->getSearchResultsUsing(fn (string $search, Get $get) => // Mantener para la búsqueda
+                        ->getSearchResultsUsing(fn (string $search, Get $get) =>
                             Municipio::where('departamento_id', $get('departamento_id'))
-                                ->where('nombre_municipio', 'like', "%$search%")
-                                ->limit(10)
-                                ->pluck('nombre_municipio', 'id')
+                                ->where('nombre_municipio', 'like', "%{$search}%")
+                                ->limit(10)->pluck('nombre_municipio', 'id')
                         )
                         ->getOptionLabelUsing(fn ($value) =>
                             Municipio::find($value)?->nombre_municipio ?? 'Selecciona...'
                         )
                         ->preload()
-                        ->optionsLimit(15) // Límite de 15 opciones precargadas
+                        ->optionsLimit(15)
                         ->required(),
                 ])
                 ->createOptionUsing(function (array $data) {
-                    $personaExistente = \App\Models\Persona::where('dni', $data['dni'])->first();
-
-                    if ($personaExistente) {
-                        return $personaExistente->id; // Ya existe → devolvemos el ID
-                    }
-
-                    $nuevaPersona = \App\Models\Persona::create($data);
-                    return $nuevaPersona->id;
+                    $persona = Persona::where('dni', $data['dni'])->first();
+                    return $persona ? $persona->id : Persona::create($data)->id;
                 })
-
-                ->createOptionAction(function ($action) {
-                    return $action->after(function ($state, callable $set) {
+                ->createOptionAction(fn ($action) =>
+                    $action->after(function ($state, callable $set) {
                         $set('persona_id', is_object($state) ? $state->getKey() : $state);
-                    });
-                })
-
+                    })
+                )
                 ->required()
                 ->reactive()
-                ->rules([\Illuminate\Validation\Rule::unique('users', 'persona_id')]),
+                // Único en users.persona_id pero ignorando el registro actual
+                ->rules(function (?User $record) {
+                    return [
+                        Rule::unique('users', 'persona_id')->ignore($record?->id),
+                    ];
+                })
+                // Regla de negocio: no permitir cambiar la persona en edición
+                ->disabled(fn (string $context) => $context === 'edit')
+                // No enviar el valor al backend en edición
+                ->dehydrated(fn (string $context) => $context === 'create'),
 
             TextInput::make('password')
                 ->label('Contraseña')
@@ -211,12 +205,11 @@ class UserResource extends Resource
             Select::make('Roles')
                 ->label('Roles')
                 ->multiple()
-                ->relationship('roles', 'name', function (\Illuminate\Database\Eloquent\Builder $query) {
+                ->relationship('roles', 'name', function (Builder $query) {
                     return auth()->user()->hasRole('root')
                         ? $query
                         : $query->where('name', '!=', 'root');
                 })
-
                 ->preload()
                 ->reactive()
                 ->afterStateUpdated(function (callable $set, $state) {
@@ -243,6 +236,7 @@ class UserResource extends Resource
                 ]),
         ]);
     }
+
 
 
 
