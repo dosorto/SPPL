@@ -5,21 +5,33 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Traits\TenantScoped;
 use Illuminate\Support\Facades\Auth;
 
 class TipoOrdenCompras extends Model
 {
-    /** @use HasFactory<\Database\Factories\TipoOrdenComprasFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, TenantScoped;
 
     protected $table = 'tipo_orden_compras';
 
     protected $fillable = [
-    'nombre',
-    'created_by',
-    'updated_by',
-    'deleted_by',
-];
+        'nombre',
+        'empresa_id',
+        'created_by',
+        'updated_by',
+        'deleted_by',
+    ];
+
+    protected $casts = [
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+        'deleted_at' => 'datetime',
+    ];
+
+    public function empresa()
+    {
+        return $this->belongsTo(Empresa::class, 'empresa_id');
+    }
 
     public function creadoPor()
     {
@@ -57,6 +69,5 @@ class TipoOrdenCompras extends Model
                 $model->save(); // Guardar el deleted_by antes del soft delete
             }
         });
-
     }
 }

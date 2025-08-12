@@ -13,14 +13,13 @@ return new class extends Migration
     {
         Schema::create('tipo_orden_compras', function (Blueprint $table) {
             $table->id();
-        $table->string('nombre', 100);
-
-        $table->timestamps(); // created_at y updated_at
-        $table->softDeletes(); // deleted_at
-
-        $table->integer('created_by')->nullable();  
-        $table->integer('updated_by')->nullable(); 
-        $table->integer('deleted_by')->nullable(); 
+            $table->string('nombre', 100);
+            $table->foreignId('empresa_id')->constrained('empresas');
+            $table->timestamps(); // created_at y updated_at
+            $table->softDeletes(); // deleted_at
+            $table->integer('created_by')->nullable();
+            $table->integer('updated_by')->nullable();
+            $table->integer('deleted_by')->nullable();
         });
     }
 
