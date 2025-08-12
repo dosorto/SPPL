@@ -13,7 +13,7 @@ class EmpleadoPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_empleados');
+        return $user->can('recursos_humanos_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class EmpleadoPolicy
      */
     public function view(User $user, Empleado $empleado): bool
     {
-        return $user->can('view_empleados');
+        return $user->can('recursos_humanos_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class EmpleadoPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_empleados');
+        return $user->can('recursos_humanos_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class EmpleadoPolicy
      */
     public function update(User $user, Empleado $empleado): bool
     {
-        return $user->can('update_empleados');
+        return $user->can('recursos_humanos_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class EmpleadoPolicy
      */
     public function delete(User $user, Empleado $empleado): bool
     {
-        return $user->can('delete_empleados');
+        return $user->can('recursos_humanos_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class EmpleadoPolicy
      */
     public function restore(User $user, Empleado $empleado): bool
     {
-        return $user->can('restore_empleados');
+        return $user->can('restore_recursos_humanos');
     }
 
     /**
@@ -61,6 +61,6 @@ class EmpleadoPolicy
      */
     public function forceDelete(User $user, Empleado $empleado): bool
     {
-        return $user->can('force_delete_empleados');
+        return $user->can('force_delete_recursos_humanos');
     }
 }

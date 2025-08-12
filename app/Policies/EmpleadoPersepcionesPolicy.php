@@ -13,7 +13,7 @@ class EmpleadoPersepcionesPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_empleado_percepciones');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class EmpleadoPersepcionesPolicy
      */
     public function view(User $user, EmpleadoPercepciones $empleadoPercepciones): bool
     {
-        return $user->can('view_empleado_percepciones');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class EmpleadoPersepcionesPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_empleado_percepciones');
+        return $user->can('nominas_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class EmpleadoPersepcionesPolicy
      */
     public function update(User $user, EmpleadoPercepciones $empleadoPercepciones): bool
     {
-        return $user->can('update_empleado_percepciones');
+        return $user->can('nominas_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class EmpleadoPersepcionesPolicy
      */
     public function delete(User $user, EmpleadoPercepciones $empleadoPercepciones): bool
     {
-        return $user->can('delete_empleado_percepciones');
+        return $user->can('nominas_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class EmpleadoPersepcionesPolicy
      */
     public function restore(User $user, EmpleadoPercepciones $empleadoPercepciones): bool
     {
-        return $user->can('restore_empleado_percepciones');
+        return $user->can('restore_nominas');
     }
 
     /**
@@ -61,6 +61,6 @@ class EmpleadoPersepcionesPolicy
      */
     public function forceDelete(User $user, EmpleadoPercepciones $empleadoPercepciones): bool
     {
-        return $user->can('force_delete_empleado_percepciones');
+        return $user->can('force_delete_nominas');
     }
 }
