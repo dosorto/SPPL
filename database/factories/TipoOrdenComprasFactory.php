@@ -12,8 +12,9 @@ class TipoOrdenComprasFactory extends Factory
     public function definition()
     {
         return [
-            'nombre' => $this->faker->unique()->word(),  // nombre único y válido
-            'created_by' => 1,   // cambia según usuarios que tengas
+            'nombre' => $this->faker->unique()->word(),
+            'empresa_id' => 1, // Ajusta según el ID de empresa disponible
+            'created_by' => 1, // Ajusta según usuarios disponibles
             'updated_by' => 1,
             'deleted_by' => null,
         ];

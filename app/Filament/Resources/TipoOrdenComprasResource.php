@@ -32,6 +32,11 @@ class TipoOrdenComprasResource extends Resource
                     ->icon('heroicon-o-receipt-refund')
                     ->description('Configure el tipo de orden de compra.')
                     ->schema([
+                        Forms\Components\Select::make('empresa_id')
+                            ->label('Empresa')
+                            ->relationship('empresa', 'nombre')
+                            ->required()
+                            ->helperText('Seleccione la empresa asociada.'),
                         Forms\Components\TextInput::make('nombre')
                             ->label('Nombre del Tipo de Orden')
                             ->required()
@@ -54,11 +59,10 @@ class TipoOrdenComprasResource extends Resource
                     ->badge()
                     ->color('primary')
                     ->tooltip('Nombre del tipo de orden.'),
-                TextColumn::make('empresa_id')
-                    ->label('ID de Empresa')
+                TextColumn::make('empresa.nombre')
+                    ->label('Empresa')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true)
-                    ->tooltip('ID de la empresa asociada.'),
+                    ->tooltip('Nombre de la empresa asociada.'),
                 TextColumn::make('created_at')
                     ->label('Creado el')
                     ->dateTime('M d, Y H:i A')
@@ -134,7 +138,6 @@ class TipoOrdenComprasResource extends Resource
                         ->requiresConfirmation(),
                 ]),
             ])
-           
             ->defaultSort('nombre', 'asc')
             ->paginated([10, 25, 50]);
     }
@@ -153,8 +156,5 @@ class TipoOrdenComprasResource extends Resource
         ];
     }
 
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery();
-    }
+   
 }
