@@ -21,7 +21,7 @@ class ProductosPolicy
      */
     public function view(User $user, Productos $productos): bool
     {
-        return $user->can('inventario_ver') && $productos->empresa_id === $user->empresa_id;
+        return $user->can('inventario_ver');
     }
 
     /**
@@ -37,7 +37,7 @@ class ProductosPolicy
      */
     public function update(User $user, Productos $productos): bool
     {
-        return $user->can('inventario_actualizar') && $productos->empresa_id === $user->empresa_id;
+        return $user->can('inventario_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class ProductosPolicy
      */
     public function delete(User $user, Productos $productos): bool
     {
-        return $user->can('inventario_eliminar') && $productos->empresa_id === $user->empresa_id;
+        return $user->can('inventario_eliminar') ;
     }
 
     
