@@ -7,7 +7,7 @@ class OrdenProduccionInsumo extends Model
 {
     protected $table = 'orden_produccion_insumos';
     protected $fillable = [
-        'orden_produccion_id', 'insumo_id', 'cantidad_utilizada'
+        'orden_produccion_id', 'insumo_id', 'unidad_de_medida_id', 'cantidad_utilizada'
     ];
 
     public function ordenProduccion()
@@ -18,5 +18,10 @@ class OrdenProduccionInsumo extends Model
     public function insumo()
     {
         return $this->belongsTo(Productos::class, 'insumo_id');
+    }
+
+    public function unidadDeMedida()
+    {
+        return $this->belongsTo(UnidadDeMedidas::class, 'unidad_de_medida_id');
     }
 }

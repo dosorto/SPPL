@@ -10,8 +10,13 @@ class OrdenProduccion extends Model
 
     protected $table = 'ordenes_produccion';
     protected $fillable = [
-        'producto_id', 'cantidad', 'fecha_solicitud', 'fecha_entrega', 'estado', 'observaciones', 'empresa_id', 'created_by', 'updated_by', 'deleted_by'
+        'producto_id', 'cantidad', 'unidad_de_medida_id', 'fecha_solicitud', 'fecha_entrega', 'estado', 'observaciones', 'empresa_id', 'created_by', 'updated_by', 'deleted_by'
     ];
+
+    public function unidadDeMedida()
+    {
+        return $this->belongsTo(\App\Models\UnidadDeMedidas::class, 'unidad_de_medida_id');
+    }
 
     public function producto()
     {

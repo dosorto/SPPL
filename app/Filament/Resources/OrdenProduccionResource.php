@@ -40,9 +40,16 @@ class OrdenProduccionResource extends Resource
                 Forms\Components\Select::make('producto_id')
                     ->relationship('producto', 'nombre')
                     ->required(),
-                Forms\Components\TextInput::make('cantidad')
-                    ->numeric()
-                    ->required(),
+                Forms\Components\Grid::make(2)
+                    ->schema([
+                        Forms\Components\TextInput::make('cantidad')
+                            ->numeric()
+                            ->required(),
+                        Forms\Components\Select::make('unidad_de_medida_id')
+                            ->label('Unidad de Medida')
+                            ->options(\App\Models\UnidadDeMedidas::pluck('nombre', 'id'))
+                            ->required(),
+                    ]),
                 Forms\Components\DatePicker::make('fecha_solicitud')
                     ->required(),
                 Forms\Components\DatePicker::make('fecha_entrega'),
@@ -60,16 +67,26 @@ class OrdenProduccionResource extends Resource
                     ->label('Insumos a utilizar')
                     ->relationship('insumos')
                     ->schema([
-                        Forms\Components\Grid::make(2)
+                        Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\Select::make('insumo_id')
                                     ->label('Insumo')
                                     ->relationship('insumo', 'nombre')
                                     ->required()
+                                    ->reactive()
+                                    ->afterStateUpdated(function ($state, callable $set) {
+                                        $insumo = \App\Models\Productos::find($state);
+                                        $set('unidad_de_medida_id', $insumo?->unidad_de_medida_id);
+                                    })
                                     ->columnSpan(1),
                                 Forms\Components\TextInput::make('cantidad_utilizada')
                                     ->label('Cantidad utilizada')
                                     ->numeric()
+                                    ->required()
+                                    ->columnSpan(1),
+                                Forms\Components\Select::make('unidad_de_medida_id')
+                                    ->label('Unidad de Medida')
+                                    ->options(\App\Models\UnidadDeMedidas::pluck('nombre', 'id'))
                                     ->required()
                                     ->columnSpan(1),
                             ]),

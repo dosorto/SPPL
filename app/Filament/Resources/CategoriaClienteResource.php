@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources;
 
+use Illuminate\Validation\Rule;
+
 use App\Filament\Resources\CategoriaClienteResource\Pages;
 use App\Filament\Resources\CategoriaClienteResource\RelationManagers;
 use App\Models\CategoriaCliente;
@@ -45,6 +47,11 @@ class CategoriaClienteResource extends Resource
                                 ->label('Nombre de la Categoría')
                                 ->required()
                                 ->maxLength(100)
+                                ->rules([
+                                    Rule::unique('categorias_clientes', 'nombre')
+                                        ->where(fn ($query) => $query->where('empresa_id', auth()->user()->empresa_id))
+                                        ->ignore(request()->route('record')),
+                                ])
                                 ->placeholder('Ej: Cliente VIP, Cliente Regular, etc.'),
                             Forms\Components\Textarea::make('descripcion')
                                 ->label('Descripción')

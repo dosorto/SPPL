@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('categorias_clientes', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('empresa_id')->nullable();
             $table->string('nombre', 100)->unique();
             $table->text('descripcion')->nullable();
             $table->boolean('activo')->default(true);

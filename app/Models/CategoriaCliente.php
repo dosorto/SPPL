@@ -13,6 +13,7 @@ class CategoriaCliente extends Model
     protected $table = 'categorias_clientes';
 
     protected $fillable = [
+        'empresa_id',
         'nombre',
         'descripcion',
         'activo',

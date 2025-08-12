@@ -16,13 +16,10 @@ class AuthServiceProvider extends ServiceProvider
      */
     protected $policies = [
         Permission::class => PermissionPolicy::class,
-<<<<<<< HEAD
         \App\Models\CategoriaCliente::class => \App\Policies\CategoriaClientePolicy::class,
         \App\Models\OrdenProduccion::class => \App\Policies\OrdenProduccionPolicy::class,
-=======
         //CategoriaProducto::class => CategoriaProductoPolicy::class,
         //SubcategoriaProducto::class => SubcategoriaProductoPolicy::class,
->>>>>>> fa6ccee06d2470b3e0eb061eb003df50aad81f43
     ];
 
     /**

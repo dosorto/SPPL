@@ -23,6 +23,7 @@ class ComprasRelationManager extends RelationManager
                 TextColumn::make('empresa.nombre')->label('Empresa'),
                 TextColumn::make('created_at')->dateTime()->label('Creada'),
             ])
+            ->emptyStateView('filament.resources.cliente-resource.empty-facturas')
             ->filters([])
             ->headerActions([])
             ->actions([])

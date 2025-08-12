@@ -60,6 +60,8 @@ class RolesAndPermissionsSeeder extends Seeder
             'facturas', //18
             'cais',
             'caja_aperturas',
+            'categoria_clientes', // NUEVO: para CategoriaCliente
+            'ordenes_produccion', // NUEVO: para OrdenProduccion
         ];
 
         // Definir modelos con convención especial para Filament (usando ::)
