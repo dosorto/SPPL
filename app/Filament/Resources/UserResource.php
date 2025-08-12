@@ -238,13 +238,10 @@ class UserResource extends Resource
     }
 
 
-
-
-
-
     public static function table(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => static::getUrl('view', ['record' => $record]))
             ->columns([
                 Tables\Columns\TextColumn::make('name')
                     ->label('Nombre')
@@ -324,6 +321,7 @@ class UserResource extends Resource
     {
         return [
             'index' => Pages\ListUsers::route('/'),
+            'view' => Pages\ViewUser::route('/{record}'),
             'create' => Pages\CreateUser::route('/create'),
             'edit' => Pages\EditUser::route('/{record}/edit'),
         ];

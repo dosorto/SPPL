@@ -104,6 +104,7 @@ class RoleResource extends Resource
                             Forms\Components\Checkbox::make("permission_ver_{$moduleKey}")
                                 ->label($actionLabels['ver'])
                                 ->live()
+                                
                                 ->afterStateUpdated(function ($state, $set) use ($moduleKey) {
                                     self::updatePermissionRelationship($state, "{$moduleKey}_ver", $set);
                                 })
@@ -117,6 +118,7 @@ class RoleResource extends Resource
                             Forms\Components\Checkbox::make("permission_crear_{$moduleKey}")
                                 ->label($actionLabels['crear'])
                                 ->live()
+                                
                                 ->afterStateUpdated(function ($state, $set) use ($moduleKey) {
                                     self::updatePermissionRelationship($state, "{$moduleKey}_crear", $set);
                                 })
@@ -130,6 +132,7 @@ class RoleResource extends Resource
                             Forms\Components\Checkbox::make("permission_actualizar_{$moduleKey}")
                                 ->label($actionLabels['actualizar'])
                                 ->live()
+                                
                                 ->afterStateUpdated(function ($state, $set) use ($moduleKey) {
                                     self::updatePermissionRelationship($state, "{$moduleKey}_actualizar", $set);
                                 })
@@ -161,13 +164,15 @@ class RoleResource extends Resource
 
     protected static function updatePermissionRelationship($state, $permissionName, $set)
     {
-        // Esta función se maneja automáticamente por Filament cuando se use mutateFormDataBeforeSave
-        // o se puede manejar en los Pages del Resource
+        // Esta función ahora maneja los cambios en tiempo real de los checkboxes
+        // No necesita hacer nada específico porque el procesamiento real ocurre en mutateFormDataBeforeSave
+        // Pero podrías agregar lógica aquí si necesitas validaciones o efectos en tiempo real
     }
 
-   public static function table(Table $table): Table
+    public static function table(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => static::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('id')->sortable(),
                 TextColumn::make('name')
@@ -248,6 +253,7 @@ class RoleResource extends Resource
     {
         return [
             'index' => Pages\ListRoles::route('/'),
+            'view' => Pages\ViewRole::route('/{record}'),
             'create' => Pages\CreateRole::route('/create'),
             'edit' => Pages\EditRole::route('/{record}/edit'),
         ];
