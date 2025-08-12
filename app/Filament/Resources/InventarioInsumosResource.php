@@ -22,8 +22,10 @@ class InventarioInsumosResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
     protected static ?string $navigationLabel = 'Gestión de Inventario Insumos';
     protected static ?string $modelLabel = 'Inventario de Insumos';
-    protected static ?string $navigationGroup = 'Insumos y Materia Prima';
+    protected static ?string $navigationGroup = 'Órdenes de Producción';
+    protected static ?int $navigationSort = 2;
     protected static bool $shouldRegisterNavigation = true;
+
 
     public static function canCreate(): bool
     {

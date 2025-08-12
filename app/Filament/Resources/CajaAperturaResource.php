@@ -18,7 +18,8 @@ class CajaAperturaResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-archive-box';
     protected static ?string $navigationGroup = 'Ventas';
-           
+    protected static ?int $navigationSort = 2;
+
     public static function form(Form $form): Form
     {
         return $form

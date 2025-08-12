@@ -21,7 +21,7 @@ class CreateRole extends CreateRecord
             'comercial',
             'inventario',
             'compras',
-            'insumos_materia_prima', 
+            'ordenes_producciones', 
             'nominas',   
         ];
         

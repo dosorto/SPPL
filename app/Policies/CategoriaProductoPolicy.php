@@ -12,42 +12,27 @@ class CategoriaProductoPolicy
 
     public function viewAny(User $user): bool
     {
-        if ($user->hasRole('root')) {
-            return true; // El usuario root puede ver todas las categorías
-        }
-        return $user->hasPermissionTo('view_any_categoria::producto') && $user->empresa_id !== null;
+        return $user->can('inventario_ver');
     }
 
     public function view(User $user, CategoriaProducto $categoriaProducto): bool
     {
-        if ($user->hasRole('root')) {
-            return true;
-        }
-        return $user->hasPermissionTo('view_categoria::producto') && $categoriaProducto->empresa_id === $user->empresa_id;
+        return $user->can('inventario_ver');
     }
 
     public function create(User $user): bool
     {
-        if ($user->hasRole('root')) {
-            return true;
-        }
-        return $user->hasPermissionTo('create_categoria::producto') && $user->empresa_id !== null;
+        return $user->can('inventario_crear');
     }
 
     public function update(User $user, CategoriaProducto $categoriaProducto): bool
     {
-        if ($user->hasRole('root')) {
-            return true;
-        }
-        return $user->hasPermissionTo('update_categoria::producto') && $categoriaProducto->empresa_id === $user->empresa_id;
+        return $user->can('inventario_actualizar');
     }
 
     public function delete(User $user, CategoriaProducto $categoriaProducto): bool
     {
-        if ($user->hasRole('root')) {
-            return true;
-        }
-        return $user->hasPermissionTo('delete_categoria::producto') && $categoriaProducto->empresa_id === $user->empresa_id;
+        return $user->can('inventario_eliminar');
     }
 
     public function restore(User $user, CategoriaProducto $categoriaProducto): bool

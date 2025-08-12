@@ -13,7 +13,7 @@ class EmpleadoDeduccionesPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_empleado_deducciones');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class EmpleadoDeduccionesPolicy
      */
     public function view(User $user, EmpleadoDeducciones $empleadoDeducciones): bool
     {
-        return $user->can('view_empleado_deducciones');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class EmpleadoDeduccionesPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_empleado_deducciones');
+        return $user->can('nominas_crear');
     }
 
     /**
