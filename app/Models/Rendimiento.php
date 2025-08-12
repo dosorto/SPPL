@@ -22,19 +22,19 @@ class Rendimiento extends Model
         'created_by',
         'updated_by',
         'deleted_by',
-
+        'enviado_a_inventario_at',
+        'enviado_a_inventario_por',
     ];
 
 
-    public function ordenProducciones()
+    public function ordenProduccion()
     {
-        return $this->belongsTo(OrdenProduccion::class);
+        return $this->belongsTo(OrdenProduccion::class, 'orden_produccion_id');
     }
 
-
-    public function productoProduccion()
+    public function productosFinales()
     {
-        return $this->hasOne(ProductoProduccion::class);
+        return $this->hasMany(RendimientoProducto::class, 'rendimiento_id');
     }
 
 }

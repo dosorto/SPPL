@@ -32,6 +32,8 @@ class RolesAndPermissionsSeeder extends Seeder
             //Modulos Premium
             'ordenes_producciones', 
             'nominas',   
+            'rendimientos',
+            'movimientos_inventario',
         ];
 
         foreach ($modulos as $modulo) {

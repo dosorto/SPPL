@@ -32,4 +32,9 @@ class OrdenProduccion extends Model
     {
         return $this->hasMany(OrdenProduccionInsumo::class, 'orden_produccion_id');
     }
+
+        public function rendimiento()
+        {
+            return $this->hasOne(Rendimiento::class, 'orden_produccion_id');
+        }
 }

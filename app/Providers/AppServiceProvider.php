@@ -32,6 +32,7 @@ class AppServiceProvider extends ServiceProvider
         if (class_exists('Maatwebsite\\Excel\\ExcelServiceProvider')) {
             $this->app->alias('Excel', 'Maatwebsite\\Excel\\Facades\\Excel');
         }
-        Empresa::observe(EmpresaObserver::class);
+    Empresa::observe(EmpresaObserver::class);
+    \App\Models\OrdenProduccion::observe(\App\Observers\OrdenProduccionObserver::class);
     }
 }

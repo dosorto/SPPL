@@ -15,7 +15,7 @@ class OrdenProduccionPolicy
 
     public function view(User $user, OrdenProduccion $ordenProduccion): bool
     {
-        return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('view_ordenes_produccion');
+    return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('ordenes_producciones_ver');
     }
 
     public function create(User $user): bool
@@ -25,21 +25,21 @@ class OrdenProduccionPolicy
 
     public function update(User $user, OrdenProduccion $ordenProduccion): bool
     {
-        return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('update_ordenes_produccion');
+    return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('ordenes_producciones_actualizar');
     }
 
     public function delete(User $user, OrdenProduccion $ordenProduccion): bool
     {
-        return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('delete_ordenes_produccion');
+    return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('ordenes_producciones_eliminar');
     }
 
     public function restore(User $user, OrdenProduccion $ordenProduccion): bool
     {
-        return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('restore_ordenes_produccion');
+    return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('ordenes_producciones_actualizar');
     }
 
     public function forceDelete(User $user, OrdenProduccion $ordenProduccion): bool
     {
-        return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('force_delete_ordenes_produccion');
+    return $user->empresa_id === $ordenProduccion->empresa_id && $user->can('ordenes_producciones_eliminar');
     }
 }
