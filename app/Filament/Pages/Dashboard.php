@@ -2,48 +2,95 @@
 
 namespace App\Filament\Pages;
 
-use Filament\Pages\Dashboard as BaseDashboard;
+use App\Filament\Widgets\OrdersChart;
+use App\Filament\Widgets\InventoriesChart;
+use App\Filament\Widgets\StatsOverview;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Form;
+use Filament\Pages\Dashboard as BaseDashboard;
 use Filament\Pages\Dashboard\Concerns\HasFiltersForm;
+use Illuminate\Contracts\Support\Htmlable;
 
 class Dashboard extends BaseDashboard
 {
     use HasFiltersForm;
 
-    //protected static ?string $title = 'Panel de Control';
-    protected static ?string $navigationIcon = 'heroicon-o-home';
-    //protected static string $view = 'filament.pages.dashboard';
+    protected static ?string $title = 'Panel de Control Principal';
+    protected static ?string $navigationIcon = 'heroicon-s-chart-pie';
+    protected static ?string $navigationLabel = 'Dashboard';
 
-    // Desactiva la cabecera predeterminada (opcional, depende de la versión)
-    protected static bool $shouldRegisterNavigation = true;
-    
-
-    public function getColumns(): int | array
+    public function getColumns(): int|array
     {
         return [
-            'sm' => 1,
-            'md' => 2,
-            'xl' => 4,
+            'default' => 1,
+            'sm' => 2,
+            'md' => 3,
+            'xl' => 2,
         ];
     }
 
-    protected function getHeaderWidgets(): array
+    /**
+     * Unificamos todos los widgets aquí para evitar duplicados
+     */
+    public function getWidgets(): array
     {
-        return [];
+        return [
+            StatsOverview::make(['columnSpan' => 'full']),
+            OrdersChart::make(['columnSpan' => ['sm' => 1, 'md' => 2, 'xl' => 2]]),
+            InventoriesChart::make(['columnSpan' => ['sm' => 1, 'md' => 2, 'xl' => 2]]),
+        ];
     }
 
     public function filtersForm(Form $form): Form
     {
         return $form
             ->schema([
-                Section::make('Filtros')
+                Section::make('Filtros del Panel')
+                    ->description('Filtra los datos por rango de fechas.')
+                    ->aside()
+                    ->collapsible()
+                    ->compact()
                     ->schema([
-                        DatePicker::make('startDate')->label('Fecha Inicio')->displayFormat('d/m/Y'),
-                        DatePicker::make('endDate')->label('Fecha Fin')->displayFormat('d/m/Y'),
+                        DatePicker::make('startDate')
+                            ->label('Fecha de Inicio')
+                            ->placeholder('Selecciona la fecha inicial')
+                            ->displayFormat('d/m/Y')
+                            ->default(now()->startOfYear())
+                            ->prefixIcon('heroicon-o-calendar')
+                            ->native(false),
+                        DatePicker::make('endDate')
+                            ->label('Fecha de Fin')
+                            ->placeholder('Selecciona la fecha final')
+                            ->displayFormat('d/m/Y')
+                            ->default(now())
+                            ->prefixIcon('heroicon-o-calendar')
+                            ->native(false),
                     ])
                     ->columns(2),
             ]);
+    }
+
+    public function getTitle(): string|Htmlable
+    {
+        return static::$title;
+    }
+
+    public function getHeading(): string|Htmlable
+    {
+        return 'Bienvenido a tu Panel de Control';
+    }
+
+    public function getSubheading(): string|Htmlable
+    {
+        return 'Visualiza métricas clave y tendencias de órdenes e inventarios.';
+    }
+
+    public function getHeader(): ?\Illuminate\Contracts\View\View
+    {
+        return view('filament.pages.dashboard-header', [
+            'title' => $this->getHeading(),
+            'subheading' => $this->getSubheading(),
+        ]);
     }
 }
