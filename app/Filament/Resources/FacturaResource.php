@@ -22,7 +22,7 @@ class FacturaResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
     protected static ?string $navigationGroup = 'Ventas';
     protected static ?string $navigationLabel = 'Facturas';
-    protected static ?int $navigationSort = -3;
+    protected static ?int $navigationSort = 3;
     protected static ?string $slug = 'facturas';
 
     
@@ -158,7 +158,7 @@ class FacturaResource extends Resource
 
         return $query
             ->where('apertura_id', $aperturaId)
-            ->orderByDesc('id'); // 👈 Aquí defines el orden descendente por ID
+            ->orderByDesc('id'); // Aquí defines el orden descendente por ID
     }
 
     

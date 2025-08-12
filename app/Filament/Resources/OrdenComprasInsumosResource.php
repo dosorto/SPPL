@@ -33,10 +33,11 @@ class OrdenComprasInsumosResource extends Resource
 {
     protected static ?string $model = OrdenComprasInsumos::class;
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
-    protected static ?string $navigationGroup = 'Insumos y Materia Prima';
+    protected static ?string $navigationGroup = 'Órdenes de Producción';
     protected static ?string $navigationLabel = 'Órdenes de Compra Insumos';
     protected static ?string $pluralModelLabel = 'Órdenes de Compra Insumos';
     protected static ?string $modelLabel = 'Orden de Compra Insumos';
+    protected static ?int $navigationSort = 3;
     protected static bool $shouldRegisterNavigation = true;
 
     public static function form(Form $form): Form

@@ -13,7 +13,7 @@ class EmpleadoDeduccionesPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_empleado_deducciones');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class EmpleadoDeduccionesPolicy
      */
     public function view(User $user, EmpleadoDeducciones $empleadoDeducciones): bool
     {
-        return $user->can('view_empleado_deducciones');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class EmpleadoDeduccionesPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_empleado_deducciones');
+        return $user->can('nominas_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class EmpleadoDeduccionesPolicy
      */
     public function update(User $user, EmpleadoDeducciones $empleadoDeducciones): bool
     {
-        return $user->can('update_empleado_deducciones');
+        return $user->can('nominas_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class EmpleadoDeduccionesPolicy
      */
     public function delete(User $user, EmpleadoDeducciones $empleadoDeducciones): bool
     {
-        return $user->can('delete_empleado_deducciones');
+        return $user->can('nominas_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class EmpleadoDeduccionesPolicy
      */
     public function restore(User $user, EmpleadoDeducciones $empleadoDeducciones): bool
     {
-        return $user->can('restore_empleado_deducciones');
+        return $user->can('restore_nominas');
     }
 
     /**
@@ -61,6 +61,6 @@ class EmpleadoDeduccionesPolicy
      */
     public function forceDelete(User $user, EmpleadoDeducciones $empleadoDeducciones): bool
     {
-        return $user->can('force_delete_empleado_deducciones');
+        return $user->can('force_delete_nominas');
     }
 }

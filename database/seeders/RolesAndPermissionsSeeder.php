@@ -30,7 +30,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'inventario',
             'compras',
             //Modulos Premium
-            'insumos_materia_prima', 
+            'ordenes_producciones', 
             'nominas',   
         ];
 
@@ -70,60 +70,6 @@ class RolesAndPermissionsSeeder extends Seeder
             'subcategoria::producto' => 'subcategorias_productos', // Modelo SubcategoriaProducto
         ];
         
-        // Definir modelos adicionales
-        $additionalModels = [
-            'categoria_productos', 
-            'subcategoria_productos',
-            'cais',
-            'empleado_deducciones',
-            'deducciones',
-            'percepciones', 
-            'empleado_percepciones',
-            'nominas', 
-            'detalle_nominas'
-        ];
-
-        // Acciones comunes de las políticas
-        $actions = [
-            'view_any',
-            'view',
-            'create',
-            'update',
-            'delete',
-            'restore',
-            'force_delete',
-        ];
-
-        // Crear permisos para modelos estándar
-        foreach ($models as $model) {
-            foreach ($actions as $action) {
-                $permName = "{$action}_{$model}";
-                if (!Permission::where('name', $permName)->exists()) {
-                    Permission::create(['name' => $permName, 'guard_name' => 'web']);
-                }
-            }
-        }
-
-        // Crear permisos para modelos con convención especial
-        foreach ($specialModels as $permModel => $table) {
-            foreach ($actions as $action) {
-                $permName = "{$action}_{$permModel}";
-                if (!Permission::where('name', $permName)->exists()) {
-                    Permission::create(['name' => $permName, 'guard_name' => 'web']);
-                }
-            }
-        }
-        
-        // Crear permisos para modelos adicionales
-        foreach ($additionalModels as $model) {
-            foreach ($actions as $action) {
-                $permName = "{$action}_{$model}";
-                if (!Permission::where('name', $permName)->exists()) {
-                    Permission::create(['name' => $permName, 'guard_name' => 'web']);
-                }
-            }
-        }
-
         // Crear y asignar permisos al rol root
         $adminRole = Role::firstOrCreate(['name' => 'root', 'guard_name' => 'web']);
         $adminRole->givePermissionTo(Permission::all());
@@ -133,22 +79,5 @@ class RolesAndPermissionsSeeder extends Seeder
         $adminRole1->givePermissionTo(Permission::all());
 
         
-        // Crear y asignar permisos al rol editor
-        $roleEditor = Role::firstOrCreate(['name' => 'editor', 'guard_name' => 'web']);
-        $editorPermissions = [
-            'view_any_paises',
-            'view_paises',
-            'view_any_categoria::producto',
-            'view_categoria::producto',
-            'create_categoria::producto',
-            'update_categoria::producto',
-            'delete_categoria::producto',
-            'view_any_subcategoria::producto',
-            'view_subcategoria::producto',
-            'create_subcategoria::producto',
-            'update_subcategoria::producto',
-            'delete_subcategoria::producto',
-        ];
-        $roleEditor->givePermissionTo($editorPermissions);
     }
 }

@@ -13,7 +13,7 @@ class PercepcionesPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_percepciones');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class PercepcionesPolicy
      */
     public function view(User $user, Percepciones $percepciones): bool
     {
-        return $user->can('view_percepciones');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class PercepcionesPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_percepciones');
+        return $user->can('nominas_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class PercepcionesPolicy
      */
     public function update(User $user, Percepciones $percepciones): bool
     {
-        return $user->can('update_percepciones');
+        return $user->can('nominas_editar');
     }
 
     /**
@@ -45,7 +45,7 @@ class PercepcionesPolicy
      */
     public function delete(User $user, Percepciones $percepciones): bool
     {
-        return $user->can('delete_percepciones');
+        return $user->can('nominas_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class PercepcionesPolicy
      */
     public function restore(User $user, Percepciones $percepciones): bool
     {
-        return $user->can('restore_percepciones');
+        return $user->can('nominas_restaurar');
     }
 
     /**
@@ -61,6 +61,6 @@ class PercepcionesPolicy
      */
     public function forceDelete(User $user, Percepciones $percepciones): bool
     {
-        return $user->can('force_delete_percepciones');
+        return $user->can('nominas_eliminar');
     }
 }

@@ -27,6 +27,8 @@ class CaiResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text'; // Icono más descriptivo para CAI
     protected static ?string $navigationGroup = 'Ventas'; // O el grupo de navegación que prefieras
+    protected static ?int $navigationSort = 1;
+    
 
     public static function form(Form $form): Form
     {

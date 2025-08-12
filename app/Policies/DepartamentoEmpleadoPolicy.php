@@ -13,7 +13,7 @@ class DepartamentoEmpleadoPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_departamento_empleados');
+        return $user->can('recursos_humanos_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class DepartamentoEmpleadoPolicy
      */
     public function view(User $user, DepartamentoEmpleado $departamentoEmpleado): bool
     {
-        return $user->can('view_departamento_empleados');
+        return $user->can('recursos_humanos_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class DepartamentoEmpleadoPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_departamento_empleados');
+        return $user->can('recursos_humanos_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class DepartamentoEmpleadoPolicy
      */
     public function update(User $user, DepartamentoEmpleado $departamentoEmpleado): bool
     {
-        return $user->can('update_departamento_empleados');
+        return $user->can('recursos_humanos_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class DepartamentoEmpleadoPolicy
      */
     public function delete(User $user, DepartamentoEmpleado $departamentoEmpleado): bool
     {
-        return $user->can('delete_departamento_empleados');
+        return $user->can('recursos_humanos_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class DepartamentoEmpleadoPolicy
      */
     public function restore(User $user, DepartamentoEmpleado $departamentoEmpleado): bool
     {
-        return $user->can('restore_departamento_empleados');
+        return $user->can('recursos_humanos_restaurar');
     }
 
     /**
@@ -61,6 +61,6 @@ class DepartamentoEmpleadoPolicy
      */
     public function forceDelete(User $user, DepartamentoEmpleado $departamentoEmpleado): bool
     {
-        return $user->can('force_delete_departamento_empleados');
+        return $user->can('force_delete_recursos_humanos');
     }
 }

@@ -12,7 +12,7 @@ class DetalleNominasPolicy
      */
     public function view(User $user, DetalleNominas $detalleNomina): bool
     {
-        return $user->empresa_id === $detalleNomina->empresa_id;
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -20,7 +20,7 @@ class DetalleNominasPolicy
      */
     public function update(User $user, DetalleNominas $detalleNomina): bool
     {
-        return $user->empresa_id === $detalleNomina->empresa_id;
+        return $user->can('nominas_actualizar');
     }
 
     /**
@@ -28,7 +28,7 @@ class DetalleNominasPolicy
      */
     public function delete(User $user, DetalleNominas $detalleNomina): bool
     {
-        return $user->empresa_id === $detalleNomina->empresa_id;
+        return $user->can('nominas_eliminar');
     }
 
     /**
@@ -36,6 +36,6 @@ class DetalleNominasPolicy
      */
     public function viewAny(User $user): bool
     {
-        return true; // O puedes usar $user->can('view_any_detalle_nominas')
+        return $user->can('nominas_ver');
     }
 }

@@ -10,6 +10,9 @@ use Spatie\Permission\Models\Permission;
 class EditRole extends EditRecord
 {
     protected static string $resource = RoleResource::class;
+    
+    // Propiedad para almacenar los permisos temporalmente
+    protected array $permissions = [];
 
     protected function getHeaderActions(): array
     {
@@ -27,74 +30,89 @@ class EditRole extends EditRecord
 
     protected function mutateFormDataBeforeFill(array $data): array
     {
-        // Definir módulos y acciones directamente
+        // Usa los mismos módulos del form - IMPORTANTE: mismo orden que en RoleResource
         $modules = [
             'ventas',
-            'recursos_humanos',  
+            'recursos_humanos',
             'configuraciones',
             'comercial',
             'inventario',
             'compras',
-            'insumos_materia_prima', 
-            'nominas',   
+            'ordenes_producciones',
+            'nominas',
         ];
-        
+
         $actions = ['ver', 'crear', 'actualizar', 'eliminar'];
-        
-        // Cargar los permisos existentes en los checkboxes
+
+        // Hidrata los checkboxes con el estado actual de los permisos
         foreach ($modules as $module) {
             foreach ($actions as $action) {
                 $permissionName = "{$module}_{$action}";
+                // CORREGIDO: usar el mismo formato que en el form
                 $checkboxKey = "permission_{$action}_{$module}";
-                $data[$checkboxKey] = $this->record->hasPermissionTo($permissionName);
+                
+                // Verificar si el rol tiene este permiso
+                $data[$checkboxKey] = $this->record->permissions->contains('name', $permissionName);
             }
         }
-        
+
         return $data;
     }
 
     protected function mutateFormDataBeforeSave(array $data): array
     {
-        // Definir módulos y acciones directamente
         $modules = [
             'ventas',
-            'recursos_humanos',  
+            'recursos_humanos',
             'configuraciones',
             'comercial',
             'inventario',
             'compras',
-            'insumos_materia_prima', 
-            'nominas',   
+            'ordenes_producciones',
+            'nominas',
         ];
         
         $actions = ['ver', 'crear', 'actualizar', 'eliminar'];
         
-        // Extraer los permisos de los checkboxes
-        $permissions = [];
-        
+        // Array para almacenar los permisos seleccionados
+        $selectedPermissions = [];
+
+        // Procesar cada módulo y acción
         foreach ($modules as $module) {
             foreach ($actions as $action) {
                 $checkboxKey = "permission_{$action}_{$module}";
+                
+                // Si el checkbox está marcado, agregar el permiso
                 if (isset($data[$checkboxKey]) && $data[$checkboxKey]) {
-                    $permissions[] = "{$module}_{$action}";
+                    $selectedPermissions[] = "{$module}_{$action}";
                 }
-                // Remover el checkbox del array de datos
+                
+                // Remover del array de data para que no vaya al UPDATE del modelo Role
                 unset($data[$checkboxKey]);
             }
         }
-        
-        // Almacenar los permisos temporalmente
-        $this->permissions = $permissions;
-        
+
+        // Guardar los permisos en la propiedad de la clase
+        $this->permissions = $selectedPermissions;
+
         return $data;
     }
 
     protected function afterSave(): void
     {
-        // Sincronizar los permisos del rol
-        if (isset($this->permissions)) {
-            $this->record->syncPermissions($this->permissions);
+        // Crear permisos que no existan
+        foreach ($this->permissions as $permissionName) {
+            Permission::firstOrCreate([
+                'name' => $permissionName,
+                'guard_name' => 'web',
+            ]);
         }
+
+        // Sincronizar los permisos del rol
+        $this->record->syncPermissions($this->permissions);
+        
+        // Limpiar la propiedad
+        $this->permissions = [];
     }
 
     protected function getSavedNotificationTitle(): ?string
@@ -104,7 +122,6 @@ class EditRole extends EditRecord
     
     protected function getRedirectUrl(): string
     {
-        // Después de guardar, ir al index del recurso
         return static::getResource()::getUrl('index');
     }
 }

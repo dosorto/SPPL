@@ -10,6 +10,9 @@ use Spatie\Permission\Models\Permission;
 class CreateRole extends CreateRecord
 {
     protected static string $resource = RoleResource::class;
+    
+    // AGREGADO: Declarar la propiedad para almacenar permisos temporalmente
+    protected array $permissions = [];
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {
@@ -21,7 +24,7 @@ class CreateRole extends CreateRecord
             'comercial',
             'inventario',
             'compras',
-            'insumos_materia_prima', 
+            'ordenes_producciones', 
             'nominas',   
         ];
         
@@ -34,7 +37,7 @@ class CreateRole extends CreateRecord
             foreach ($actions as $action) {
                 $checkboxKey = "permission_{$action}_{$module}";
                 if (isset($data[$checkboxKey]) && $data[$checkboxKey]) {
-                    $permissions[] = "{$module}.{$action}";
+                    $permissions[] = "{$module}_{$action}";
                 }
                 // Remover el checkbox del array de datos
                 unset($data[$checkboxKey]);
@@ -49,9 +52,21 @@ class CreateRole extends CreateRecord
 
     protected function afterCreate(): void
     {
-        // Asignar los permisos al rol después de crearlo
-        if (isset($this->permissions) && !empty($this->permissions)) {
+        // MEJORADO: Crear permisos que no existan y asignar al rol
+        if (!empty($this->permissions)) {
+            // Crear permisos que no existan en la base de datos
+            foreach ($this->permissions as $permissionName) {
+                Permission::firstOrCreate([
+                    'name' => $permissionName,
+                    'guard_name' => 'web',
+                ]);
+            }
+            
+            // Sincronizar los permisos con el rol
             $this->record->syncPermissions($this->permissions);
+            
+            // Limpiar la propiedad
+            $this->permissions = [];
         }
     }
 

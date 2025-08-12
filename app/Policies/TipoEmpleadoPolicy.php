@@ -13,7 +13,7 @@ class TipoEmpleadoPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_tipo_empleados');
+        return $user->can('recursos_humanos_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class TipoEmpleadoPolicy
      */
     public function view(User $user, TipoEmpleado $tipoEmpleado): bool
     {
-        return $user->can('view_tipo_empleados');
+        return $user->can('recursos_humanos_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class TipoEmpleadoPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_tipo_empleados');
+        return $user->can('recursos_humanos_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class TipoEmpleadoPolicy
      */
     public function update(User $user, TipoEmpleado $tipoEmpleado): bool
     {
-        return $user->can('update_tipo_empleados');
+        return $user->can('recursos_humanos_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class TipoEmpleadoPolicy
      */
     public function delete(User $user, TipoEmpleado $tipoEmpleado): bool
     {
-        return $user->can('delete_tipo_empleados');
+        return $user->can('recursos_humanos_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class TipoEmpleadoPolicy
      */
     public function restore(User $user, TipoEmpleado $tipoEmpleado): bool
     {
-        return $user->can('restore_tipo_empleados');
+        return $user->can('restore_recursos_humanos');
     }
 
     /**
@@ -61,6 +61,6 @@ class TipoEmpleadoPolicy
      */
     public function forceDelete(User $user, TipoEmpleado $tipoEmpleado): bool
     {
-        return $user->can('force_delete_tipo_empleados');
+        return $user->can('force_delete_recursos_humanos');
     }
 }

@@ -13,7 +13,7 @@ class NominaPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_nominas');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class NominaPolicy
      */
     public function view(User $user, Nomina $nomina): bool
     {
-        return $user->can('view_nominas');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class NominaPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_nominas');
+        return $user->can('nominas_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class NominaPolicy
      */
     public function update(User $user, Nomina $nomina): bool
     {
-        return $user->can('update_nominas');
+        return $user->can('nominas_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class NominaPolicy
      */
     public function delete(User $user, Nomina $nomina): bool
     {
-        return $user->can('delete_nominas');
+        return $user->can('nominas_eliminar');
     }
 
     /**
