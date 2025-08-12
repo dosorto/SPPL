@@ -13,7 +13,7 @@ class CategoriaClientePolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_categoria_clientes');
+        return $user->can('comercial_ver');
     }
 
     /**
@@ -22,7 +22,7 @@ class CategoriaClientePolicy
     public function view(User $user, CategoriaCliente $categoriaCliente): bool
     {
         // Solo puede ver si pertenece a la misma empresa (tenant)
-        return $user->empresa_id === $categoriaCliente->empresa_id && $user->can('view_categoria_clientes');
+        return $user->can('comercial_ver');
     }
 
     /**
@@ -30,7 +30,7 @@ class CategoriaClientePolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_categoria_clientes');
+        return $user->can('comercial_crear');
     }
 
     /**
@@ -38,7 +38,7 @@ class CategoriaClientePolicy
      */
     public function update(User $user, CategoriaCliente $categoriaCliente): bool
     {
-        return $user->empresa_id === $categoriaCliente->empresa_id && $user->can('update_categoria_clientes');
+        return $user->can('comercial_actualizar');
     }
 
     /**
@@ -46,7 +46,7 @@ class CategoriaClientePolicy
      */
     public function delete(User $user, CategoriaCliente $categoriaCliente): bool
     {
-        return $user->empresa_id === $categoriaCliente->empresa_id && $user->can('delete_categoria_clientes');
+        return $user->can('comercial_eliminar');
     }
 
     /**
@@ -54,7 +54,7 @@ class CategoriaClientePolicy
      */
     public function restore(User $user, CategoriaCliente $categoriaCliente): bool
     {
-        return $user->empresa_id === $categoriaCliente->empresa_id && $user->can('restore_categoria_clientes');
+        return $user->can('comercial_actualizar');
     }
 
     /**
@@ -62,6 +62,6 @@ class CategoriaClientePolicy
      */
     public function forceDelete(User $user, CategoriaCliente $categoriaCliente): bool
     {
-        return $user->empresa_id === $categoriaCliente->empresa_id && $user->can('force_delete_categoria_clientes');
+        return $user->can('comercial_eliminar');
     }
 }
