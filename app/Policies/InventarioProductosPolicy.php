@@ -13,7 +13,7 @@ class InventarioProductosPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_inventario_productos');
+        return $user->can('inventario_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class InventarioProductosPolicy
      */
     public function view(User $user, InventarioProductos $inventarioProductos): bool
     {
-        return $user->can('view_inventario_productos');
+        return $user->can('inventario_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class InventarioProductosPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_inventario_productos');
+        return $user->can('inventario_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class InventarioProductosPolicy
      */
     public function update(User $user, InventarioProductos $inventarioProductos): bool
     {
-        return $user->can('update_inventario_productos');
+        return $user->can('inventario_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class InventarioProductosPolicy
      */
     public function delete(User $user, InventarioProductos $inventarioProductos): bool
     {
-         return $user->can('delete_inventario_productos');
+         return $user->can('inventario_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class InventarioProductosPolicy
      */
     public function restore(User $user, InventarioProductos $inventarioProductos): bool
     {
-        return $user->can('restore_inventario_productos');
+        return $user->can('inventario_actualizar');
     }
 
     /**
@@ -61,7 +61,7 @@ class InventarioProductosPolicy
      */
     public function forceDelete(User $user, InventarioProductos $inventarioProductos): bool
     {
-        return $user->can('force_delete_inventario_productos');
+        return $user->can('inventario_eliminar');
     }
 
 }
