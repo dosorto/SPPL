@@ -82,7 +82,7 @@ class RoleResource extends Resource
             'comercial' => 'Comercial',
             'inventario' => 'Inventario',
             'compras' => 'Compras',
-            'insumos_materia_prima' => 'Insumos y Materia Prima', 
+            'ordenes_producciones' => 'Órdenes de Producción', 
             'nominas' => 'Nóminas',   
         ];
 

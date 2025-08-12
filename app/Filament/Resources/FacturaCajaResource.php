@@ -18,7 +18,7 @@ class FacturaCajaResource extends Resource
     // --- Configuración del Menú (Este es el historial) ---
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
     protected static ?string $navigationLabel = 'Historial de Facturas';
-    protected static ?int $navigationSort = -2;
+    protected static ?int $navigationSort = 4;
     protected static ?string $navigationGroup = 'Ventas';
     protected static ?string $slug = 'historial-facturas';
 
