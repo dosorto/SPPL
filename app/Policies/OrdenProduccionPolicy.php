@@ -10,7 +10,7 @@ class OrdenProduccionPolicy
 {
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_ordenes_produccion');
+    return $user->can('ordenes_producciones_ver');
     }
 
     public function view(User $user, OrdenProduccion $ordenProduccion): bool
@@ -20,7 +20,7 @@ class OrdenProduccionPolicy
 
     public function create(User $user): bool
     {
-        return $user->can('create_ordenes_produccion');
+    return $user->can('ordenes_producciones_crear');
     }
 
     public function update(User $user, OrdenProduccion $ordenProduccion): bool
