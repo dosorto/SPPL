@@ -13,7 +13,7 @@ class TipoOrdenComprasPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_tipo_orden_compras');
+         return $user->can('compras_ver');
     }
 
     /**
@@ -25,22 +25,22 @@ class TipoOrdenComprasPolicy
 
         public function view(User $user, TipoOrdenCompras $tipoOrdenCompras): bool
         {
-            return $user->can('view_tipo_orden_compras');
+             return $user->can('compras_ver');
         }
 
         public function create(User $user): bool
         {
-            return $user->can('create_tipo_orden_compras');
+              return $user->can('compras_crear');
         }
 
         public function update(User $user, TipoOrdenCompras $tipoOrdenCompras): bool
         {
-            return $user->can('update_tipo_orden_compras');
+             return $user->can('compras_editar');
         }
 
         public function delete(User $user, TipoOrdenCompras $tipoOrdenCompras): bool
         {
-            return $user->can('delete_tipo_orden_compras');
+              return $user->can('compras_eliminar');
         }
 
         public function restore(User $user, TipoOrdenCompras $tipoOrdenCompras): bool

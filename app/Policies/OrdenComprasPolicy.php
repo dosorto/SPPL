@@ -13,7 +13,7 @@ class OrdenComprasPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_orden_compras');
+        return $user->can('compras_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class OrdenComprasPolicy
      */
     public function view(User $user, OrdenCompras $ordenCompras): bool
     {
-        return $user->can('view_orden_compras');
+        return $user->can('compras_ver') && $ordenCompras->empresa_id === $user->empresa_id;
     }
 
     /**
@@ -29,7 +29,7 @@ class OrdenComprasPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_orden_compras');
+        return $user->can('compras_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class OrdenComprasPolicy
      */
     public function update(User $user, OrdenCompras $ordenCompras): bool
     {
-        return $user->can('update_orden_compras');
+        return $user->can('compras_actualizar') && $ordenCompras->empresa_id === $user->empresa_id;
     }
 
     /**
@@ -45,7 +45,7 @@ class OrdenComprasPolicy
      */
     public function delete(User $user, OrdenCompras $ordenCompras): bool
     {
-        return $user->can('delete_orden_compras');
+        return $user->can('compras_eliminar') && $ordenCompras->empresa_id === $user->empresa_id;
     }
 
     /**

@@ -13,7 +13,7 @@ class ProductosPolicy
      */
     public function viewAny(User $user): bool
     {
-        return $user->can('view_any_productos');
+        return $user->can('inventario_ver');
     }
 
     /**
@@ -21,7 +21,7 @@ class ProductosPolicy
      */
     public function view(User $user, Productos $productos): bool
     {
-        return $user->can('view_productos');
+        return $user->can('inventario_ver') && $productos->empresa_id === $user->empresa_id;
     }
 
     /**
@@ -29,7 +29,7 @@ class ProductosPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_productos');
+        return $user->can('inventario_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class ProductosPolicy
      */
     public function update(User $user, Productos $productos): bool
     {
-        return $user->can('update_productos');
+        return $user->can('inventario_actualizar') && $productos->empresa_id === $user->empresa_id;
     }
 
     /**
@@ -45,22 +45,8 @@ class ProductosPolicy
      */
     public function delete(User $user, Productos $productos): bool
     {
-        return $user->can('delete_productos');
+        return $user->can('inventario_eliminar') && $productos->empresa_id === $user->empresa_id;
     }
 
-    /**
-     * Determine whether the user can restore the model.
-     */
-    public function restore(User $user, Productos $productos): bool
-    {
-        return $user->can('restore_productos');
-    }
-
-    /**
-     * Determine whether the user can permanently delete the model.
-     */
-    public function forceDelete(User $user, Productos $productos): bool
-    {
-        return $user->can('force_delete_productos');
-    }
+    
 }
