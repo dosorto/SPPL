@@ -1,28 +1,46 @@
-<div class="space-y-4" x-data="{ isDisabled: @entangle('isBasicInfoComplete').defer }">
+<div class="space-y-4" x-data="{ isDisabled: @entangle('isBasicInfoComplete').defer, open: @entangle('dropdownOpen').defer }">
     <!-- Fila única con columnas para los inputs -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
         <!-- Producto -->
-        <div class="flex flex-col">
-        <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+        <div class="flex flex-col relative" x-on:click.away="open = false">
+            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
+
             <input 
                 type="text" 
-                wire:model.live="producto_nombre" 
-                list="productoOptions" 
+                wire:model.debounce.300ms="producto_nombre" 
                 placeholder="Escribe SKU, nombre o código de barras..." 
                 class="w-full border rounded-lg p-2 shadow-sm focus:ring focus:ring-blue-200 focus:outline-none"
-                wire:change="updateProductoId"
+                @focus="open = true"
+                :disabled="isDisabled"
+                wire:keydown.escape="$set('dropdownOpen', false)"
             >
-            <datalist id="productoOptions">
-                @foreach ($productos as $id => $nombre)
-                    <option value="{{ $nombre }}">{{ $nombre }}</option>
-                @endforeach
-            </datalist>
+
+            <!-- Dropdown personalizado -->
+            @if($producto_nombre && $productos->isNotEmpty())
+                <ul 
+                    class="absolute z-10 w-full bg-white border rounded-lg shadow max-h-60 overflow-y-auto mt-1"
+                    x-show="open"
+                    x-cloak
+                >
+                    @foreach ($productos->take(10) as $id => $nombre)
+                        <li 
+                            wire:key="producto-{{ $id }}"
+                            class="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-blue-50 transition"
+                            wire:click="selectProducto({{ $id }})"
+                            @click="open = false"
+                        >
+                            <div class="text-sm text-gray-800">{{ $nombre }}</div>
+                            <div class="text-xs text-gray-400">Seleccionar</div>
+                        </li>
+                    @endforeach
+                </ul>
+            @endif
+
             @error('producto_id') 
                 <span class="text-red-600 text-sm mt-1">{{ $message }}</span> 
             @enderror
         </div>
-
-   
 
         <!-- Cantidad -->
         <div class="flex flex-col">
@@ -57,20 +75,18 @@
     </div>
 
     <!-- Botón centrado -->
-   <div class="flex justify-center">
-    <button
-        type="button"
-        wire:click="addProducto"
-        class="border border-blue-500 bg-blue-100 text-blue-800 font-medium px-6 py-2 rounded-lg shadow-sm hover:bg-blue-200 hover:text-blue-900 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
-        :disabled="isDisabled"
-    >
-        {{ isset($editIndex) && $editIndex !== null ? 'Actualizar Producto' : 'Añadir a Tabla' }}
-    </button>
-</div>
+    <div class="flex justify-center">
+        <button
+            type="button"
+            wire:click="addProducto"
+            class="border border-blue-500 bg-blue-100 text-blue-800 font-medium px-6 py-2 rounded-lg shadow-sm hover:bg-blue-200 hover:text-blue-900 transition-all duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            :disabled="isDisabled"
+        >
+            {{ isset($editIndex) && $editIndex !== null ? 'Actualizar Producto' : 'Añadir a Tabla' }}
+        </button>
+    </div>
 
-
-
-    <!-- Tabla -->
+    <!-- Tabla (igual que antes) -->
     @if (count($detalles))
         <table class="w-full table-auto border mt-4">
             <thead>
