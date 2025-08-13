@@ -11,12 +11,17 @@ class TipoOrdenComprasFactory extends Factory
 
     public function definition()
     {
+        $baseOrderTypes = [
+            'Maquinaria',
+            'Equipo',
+            'Empaques',
+        ];
+
         return [
-            'nombre' => $this->faker->unique()->word(),
-            'empresa_id' => 1, // Ajusta según el ID de empresa disponible
-            'created_by' => 1, // Ajusta según usuarios disponibles
+            'nombre' => $this->faker->unique()->regexify('(' . implode('|', $baseOrderTypes) . ')[ -][A-Z0-9]{3,5}'),
+            'empresa_id' => 1, // Adjust based on available empresa_id
+            'created_by' => 1, // Adjust based on available users
             'updated_by' => 1,
-            'deleted_by' => null,
         ];
     }
 }

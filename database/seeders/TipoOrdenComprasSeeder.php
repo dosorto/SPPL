@@ -9,21 +9,20 @@ use Illuminate\Support\Facades\DB;
 
 class TipoOrdenComprasSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
         $tiposOrden = [
-            'Equipo Maquinaria',
+            'Maquinaria',
+            'Equipo',
             'Insumos',
             'Materia Prima',
+            'Empaques',
         ];
 
         $dataToInsert = [];
         $now = Carbon::now();
-        $createdBy = 1; // Ajusta según el ID de usuario
-        $empresaId = 1; // Ajusta según el ID de empresa disponible
+        $createdBy = 1; // Adjust based on user ID
+        $empresaId = 1; // Adjust based on empresa ID
 
         foreach ($tiposOrden as $nombreTipo) {
             $dataToInsert[] = [

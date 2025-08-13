@@ -1,81 +1,23 @@
-<div class="space-y-4" x-data="{ isDisabled: @entangle('isBasicInfoComplete').defer, open: @entangle('dropdownOpen').defer }">
-    <!-- Fila única con columnas para los inputs -->
+<div class="space-y-4" x-data="{ isDisabled: @entangle('isBasicInfoComplete').defer }">
     <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-        
-        <!-- Producto -->
-        <div class="flex flex-col relative" x-on:click.away="open = false">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Producto</label>
-
-            <input 
-                type="text" 
-                wire:model.debounce.300ms="producto_nombre" 
-                placeholder="Escribe SKU, nombre o código de barras..." 
-                class="w-full border rounded-lg p-2 shadow-sm focus:ring focus:ring-blue-200 focus:outline-none"
-                @focus="open = true"
-                :disabled="isDisabled"
-                wire:keydown.escape="$set('dropdownOpen', false)"
-            >
-
-            <!-- Dropdown personalizado -->
-            @if($producto_nombre && $productos->isNotEmpty())
-                <ul 
-                    class="absolute z-10 w-full bg-white border rounded-lg shadow max-h-60 overflow-y-auto mt-1"
-                    x-show="open"
-                    x-cloak
-                >
-                    @foreach ($productos->take(10) as $id => $nombre)
-                        <li 
-                            wire:key="producto-{{ $id }}"
-                            class="flex items-center justify-between px-4 py-2 cursor-pointer hover:bg-blue-50 transition"
-                            wire:click="selectProducto({{ $id }})"
-                            @click="open = false"
-                        >
-                            <div class="text-sm text-gray-800">{{ $nombre }}</div>
-                            <div class="text-xs text-gray-400">Seleccionar</div>
-                        </li>
-                    @endforeach
-                </ul>
+        @foreach ($this->form->getComponents() as $component)
+            @if ($component->getName() === 'producto_nombre')
+                <div class="flex flex-col">
+                    {{ $component }}
+                </div>
+            @elseif ($component->getName() === 'cantidad')
+                <div class="flex flex-col">
+                    {{ $component }}
+                </div>
+            @elseif ($component->getName() === 'precio')
+                <div class="flex flex-col">
+                    {{ $component }}
+                </div>
             @endif
-
-            @error('producto_id') 
-                <span class="text-red-600 text-sm mt-1">{{ $message }}</span> 
-            @enderror
-        </div>
-
-        <!-- Cantidad -->
-        <div class="flex flex-col">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Cantidad</label>
-            <input 
-                type="number" 
-                wire:model.defer="cantidad" 
-                class="w-full border rounded-lg p-2 shadow-sm focus:ring focus:ring-blue-200" 
-                min="1" 
-                :disabled="isDisabled"
-            >
-            @error('cantidad') 
-                <span class="text-red-600 text-sm mt-1">{{ $message }}</span> 
-            @enderror
-        </div>
-
-        <!-- Precio -->
-        <div class="flex flex-col">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Precio (Lps)</label>
-            <input 
-                type="number" 
-                wire:model.defer="precio" 
-                class="w-full border rounded-lg p-2 shadow-sm focus:ring focus:ring-blue-200" 
-                min="0" 
-                step="0.01" 
-                :disabled="isDisabled"
-            >
-            @error('precio') 
-                <span class="text-red-600 text-sm mt-1">{{ $message }}</span> 
-            @enderror
-        </div>
+        @endforeach
     </div>
 
-    <!-- Botón centrado -->
-    <div class="flex justify-center">
+    <div class="flex justify-center mt-4">
         <button
             type="button"
             wire:click="addProducto"
@@ -86,7 +28,6 @@
         </button>
     </div>
 
-    <!-- Tabla (igual que antes) -->
     @if (count($detalles))
         <table class="w-full table-auto border mt-4">
             <thead>
@@ -95,7 +36,7 @@
                     <th class="px-4 py-2">Cantidad</th>
                     <th class="px-4 py-2">Precio</th>
                     <th class="px-4 py-2">Total</th>
-                    <th class="px-4 py-2">Acciones</th>
+                    <th class="px-4 py-2 w-64">Acciones</th>
                 </tr>
             </thead>
             <tbody>
@@ -106,7 +47,7 @@
                         <td class="border px-4 py-2">Lps {{ number_format($item['precio'], 2) }}</td>
                         <td class="border px-4 py-2">Lps {{ number_format($item['cantidad'] * $item['precio'], 2) }}</td>
                         <td class="border px-4 py-2">
-                            <div class="flex space-x-2">
+                            <div class="flex flex-row gap-2">
                                 <button
                                     wire:click="editDetalle({{ $index }})"
                                     type="button"

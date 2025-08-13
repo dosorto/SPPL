@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\TipoOrdenComprasResource\Pages;
 use App\Models\TipoOrdenCompras;
+use App\Models\Empresa; // Assuming you have an Empresa model
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -12,6 +13,7 @@ use Filament\Tables\Table;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\TrashedFilter;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\Auth;
 
 class TipoOrdenComprasResource extends Resource
 {
@@ -32,18 +34,36 @@ class TipoOrdenComprasResource extends Resource
                     ->icon('heroicon-o-receipt-refund')
                     ->description('Configure el tipo de orden de compra.')
                     ->schema([
-                        Forms\Components\Select::make('empresa_id')
-                            ->label('Empresa')
-                            ->relationship('empresa', 'nombre')
-                            ->required()
-                            ->helperText('Seleccione la empresa asociada.'),
                         Forms\Components\TextInput::make('nombre')
                             ->label('Nombre del Tipo de Orden')
                             ->required()
                             ->maxLength(100)
-                            ->placeholder('Ej. Insumos, Materia Prima, Urgente...')
-                            ->unique(ignoreRecord: true)
-                            ->helperText('Ejemplo: Insumos, Materia Prima'),
+                            ->placeholder('Ej. Maquinaria Lácteos, Insumos Lácteos...')
+                            ->unique(
+                                table: TipoOrdenCompras::class,
+                                column: 'nombre',
+                                ignoreRecord: true,
+                                modifyRuleUsing: function ($rule) {
+                                    return $rule->where('empresa_id', Auth::user()->empresa_id);
+                                }
+                            )
+                            ->validationMessages([
+                                'unique' => 'The nombre del Tipo de Orden has already been taken.',
+                            ])
+                            ->helperText('Ejemplo: Maquinaria Lácteos, Materia Prima Lácteos'),
+                        Forms\Components\Select::make('empresa_id')
+                            ->label('Empresa')
+                            ->options(function () {
+                                // Assuming Empresa model exists and has a 'nombre' field
+                                return Empresa::where('id', Auth::user()->empresa_id)
+                                    ->pluck('nombre', 'id')
+                                    ->toArray();
+                            })
+                            ->default(Auth::user()->empresa_id)
+                            ->disabled()
+                            ->dehydrated(false) // Prevents empresa_id from being included in the form submission
+                            ->required(false) // Not required in the form
+                            ->helperText('La empresa asociada al usuario actual.'),
                     ]),
             ]);
     }
@@ -59,10 +79,10 @@ class TipoOrdenComprasResource extends Resource
                     ->badge()
                     ->color('primary')
                     ->tooltip('Nombre del tipo de orden.'),
-                TextColumn::make('empresa.nombre')
+                TextColumn::make('empresa.nombre') // Assuming Empresa model has a 'nombre' field
                     ->label('Empresa')
                     ->sortable()
-                    ->tooltip('Nombre de la empresa asociada.'),
+                    ->tooltip('Empresa asociada al tipo de orden.'),
                 TextColumn::make('created_at')
                     ->label('Creado el')
                     ->dateTime('M d, Y H:i A')
@@ -138,7 +158,11 @@ class TipoOrdenComprasResource extends Resource
                         ->requiresConfirmation(),
                 ]),
             ])
-            ->defaultSort('nombre', 'asc')
+            ->defaultSort('created_at', 'desc')
+            ->modifyQueryUsing(function (Builder $query) {
+                // Scope the table to only show records for the current user's empresa_id
+                return $query->where('empresa_id', Auth::user()->empresa_id);
+            })
             ->paginated([10, 25, 50]);
     }
 
@@ -155,6 +179,4 @@ class TipoOrdenComprasResource extends Resource
             'edit' => Pages\EditTipoOrdenCompras::route('/{record}/edit'),
         ];
     }
-
-   
 }

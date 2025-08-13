@@ -40,18 +40,49 @@ class OrdenComprasResource extends Resource
                     ->icon('heroicon-o-information-circle')
                     ->schema([
                         Forms\Components\Select::make('tipo_orden_compra_id')
-                            ->label('Tipo de Orden')
-                            ->relationship('tipoOrdenCompra', 'nombre')
-                            ->required()
-                            ->searchable()
-                            ->preload()
-                            ->optionsLimit(100)
-                            ->live()
-                            ->afterStateUpdated(function ($state, callable $set, $livewire) {
-                                $livewire->dispatch('updateFormState', [
-                                    'tipo_orden_compra_id' => $state,
-                                ]);
-                            }),
+                        ->label('Tipo de Orden')
+                        ->relationship('tipoOrdenCompra', 'nombre', function ($query) {
+                            // Scope the relationship to only show TipoOrdenCompras for the current user's empresa_id
+                            return $query->where('empresa_id', Auth::user()->empresa_id);
+                        })
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->optionsLimit(100)
+                        ->live()
+                        ->afterStateUpdated(function ($state, callable $set, $livewire) {
+                            $livewire->dispatch('updateFormState', [
+                                'tipo_orden_compra_id' => $state,
+                            ]);
+                        })
+                        ->createOptionForm([
+                            Forms\Components\Section::make('Crear Nuevo Tipo de Orden')
+                                ->schema([
+                                    Forms\Components\TextInput::make('nombre')
+                                        ->label('Nombre del Tipo de Orden')
+                                        ->required()
+                                        ->maxLength(100)
+                                        ->placeholder('Ej. Maquinaria Lácteos, Insumos Lácteos...')
+                                        ->unique(table: TipoOrdenCompras::class, column: 'nombre', ignoreRecord: true)
+                                        ->helperText('Ejemplo: Maquinaria Lácteos, Materia Prima Lácteos'),
+                                ]),
+                        ])
+                        ->createOptionAction(function ($action) {
+                            return $action
+                                ->modalHeading('Crear Tipo de Orden de Compra')
+                                ->modalSubmitActionLabel('Crear')
+                                ->modalWidth('lg')
+                                ->icon('heroicon-o-plus');
+                        })
+                        ->createOptionUsing(function (array $data) {
+                            // Create the TipoOrdenCompras record with the authenticated user's empresa_id
+                            return TipoOrdenCompras::create([
+                                'nombre' => $data['nombre'],
+                                'empresa_id' => Auth::user()->empresa_id,
+                                'created_by' => Auth::user()->id,
+                                'updated_by' => Auth::user()->id,
+                            ])->id;
+                        }),
                         Forms\Components\Select::make('proveedor_id')
                             ->label('Proveedor')
                             ->relationship('proveedor', 'nombre_proveedor')

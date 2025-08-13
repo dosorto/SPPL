@@ -179,7 +179,7 @@
                         <div class="text-5xl font-extrabold mb-4 text-gray-900">$49<span class="text-xl font-normal text-gray-500">/mes</span></div>
                         <ul class="text-left space-y-3 text-gray-700 mb-8">
                             <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-3"></i> Gestión básica de producción</li>
-                            <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-3"></i> Control de inventario limitado</li>
+                            <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-3"></i> Control de inventario</li>
                             <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-3"></i> Reportes estándar</li>
                             <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-3"></i> Soporte por correo electrónico</li>
                         </ul>
