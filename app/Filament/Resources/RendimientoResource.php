@@ -18,43 +18,7 @@ use Illuminate\Database\Eloquent\Builder;
 class RendimientoResource extends Resource
 {
     protected static ?string $model = Rendimiento::class;
-    public static function canViewAny(): bool
-    {
-        return auth()->user()?->can('rendimientos_ver') ?? false;
-    }
-
-    public static function canView($record): bool
-    {
-        return auth()->user()?->can('rendimientos_ver') ?? false;
-    }
-
-    public static function canDelete($record): bool
-    {
-        return auth()->user()?->can('rendimientos_eliminar') ?? false;
-    }
-
-    public static function canCreate(): bool
-    {
-        return auth()->user()?->can('rendimientos_crear') ?? false;
-    }
-
-    public static function canEdit($record): bool
-    {
-        return auth()->user()?->can('rendimientos_actualizar') ?? false;
-    }
-    protected static ?string $navigationIcon = 'heroicon-o-chart-bar';
-    protected static ?string $navigationGroup = 'Órdenes de Producción';
-    protected static ?string $navigationLabel = 'Rendimientos';
-    protected static ?string $pluralLabel = 'Rendimientos';
-    protected static ?string $label = 'Rendimiento';
-
-    public static function getEloquentQuery(): Builder
-    {
-        return parent::getEloquentQuery()
-            ->whereHas('ordenProduccion', function ($query) {
-                $query->where('empresa_id', auth()->user()->empresa_id);
-            });
-    }
+    
 
     public static function form(Form $form): Form
     {
@@ -135,7 +99,7 @@ class RendimientoResource extends Resource
     {
         return $table->columns([
             Tables\Columns\TextColumn::make('id')->sortable(),
-            Tables\Columns\TextColumn::make('orden_produccion.id')->label('Orden de Producción'),
+            Tables\Columns\TextColumn::make('ordenes_produccion.id')->label('Orden de Producción'),
             Tables\Columns\TextColumn::make('productosFinales')
                 ->label('Productos Finales')
                 ->formatStateUsing(function ($productos) {

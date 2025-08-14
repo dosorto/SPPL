@@ -20,7 +20,7 @@ class OrdenProduccionPolicy
 
     public function create(User $user): bool
     {
-    return $user->can('ordenes_producciones_crear');
+        return $user->can('ordenes_producciones_crear');
     }
 
     public function update(User $user, OrdenProduccion $ordenProduccion): bool

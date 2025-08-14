@@ -14,8 +14,13 @@ return new class extends Migration
             $table->foreignId('producto_id')->constrained('productos');
             $table->integer('cantidad');
             $table->decimal('precio_costo', 10, 2);
+            $table->unique(['empresa_id', 'producto_id']); 
+
             $table->timestamps();
             $table->softDeletes();
+            $table->integer('created_by')->nullable();
+            $table->integer('updated_by')->nullable();
+            $table->integer('deleted_by')->nullable();
         });
     }
 

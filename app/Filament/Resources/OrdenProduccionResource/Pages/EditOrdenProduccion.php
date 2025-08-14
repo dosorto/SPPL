@@ -10,7 +10,7 @@ use App\Models\InventarioInsumos;
 
 class EditOrdenProduccion extends EditRecord
 {
-    protected static string $resource = OrdenProduccionResource::class;
+     protected static string $resource = OrdenProduccionResource::class;
 
     protected function getHeaderActions(): array
     {
@@ -21,18 +21,21 @@ class EditOrdenProduccion extends EditRecord
                 ->color('success')
                 ->requiresConfirmation()
                 ->visible(fn ($record) => $record->estado !== 'Finalizada')
-                ->action(function ($record, $data) {
+                ->action(function ($record) {
                     $errores = [];
-                    foreach ($record->insumos as $insumo) {
-                        $inv = InventarioInsumos::where('producto_id', $insumo->insumo_id)
-                            ->where('empresa_id', $record->empresa_id)
-                            ->first();
-                        if (!$inv || $inv->cantidad < $insumo->cantidad_utilizada) {
-                            $nombre = $insumo->insumo->nombre ?? ('ID ' . $insumo->insumo_id);
-                            $errores[] = "Insumo '$nombre' insuficiente. Disponible: " . ($inv->cantidad ?? 0) . ", requerido: $insumo->cantidad_utilizada";
+
+                    foreach ($record->insumos as $ins) {
+                        // SUMA stock del insumo en TODAS las empresas (temporal)
+                        $disponible = InventarioInsumos::where('producto_id', $ins->insumo_id)
+                            ->sum('cantidad');
+
+                        if ($disponible < $ins->cantidad_utilizada) {
+                            $nombre = $ins->insumo->nombre ?? ('ID ' . $ins->insumo_id);
+                            $errores[] = "Insumo '{$nombre}' insuficiente. Disponible: {$disponible}, requerido: {$ins->cantidad_utilizada}";
                         }
                     }
-                    if (count($errores)) {
+
+                    if ($errores) {
                         Notification::make()
                             ->title('No se puede finalizar la orden')
                             ->body(implode("\n", $errores))
@@ -40,8 +43,31 @@ class EditOrdenProduccion extends EditRecord
                             ->send();
                         return;
                     }
+
+                    // (Opcional) Descontar stock de inventario_insumos de forma global
+                    foreach ($record->insumos as $ins) {
+                        $porDescontar = $ins->cantidad_utilizada;
+
+                        // primero intenta descontar de la empresa de la orden; si no alcanza, del resto
+                        $lotes = InventarioInsumos::where('producto_id', $ins->insumo_id)
+                            ->orderByRaw('empresa_id = ? desc', [$record->empresa_id])
+                            ->get();
+
+                        foreach ($lotes as $lote) {
+                            if ($porDescontar <= 0) break;
+                            $usa = min($porDescontar, $lote->cantidad);
+                            if ($usa <= 0) continue;
+
+                            $lote->cantidad -= $usa;
+                            $lote->save();
+
+                            $porDescontar -= $usa;
+                        }
+                    }
+
                     $record->estado = 'Finalizada';
                     $record->save();
+
                     Notification::make()
                         ->title('Orden finalizada correctamente')
                         ->success()

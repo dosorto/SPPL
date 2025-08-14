@@ -1,5 +1,5 @@
 <?php
-
+/*
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrdenesProduccionResource\Pages;
@@ -16,26 +16,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 
 class OrdenesProduccionResource extends Resource
 {
-    public static function getEloquentQuery(): Builder
-    {
-        \Log::info('[Filament] getEloquentQuery OrdenesProduccionResource', [
-            'user' => auth()->user(),
-            'empresa_id' => optional(auth()->user())->empresa_id,
-        ]);
-        if (!auth()->check()) {
-            \Log::warning('[Filament] Usuario no autenticado en getEloquentQuery OrdenesProduccionResource');
-        }
-        return parent::getEloquentQuery()
-            ->where('empresa_id', auth()->user()->empresa_id);
-    }
-    protected static ?string $model = OrdenProduccion::class;
-
-    protected static ?string $navigationIcon = 'heroicon-o-cube';
-    protected static ?string $navigationGroup = 'Órdenes de Producción';
-    protected static ?int $navigationSort = 1;
-    protected static ?string $navigationLabel = 'Órdenes de Producción';
-    protected static ?string $pluralLabel = 'Órdenes de Producción';
-    protected static ?string $label = 'Orden de Producción';
+    
+    protected static bool $shouldRegisterNavigation = false;
     
 
     public static function form(Form $form): Form
@@ -154,3 +136,4 @@ class OrdenesProduccionResource extends Resource
         ];
     }
 }
+*/
