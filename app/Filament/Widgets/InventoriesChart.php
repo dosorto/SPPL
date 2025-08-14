@@ -10,55 +10,52 @@ use Illuminate\Support\Facades\DB;
 
 class InventoriesChart extends ChartWidget
 {
-    protected static ?string $heading = 'Inventario de Insumos y Productos por Fecha';
+    protected static ?string $heading = '📦 Productos e Insumos — Inventario ';
     protected static string $chartType = 'line';
 
     protected function getData(): array
     {
         $startDate = $this->filters['startDate'] ?? null;
-        $endDate = $this->filters['endDate'] ?? null;
+        $endDate   = $this->filters['endDate'] ?? null;
 
-        // Consulta para Inventario de Insumos
+        // -----------------------------
+        // ⚗️ Inventario de Insumos
+        // -----------------------------
         $queryInsumos = InventarioInsumos::select([
-            DB::raw('DATE(created_at) as date'),
-            DB::raw('COUNT(*) as insumo_count'),
-            DB::raw('COALESCE(SUM(cantidad), 0) as insumo_product_count')
-        ])
-            ->whereNull('deleted_at')
-            ->where('empresa_id', 6) // Ajusta según tu lógica
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as count'),
+                DB::raw('COALESCE(SUM(cantidad), 0) as total_qty')
+            ])
+            ->whereNull('deleted_at') // TenantScoped ya filtra
             ->groupBy('date')
             ->orderBy('date', 'asc');
 
-        if ($startDate) {
-            $queryInsumos->whereDate('created_at', '>=', $startDate);
-        }
-        if ($endDate) {
-            $queryInsumos->whereDate('created_at', '<=', $endDate);
-        }
+        if ($startDate) $queryInsumos->whereDate('created_at', '>=', $startDate);
+        if ($endDate)   $queryInsumos->whereDate('created_at', '<=', $endDate);
 
         $insumos = $queryInsumos->get();
 
-        // Consulta para Inventario de Productos
+        // -----------------------------
+        // 📦 Inventario de Productos
+        // -----------------------------
         $queryProductos = InventarioProductos::select([
-            DB::raw('DATE(created_at) as date'),
-            DB::raw('COUNT(*) as producto_count'),
-            DB::raw('COALESCE(SUM(cantidad), 0) as producto_product_count')
-        ])
+                DB::raw('DATE(created_at) as date'),
+                DB::raw('COUNT(*) as count'),
+                DB::raw('COALESCE(SUM(cantidad), 0) as total_qty')
+            ])
             ->whereNull('deleted_at')
-            ->where('empresa_id', 6) // Ajusta según tu lógica
+            ->where('empresa_id', auth()->user()->empresa_id) // tenant manual
             ->groupBy('date')
             ->orderBy('date', 'asc');
 
-        if ($startDate) {
-            $queryProductos->whereDate('created_at', '>=', $startDate);
-        }
-        if ($endDate) {
-            $queryProductos->whereDate('created_at', '<=', $endDate);
-        }
+        if ($startDate) $queryProductos->whereDate('created_at', '>=', $startDate);
+        if ($endDate)   $queryProductos->whereDate('created_at', '<=', $endDate);
 
         $productos = $queryProductos->get();
 
-        // Combinar fechas únicas
+        // -----------------------------
+        // Fechas únicas
+        // -----------------------------
         $dates = collect([])
             ->merge($insumos->pluck('date'))
             ->merge($productos->pluck('date'))
@@ -66,40 +63,43 @@ class InventoriesChart extends ChartWidget
             ->sort()
             ->values();
 
-        // Mapear datos para cada fecha
-        $insumoCounts = $dates->map(fn ($date) => $insumos->firstWhere('date', $date)?->insumo_count ?? 0)->toArray();
-        $insumoProductCounts = $dates->map(fn ($date) => $insumos->firstWhere('date', $date)?->insumo_product_count ?? 0)->toArray();
-        $productoCounts = $dates->map(fn ($date) => $productos->firstWhere('date', $date)?->producto_count ?? 0)->toArray();
-        $productoProductCounts = $dates->map(fn ($date) => $productos->firstWhere('date', $date)?->producto_product_count ?? 0)->toArray();
+        // -----------------------------
+        // Mapear datos
+        // -----------------------------
+        $insumoCounts        = $dates->map(fn ($date) => $insumos->firstWhere('date', $date)?->count ?? 0)->toArray();
+        $insumoQtys          = $dates->map(fn ($date) => $insumos->firstWhere('date', $date)?->total_qty ?? 0)->toArray();
+
+        $productoCounts      = $dates->map(fn ($date) => $productos->firstWhere('date', $date)?->count ?? 0)->toArray();
+        $productoQtys        = $dates->map(fn ($date) => $productos->firstWhere('date', $date)?->total_qty ?? 0)->toArray();
 
         return [
             'datasets' => [
                 [
-                    'label' => 'Insumos',
+                    'label' => '📦 Productos Inventario',
+                    'data' => $productoCounts,
+                    'borderColor' => '#4F46E5',
+                    'backgroundColor' => 'rgba(79, 70, 229, 0.2)',
+                    'fill' => true,
+                ],
+                [
+                    'label' => '📦 Cantidad en Inventario Productos',
+                    'data' => $productoQtys,
+                    'borderColor' => '#10B981',
+                    'backgroundColor' => 'rgba(16, 185, 129, 0.2)',
+                    'fill' => true,
+                ],
+                [
+                    'label' => '⚗️ Insumos Inventario',
                     'data' => $insumoCounts,
                     'borderColor' => '#F59E0B',
                     'backgroundColor' => 'rgba(245, 158, 11, 0.2)',
                     'fill' => true,
                 ],
                 [
-                    'label' => 'Productos en Insumos',
-                    'data' => $insumoProductCounts,
+                    'label' => '⚗️ Cantidad en Inventario Insumos',
+                    'data' => $insumoQtys,
                     'borderColor' => '#D97706',
                     'backgroundColor' => 'rgba(217, 119, 6, 0.2)',
-                    'fill' => true,
-                ],
-                [
-                    'label' => 'Productos Inventario',
-                    'data' => $productoCounts,
-                    'borderColor' => '#EF4444',
-                    'backgroundColor' => 'rgba(239, 68, 68, 0.2)',
-                    'fill' => true,
-                ],
-                [
-                    'label' => 'Productos en Inventario',
-                    'data' => $productoProductCounts,
-                    'borderColor' => '#B91C1C',
-                    'backgroundColor' => 'rgba(185, 28, 28, 0.2)',
                     'fill' => true,
                 ],
             ],
