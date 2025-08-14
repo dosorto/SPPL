@@ -42,9 +42,15 @@ class OrdenComprasResource extends Resource
                         Forms\Components\Select::make('tipo_orden_compra_id')
                         ->label('Tipo de Orden')
                         ->relationship('tipoOrdenCompra', 'nombre', function ($query) {
-                            // Scope the relationship to only show TipoOrdenCompras for the current user's empresa_id
-                            return $query->where('empresa_id', Auth::user()->empresa_id);
+                            $user = Auth::user();
+
+                            if ($user->hasRole('root')) {
+                                return $query;
+                            }
+
+                            return $query->where('empresa_id', $user->empresa_id);
                         })
+
                         ->required()
                         ->searchable()
                         ->preload()

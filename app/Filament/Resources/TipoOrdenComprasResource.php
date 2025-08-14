@@ -160,9 +160,15 @@ class TipoOrdenComprasResource extends Resource
             ])
             ->defaultSort('created_at', 'desc')
             ->modifyQueryUsing(function (Builder $query) {
-                // Scope the table to only show records for the current user's empresa_id
-                return $query->where('empresa_id', Auth::user()->empresa_id);
+                $user = Auth::user();
+
+                if ($user->hasRole('root')) {
+                    return $query;
+                }
+
+                return $query->where('empresa_id', $user->empresa_id);
             })
+
             ->paginated([10, 25, 50]);
     }
 

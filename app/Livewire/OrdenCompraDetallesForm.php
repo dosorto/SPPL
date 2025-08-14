@@ -52,231 +52,29 @@ class OrdenCompraDetallesForm extends Component implements HasForms
     protected function getFormSchema(): array
     {
         return [
-            Forms\Components\TextInput::make('producto_nombre')
-                ->label('Producto')
-                ->live(onBlur: true)
-                ->afterStateUpdated(function ($state, callable $set) {
-                    $this->updateProductoId($state, $set);
-                })
-                ->datalist(function () {
-                    $query = Productos::query();
-                    if (Auth::user()->id !== 1 && $this->formState['empresa_id']) {
-                        $query->where('empresa_id', $this->formState['empresa_id']);
-                    }
-                    return $query->pluck('nombre', 'id')->toArray();
-                })
-                ->suffixAction(
-                    Forms\Components\Actions\Action::make('createProducto')
-                        ->label('Agregar')
-                        ->icon('heroicon-o-plus')
-                        ->tooltip('Agregar un nuevo producto')
-                        ->modalHeading('Crear Nuevo Producto')
-                        ->form([
-                            Forms\Components\TextInput::make('nombre')
-                                ->label('Nombre del producto')
-                                ->required()
-                                ->maxLength(100)
-                                ->unique(ignorable: fn ($record) => $record, table: Productos::class),
-                            Forms\Components\Textarea::make('descripcion_corta')
-                                ->label('Descripción corta')
-                                ->rows(2)
-                                ->maxLength(255)
-                                ->placeholder('Ejemplo: Papel bond de alta calidad'),
-                            Forms\Components\Textarea::make('descripcion')
-                                ->label('Descripción larga')
-                                ->rows(4)
-                                ->maxLength(255)
-                                ->placeholder('Ejemplo: Papel bond de 80 gramos, ideal para impresión'),
-                            Forms\Components\TextInput::make('color')
-                                ->label('Color')
-                                ->required()
-                                ->maxLength(50)
-                                ->placeholder('Ejemplo: Blanco'),
-                            Forms\Components\Select::make('unidad_de_medida_id')
-                                ->label('Unidad de medida')
-                                ->options(UnidadDeMedidas::pluck('nombre', 'id'))
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->placeholder('Seleccione una unidad')
-                                ->suffixAction(
-                                    Forms\Components\Actions\Action::make('createUnidadDeMedida')
-                                        ->label('Agregar')
-                                        ->icon('heroicon-o-plus')
-                                        ->tooltip('Agregar una nueva unidad de medida')
-                                        ->modalHeading('Crear Nueva Unidad de Medida')
-                                        ->form([
-                                            Forms\Components\TextInput::make('nombre')
-                                                ->label('Nombre de la Unidad')
-                                                ->required()
-                                                ->maxLength(100),
-                                            Forms\Components\TextInput::make('abreviacion')
-                                                ->label('Abreviación')
-                                                ->required()
-                                                ->maxLength(10),
-                                            Forms\Components\Select::make('categoria_id')
-                                                ->label('Categoría')
-                                                ->options(
-                                                    CategoriaProducto::where('empresa_id', $this->formState['empresa_id'] ?? Auth::user()->empresa_id)
-                                                        ->pluck('nombre', 'id')
-                                                )
-                                                ->searchable()
-                                                ->required(),
-                                        ])
-                                        ->action(function (array $data, callable $set) {
-                                            $newUnidad = UnidadDeMedidas::create($data);
-                                            Notification::make()
-                                                ->title('Unidad de Medida Creada')
-                                                ->body("La unidad de medida {$newUnidad->nombre} ha sido creada con éxito.")
-                                                ->success()
-                                                ->send();
-                                            $set('unidad_de_medida_id', $newUnidad->id);
-                                        })
-                                        ->modal()
-                                ),
-                            Forms\Components\Select::make('categoria_id')
-                                ->label('Categoría')
-                                ->options(
-                                    CategoriaProducto::where('empresa_id', $this->formState['empresa_id'] ?? Auth::user()->empresa_id)
-                                        ->pluck('nombre', 'id')
-                                )
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->reactive()
-                                ->afterStateUpdated(function ($state, callable $set) {
-                                    $this->updateSubcategorias($state, $set);
-                                })
-                                ->placeholder('Seleccione una categoría')
-                                ->suffixAction(
-                                    Forms\Components\Actions\Action::make('createCategoria')
-                                        ->label('Agregar')
-                                        ->icon('heroicon-o-plus')
-                                        ->tooltip('Agregar una nueva categoría')
-                                        ->modalHeading('Crear Nueva Categoría')
-                                        ->form([
-                                            Forms\Components\TextInput::make('nombre')
-                                                ->label('Nombre de la Categoría')
-                                                ->required()
-                                                ->maxLength(255)
-                                                ->placeholder('Ejemplo: Ropa, Electrónica')
-                                                ->live(onBlur: true)
-                                                ->afterStateUpdated(function ($state, callable $set) {
-                                                    $empresaId = $this->formState['empresa_id'] ?? Auth::user()->empresa_id;
-                                                    $existing = CategoriaProducto::where('nombre', $state)
-                                                        ->where('empresa_id', $empresaId)
-                                                        ->first();
-                                                    if ($existing) {
-                                                        Notification::make()
-                                                            ->title('Categoría ya existente')
-                                                            ->body('La categoría "' . $state . '" ya existe.')
-                                                            ->danger()
-                                                            ->send();
-                                                        $set('nombre', null);
-                                                    }
-                                                }),
-                                            Forms\Components\Repeater::make('subcategorias')
-                                                ->label('Subcategorías')
-                                                ->schema([
-                                                    Forms\Components\TextInput::make('nombre')
-                                                        ->label('Nombre de la Subcategoría')
-                                                        ->required()
-                                                        ->maxLength(255)
-                                                        ->placeholder('Ejemplo: Camisetas, Laptops'),
-                                                ])
-                                                ->required()
-                                                ->minItems(1)
-                                                ->addActionLabel('Añadir Subcategoría')
-                                                ->deleteAction(
-                                                    fn ($action) => $action->requiresConfirmation()->label('Eliminar Subcategoría')
-                                                ),
-                                        ])
-                                        ->action(function (array $data, callable $set) {
-                                            $empresaId = $this->formState['empresa_id'] ?? Auth::user()->empresa_id;
-                                            try {
-                                                \DB::beginTransaction();
-                                                $newCategoria = CategoriaProducto::create([
-                                                    'nombre' => $data['nombre'],
-                                                    'empresa_id' => $empresaId,
-                                                ]);
-                                                foreach ($data['subcategorias'] as $subcategoria) {
-                                                    SubcategoriaProducto::create([
-                                                        'nombre' => $subcategoria['nombre'],
-                                                        'categoria_id' => $newCategoria->id,
-                                                        'empresa_id' => $empresaId,
-                                                    ]);
-                                                }
-                                                \DB::commit();
-                                                $set('categoria_id', $newCategoria->id);
-                                                $this->updateSubcategorias($newCategoria->id, $set);
-                                                Notification::make()
-                                                    ->title('Categoría Creada')
-                                                    ->body("La categoría {$newCategoria->nombre} ha sido creada con éxito.")
-                                                    ->success()
-                                                    ->send();
-                                            } catch (\Exception $e) {
-                                                \DB::rollBack();
-                                                Log::error('Error al crear categoría: ' . $e->getMessage());
-                                                Notification::make()
-                                                    ->title('Error')
-                                                    ->body('No se pudo crear la categoría.')
-                                                    ->danger()
-                                                    ->send();
-                                            }
-                                        })
-                                        ->modal()
-                                ),
-                            Forms\Components\Select::make('subcategoria_id')
-                                ->label('Subcategoría')
-                                ->options($this->subcategorias)
-                                ->required()
-                                ->searchable()
-                                ->preload()
-                                ->disabled(fn ($get) => !$get('categoria_id')),
-                            Forms\Components\TextInput::make('sku')
-                                ->label('SKU')
-                                ->maxLength(100)
-                                ->default(fn () => strtoupper(Str::random(3) . '-' . rand(10000, 99999)))
-                                ->unique(ignorable: fn ($record) => $record, table: Productos::class),
-                            Forms\Components\TextInput::make('codigo')
-                                ->label('Código de barras')
-                                ->maxLength(100)
-                                ->default(fn () => Str::random(8))
-                                ->unique(ignorable: fn ($record) => $record, table: Productos::class),
-                            Forms\Components\TextInput::make('isv')
-                                ->label('ISV (%)')
-                                ->numeric()
-                                ->minValue(0)
-                                ->maxValue(20)
-                                ->default(0),
-                            Forms\Components\Hidden::make('empresa_id')
-                                ->default(fn () => $this->formState['empresa_id'] ?? Auth::user()->empresa_id)
-                                ->required(),
-                        ])
-                        ->action(function (array $data, callable $set) {
-                            Log::info('Botón + clicado para crear producto', ['data' => $data]);
-                            try {
-                                $newProducto = Productos::create($data);
-                                $this->producto_id = $newProducto->id;
-                                $this->producto_nombre = $newProducto->sku . ' - ' . $newProducto->nombre;
-                                $set('producto_nombre', $this->producto_nombre);
-                                Notification::make()
-                                    ->title('Producto Creado')
-                                    ->body("El producto {$newProducto->nombre} ha sido creado con éxito.")
-                                    ->success()
-                                    ->send();
-                            } catch (\Exception $e) {
-                                Log::error('Error al crear producto: ' . $e->getMessage());
-                                Notification::make()
-                                    ->title('Error')
-                                    ->body('No se pudo crear el producto: ' . $e->getMessage())
-                                    ->danger()
-                                    ->send();
-                            }
-                        })
-                        ->modalWidth('lg')
-                        ->modal()
-                ),
+            Forms\Components\Select::make('producto_nombre')
+    ->label('Producto')
+    ->options(function () {
+        $user = Auth::user();
+
+        $productos = $user->hasRole('root')
+            ? Productos::all()
+            : Productos::where('empresa_id', $user->empresa_id)->get();
+
+        // Devuelve un array ['ID' => 'Nombre | SKU | Código']
+        return $productos->mapWithKeys(function ($producto) {
+            return [$producto->id => $producto->nombre . ' | ' . $producto->sku . ' | ' . $producto->codigo];
+        })->toArray();
+    })
+    ->searchable()
+    ->required()
+    ->preload()
+    ->afterStateUpdated(function ($state, $set) {
+        // Guarda el ID del producto seleccionado
+        $this->producto_id = $state;
+    }),
+
+               
             Forms\Components\TextInput::make('cantidad')
                 ->label('Cantidad')
                 ->required()
