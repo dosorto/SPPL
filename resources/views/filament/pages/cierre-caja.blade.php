@@ -9,7 +9,7 @@
                     </svg>
                 </div>
                 <div>
-                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">Cierre de Caja</h1>
+                    
                     <p class="text-sm text-gray-500 dark:text-gray-400">Verifica y confirma el conteo del día</p>
                 </div>
             </div>
