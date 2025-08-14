@@ -122,6 +122,7 @@ class CaiResource extends Resource
     public static function table(Table $table): Table
     {
         return $table
+            ->recordUrl(fn ($record) => static::getUrl('view', ['record' => $record]))
             ->columns([
                 TextColumn::make('cai')
                     ->label('Código CAI')
@@ -132,7 +133,7 @@ class CaiResource extends Resource
                     ->label('Empresa')
                     ->searchable()
                     ->sortable()
-                    ->visible(fn () => auth()->user()?->hasRole('root')), // <-- CAMBIO AQUÍ: Visible solo para rol 'root'
+                    ->visible(fn () => auth()->user()?->hasRole('root')), // Solo root mira esto
 
                 TextColumn::make('rango_inicial')
                     ->label('Rango Inicial')
@@ -201,7 +202,7 @@ class CaiResource extends Resource
         return [
             'index' => Pages\ListCais::route('/'),
             'create' => Pages\CreateCai::route('/create'),
-            //'view' => Pages\ViewCai::route('/{record}'), // Página de vista
+            'view' => Pages\ViewCai::route('/{record}'), 
             'edit' => Pages\EditCai::route('/{record}/edit'),
         ];
     }
