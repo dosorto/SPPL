@@ -29,59 +29,59 @@ class RolePolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->can('configuraciones_ver');
+        return $user->hasRole(['root']);
     }
 
     public function view(User $user, Role $role): bool
     {
         // Si el usuario TIENE ese rol, puede verlo
-        if ($user->roles->contains('id', $role->id)) {
-            return true;
-        }
+        //if ($user->roles->contains('id', $role->id)) {
+        //    return true;
+       // }
 
         // De lo contrario, no permitir ver roles del sistema
-        if ($this->isSystem($role)) {
-            return false;
-        }
+        //if ($this->isSystem($role)) {
+          //  return false;
+        //}
 
-        return $user->can('configuraciones_ver');
+        return $user->hasRole(['root']);
     }
 
     public function create(User $user): bool
     {
-        return $user->can('configuraciones_crear');
+        return $user->hasRole(['root']);
     }
 
     public function update(User $user, Role $role): bool
     {
         if ($this->isSystem($role)) return false;          // no editar roles del sistema
-        return $user->can('configuraciones_actualizar');
+        return $user->hasRole(['root']);
     }
 
     public function delete(User $user, Role $role): bool
     {
         if ($this->isSystem($role)) return false;          // no eliminar roles del sistema
-        return $user->can('configuraciones_eliminar');
+        return $user->hasRole(['root']);
     }
 
     public function deleteAny(User $user): bool
     {
-        return $user->can('configuraciones_eliminar');
+        return $user->hasRole(['root']);
     }
 
     public function restore(User $user, Role $role): bool
     {
-        return $user->can('configuraciones_actualizar');
+        return $user->hasRole(['root']);
     }
 
     public function forceDelete(User $user, Role $role): bool
     {
-        return false;
+        return $user->hasRole(['root']);
     }
 
     public function forceDeleteAny(User $user): bool
     {
-        return false;
+        return $user->hasRole(['root']);
     }
 
     
