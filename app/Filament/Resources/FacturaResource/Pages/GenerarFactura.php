@@ -69,75 +69,87 @@ class GenerarFactura extends Page
 
         if ($record) {
             // --- EDICIÓN DE FACTURA PENDIENTE ---
-            $factura = Factura::with('detalles.producto.producto')
-                ->findOrFail($record);
+            $factura = Factura::with('detalles.producto.producto')->findOrFail($record);
 
-            // 1) Relleno el formulario con los datos del cliente
+            // Mostrar en el select global el primer tipo usado (solo para UI)
+            $tipoGlobal = $factura->detalles->first()->tipo_precio_utilizado ?? 'precio_detalle';
+
+            // 1) Relleno el formulario sin forzar "detalle"
             $this->form->fill([
                 'cliente_id'        => $factura->cliente_id,
-                'tipo_precio'       => 'precio_detalle',
+                'tipo_precio'       => $tipoGlobal,
                 'cantidad_busqueda' => 1,
                 'usar_cai'          => true,
             ]);
 
-            // 2) Reconstruyo las líneas de venta desde los detalles
+            // 2) Reconstruyo las líneas respetando tipo y precio guardados
             $this->lineasVenta = $factura->detalles
-                ->mapWithKeys(fn($det) => [
-                    $det->producto_id => [
-                        'inventario_id'      => $det->producto_id,
-                        'sku'                => $det->producto->producto->sku,
-                        'nombre'             => $det->producto->producto->nombre,
-                        'precio_unitario'    => $det->precio_unitario,
-                        'cantidad'           => $det->cantidad,
-                        'isv_producto'       => $det->isv_aplicado,
-                        'descuento_aplicado' => $det->descuento_aplicado,
-                        'tipo_precio_key'    => 'precio_detalle',
-                        'tipo_precio_label'  => 'Detalle',
-                    ],
-                ])->toArray();
+                ->mapWithKeys(function ($det) {
+                    $tipo = $det->tipo_precio_utilizado ?? 'precio_detalle';
 
-            // 3) Calculamos totales
+                    return [
+                        $det->producto_id => [
+                            'inventario_id'      => $det->producto_id,
+                            'sku'                => $det->sku_snapshot
+                                                    ?? ($det->producto->producto->sku ?? null),
+                            'nombre'             => $det->nombre_producto_snapshot
+                                                    ?? ($det->producto->producto->nombre ?? null),
+                            'precio_unitario'    => $det->precio_unitario,   // <- no recalcular
+                            'cantidad'           => $det->cantidad,
+                            'isv_producto'       => $det->isv_aplicado,
+                            'descuento_aplicado' => $det->descuento_aplicado,
+                            'tipo_precio_key'    => $tipo,
+                            'tipo_precio_label'  => $this->getTipoPrecioLabel($tipo),
+                        ],
+                    ];
+                })->toArray();
+
+            // 3) Totales tal cual
             $this->calcularTotales();
 
             // 4) Marco la factura pendiente en sesión
             session(['factura_pendiente_id' => $record]);
 
-            // 5) Muestro la categoría del cliente al cargar
-            $this->updatedClienteId($factura->cliente_id);
-        } else {
-            // --- CREACIÓN DE UNA NUEVA ORDEN ---
-            session()->forget('factura_pendiente_id');
+            // 5) SOLO mostrar categoría del cliente (no recalcular líneas aquí)
+            $cliente = Cliente::with('categoriaCliente')->find($factura->cliente_id);
+            $this->categoriaClienteNombre = $cliente && $cliente->categoriaCliente
+                ? $cliente->categoriaCliente->nombre
+                : null;
 
-            $empresaId = auth()->user()->empresa_id;
-
-            $consumidorFinal = Cliente::where('empresa_id', $empresaId)
-                ->whereHas('persona', fn($q) =>
-                    $q->where('dni', '0000000000000')
-                )
-                ->first();
-
-            if (! $consumidorFinal) {
-                throw new \Exception("No se encontró un cliente consumidor final para esta empresa.");
-            }   
-
-            // 1) Valores por defecto del formulario
-            $this->form->fill([
-                'cliente_id'        => $consumidorFinal->id ?? null,
-                'tipo_precio'       => 'precio_detalle',
-                'cantidad_busqueda' => 1,
-                'usar_cai'          => true,
-            ]);
-
-            // 2) Inicializo sin líneas ni totales
-            $this->lineasVenta = [];
-            $this->subtotal    = 0;
-            $this->impuestos   = 0;
-            $this->total       = 0;
-
-            // 3) Muestro la categoría del cliente por defecto
-            $this->updatedClienteId($consumidorFinal->id ?? null);
+            return;
         }
+
+        // --- CREACIÓN DE UNA NUEVA ORDEN ---
+        session()->forget('factura_pendiente_id');
+
+        $empresaId = auth()->user()->empresa_id;
+
+        $consumidorFinal = Cliente::where('empresa_id', $empresaId)
+            ->whereHas('persona', fn($q) => $q->where('dni', '0000000000000'))
+            ->first();
+
+        if (! $consumidorFinal) {
+            throw new \Exception("No se encontró un cliente consumidor final para esta empresa.");
+        }
+
+        // 1) Valores por defecto del formulario
+        $this->form->fill([
+            'cliente_id'        => $consumidorFinal->id ?? null,
+            'tipo_precio'       => 'precio_detalle',
+            'cantidad_busqueda' => 1,
+            'usar_cai'          => true,
+        ]);
+
+        // 2) Inicializo sin líneas ni totales
+        $this->lineasVenta = [];
+        $this->subtotal    = 0;
+        $this->impuestos   = 0;
+        $this->total       = 0;
+
+        // 3) Muestro la categoría del cliente por defecto
+        $this->updatedClienteId($consumidorFinal->id ?? null);
     }
+
 
 
 
@@ -203,18 +215,27 @@ class GenerarFactura extends Page
                         ->placeholder('Busque por nombre, DNI, número de cliente o teléfono...')
                         ->columnSpan(5),
 
-
                     Select::make('tipo_precio')
                         ->label('Tipo de Precio')
                         ->options([
-                            'precio_detalle'    => 'Detalle',
-                            'precio_mayorista'  => 'Mayorista',
-                            'precio_promocion'  => 'Promoción',
+                            'precio_detalle'   => 'Detalle',
+                            'precio_mayorista' => 'Mayorista',
+                            'precio_promocion' => 'Promoción',
                         ])
                         ->default('precio_detalle')
                         ->required()
                         ->reactive()
-                        ->afterStateUpdated(fn($state) => $this->updatedDataTipoPrecio($state))
+                        // cuando realmente cambie, también aplica global
+                        ->afterStateUpdated(fn ($state) => $this->aplicarTipoPrecioGlobal($state))
+                        ->suffixAction(
+                            \Filament\Forms\Components\Actions\Action::make('aplicarGlobal')
+                                ->label('Aplicar a todos')
+                                ->icon('heroicon-o-arrow-path')
+                                ->color('gray')
+                                ->action(fn (\Filament\Forms\Get $get) =>
+                                    $this->aplicarTipoPrecioGlobal($get('tipo_precio'))
+                                )
+                        )
                         ->columnSpan(3),
                 ]),
 
@@ -308,55 +329,53 @@ class GenerarFactura extends Page
         }
     }
 
-
-
-
-    public function updatedDataTipoPrecio($value): void
+    public function aplicarTipoPrecioGlobal(string $tipoPrecioSeleccionado): void
     {
-        if (empty($this->lineasVenta)) {
-            return;
-        }
+        if (!$tipoPrecioSeleccionado || empty($this->lineasVenta)) return;
 
-        $tipoPrecioSeleccionado = $value;
         $data = $this->form->getState();
+        $cliente = Cliente::with([
+            'categoriaCliente.productos',
+            'categoriaCliente.categoriasProductos',
+        ])->find($data['cliente_id']);
 
-        $cliente = Cliente::with('categoriaCliente.categoriasProductos')->find($data['cliente_id']);
+        foreach ($this->lineasVenta as $productoId => &$linea) {
+            $inv = InventarioProductos::with('producto')->find($linea['inventario_id']);
+            if (!$inv) continue;
 
-        $nuevasLineas = [];
+            // descuento: primero por producto, si no, por categoría
+            $descuento = 0;
+            if ($cliente && $cliente->categoriaCliente) {
+                $spec = $cliente->categoriaCliente
+                    ->productos()
+                    ->wherePivot('activo', true)
+                    ->where('productos.id', $inv->producto_id)
+                    ->first();
 
-        foreach ($this->lineasVenta as $productoId => $linea) {
-            $inventarioProducto = InventarioProductos::with('producto')->find($linea['inventario_id']);
-            if ($inventarioProducto) {
-                $precioOriginal = $inventarioProducto->{$tipoPrecioSeleccionado};
-                $descuento = 0;
-
-                if ($cliente && $cliente->categoriaCliente) {
-                    $categoriaRelacionada = $cliente->categoriaCliente
+                if ($spec) {
+                    $descuento = $spec->pivot->descuento_porcentaje;
+                } else {
+                    $catRel = $cliente->categoriaCliente
                         ->categoriasProductos()
-                        ->where('categoria_producto_id', $inventarioProducto->producto->categoria_id)
+                        ->where('categoria_producto_id', $inv->producto->categoria_id)
                         ->wherePivot('activo', true)
                         ->first();
-
-                    if ($categoriaRelacionada) {
-                        $descuento = $categoriaRelacionada->pivot->descuento_porcentaje ?? 0;
-                    }
+                    $descuento = $catRel ? $catRel->pivot->descuento_porcentaje : 0;
                 }
-
-                $precioConDescuento = round($precioOriginal * (1 - ($descuento / 100)), 2);
-
-                $linea['precio_unitario'] = $precioConDescuento;
-                $linea['tipo_precio_key'] = $tipoPrecioSeleccionado;
-                $linea['tipo_precio_label'] = $this->getTipoPrecioLabel($tipoPrecioSeleccionado);
-                $linea['descuento_aplicado'] = $descuento;
             }
 
-            $nuevasLineas[$productoId] = $linea;
+            $precioOriginal = $inv->{$tipoPrecioSeleccionado};
+            $linea['precio_unitario']   = round($precioOriginal * (1 - ($descuento / 100)), 2);
+            $linea['tipo_precio_key']   = $tipoPrecioSeleccionado;
+            $linea['tipo_precio_label'] = $this->getTipoPrecioLabel($tipoPrecioSeleccionado);
+            $linea['descuento_aplicado']= $descuento;
         }
+        unset($linea);
 
-        $this->lineasVenta = $nuevasLineas;
-        $this->dispatch('refresh');
         $this->calcularTotales();
+        $this->dispatch('refresh');
     }
+
     
     public function updatedDataSkuBusqueda($value): void
     {
@@ -474,19 +493,45 @@ class GenerarFactura extends Page
 
     public function actualizarTipoPrecioLinea(int $productoId, string $nuevoTipoPrecio): void
     {
-        if (isset($this->lineasVenta[$productoId])) {
-            $inventarioProducto = InventarioProductos::find($this->lineasVenta[$productoId]['inventario_id']);
-            if ($inventarioProducto) {
-                // Actualizamos los datos de la línea con el nuevo precio
-                $this->lineasVenta[$productoId]['precio_unitario'] = $inventarioProducto->{$nuevoTipoPrecio};
-                $this->lineasVenta[$productoId]['tipo_precio_key'] = $nuevoTipoPrecio;
-                $this->lineasVenta[$productoId]['tipo_precio_label'] = $this->getTipoPrecioLabel($nuevoTipoPrecio);
-                
-                // Recalculamos los totales generales
-                $this->calcularTotales();
+        if (!isset($this->lineasVenta[$productoId])) return;
+
+        $data = $this->form->getState();
+        $cliente = Cliente::with([
+            'categoriaCliente.productos',
+            'categoriaCliente.categoriasProductos',
+        ])->find($data['cliente_id']);
+
+        $linea =& $this->lineasVenta[$productoId];
+        $inv = InventarioProductos::with('producto')->find($linea['inventario_id']);
+        if (!$inv) return;
+
+        // calcular descuento (primero por producto, luego por categoría)
+        $descuento = 0;
+        if ($cliente && $cliente->categoriaCliente) {
+            $spec = $cliente->categoriaCliente->productos()
+                ->wherePivot('activo', true)
+                ->where('productos.id', $inv->producto_id)->first();
+
+            if ($spec) {
+                $descuento = $spec->pivot->descuento_porcentaje;
+            } else {
+                $catRel = $cliente->categoriaCliente->categoriasProductos()
+                    ->where('categoria_producto_id', $inv->producto->categoria_id)
+                    ->wherePivot('activo', true)->first();
+                $descuento = $catRel ? $catRel->pivot->descuento_porcentaje : 0;
             }
         }
+
+        $precioOriginal = $inv->{$nuevoTipoPrecio};
+        $linea['precio_unitario']    = round($precioOriginal * (1 - ($descuento / 100)), 2);
+        $linea['tipo_precio_key']    = $nuevoTipoPrecio;
+        $linea['tipo_precio_label']  = $this->getTipoPrecioLabel($nuevoTipoPrecio);
+        $linea['descuento_aplicado'] = $descuento;
+
+        $this->calcularTotales();
+        $this->dispatch('refresh');
     }
+
 
     private function getTipoPrecioLabel(string $tipoPrecio): string
     {

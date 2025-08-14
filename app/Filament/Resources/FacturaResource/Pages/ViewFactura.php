@@ -27,6 +27,12 @@ class ViewFactura extends ViewRecord
         $restante = round(max(0, $factura->total - $pagado), 2);
 
         return [
+            
+            Actions\Action::make('volver')
+                ->label('Volver a la lista')
+                ->icon('heroicon-o-arrow-left')
+                ->url(static::getResource()::getUrl('index'))
+                ->color('primary'),
             // BOTÓN 0: Para editar la factura pendiente
             Action::make('editar')
             ->label('Editar Factura')

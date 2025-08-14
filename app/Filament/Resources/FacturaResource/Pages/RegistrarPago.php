@@ -15,6 +15,7 @@ use Filament\Resources\Pages\EditRecord;
 use Filament\Forms\Components\Toggle;
 use Illuminate\Support\Facades\DB;
 
+
 class RegistrarPago extends EditRecord
 {
     protected static string $resource = FacturaResource::class;
@@ -25,45 +26,69 @@ class RegistrarPago extends EditRecord
     {
         parent::mount($record);
 
-        $factura = $this->getRecord();
-        $pagado = $factura->pagos()->sum('monto');
+        /** @var \App\Models\Factura $factura */
+        $factura = $this->getRecord()->fresh();
+
+        // Si la factura ya no está pendiente, bloquear y redirigir a la vista
+        if ($factura->estado !== 'Pendiente') {
+            Notification::make()
+                ->title('No editable')
+                ->body(sprintf(
+                    'Esta %s ya está %s.',
+                    $factura->cai_id ? 'factura' : 'orden de compra',
+                    $factura->estado
+                ))
+                ->warning()
+                ->send();
+
+            $this->redirect(\App\Filament\Resources\FacturaResource::getUrl('view', [
+                'record' => $factura->id,
+            ]));
+            return;
+        }
+
+        // Precargar importes para el formulario
+        $pagado   = $factura->pagos()->sum('monto');
         $restante = round(max(0, $factura->total - $pagado), 2);
 
         $this->form->fill([
+            'usar_cai'        => true,
+            'es_orden_compra' => false,
             'pagos' => [[
                 'metodo_pago_id' => null,
-                'monto' => $restante, // Inicializamos el primer monto con el restante total
-                'referencia' => '',
+                'monto'          => $restante,
+                'referencia'     => '',
                 'monto_recibido' => null,
-                'cambio' => null,
+                'cambio'         => null,
             ]],
         ]);
     }
+
 
     public function form(Forms\Form $form): Forms\Form
     {
         return $form
             ->schema([
 
-                Toggle::make('usar_cai')
-                ->label('Generar factura')
-                ->default(true)
+            Toggle::make('usar_cai')
+                ->label('Emitir Factura (con CAI)')
+                ->default(false)           // <- antes true
                 ->reactive()
                 ->afterStateUpdated(function (bool $state, callable $set) {
-                    // Si activo “usar_cai” desactivo “es_orden_compra”
+                    // Si activo “usar_cai”, desactivo “es_orden_compra”
                     $set('es_orden_compra', ! $state);
                 })
                 ->columnSpanFull(),
 
-                Toggle::make('es_orden_compra')
-                    ->label('Generar Orden de Compra')
-                    ->default(false)
-                    ->reactive()
-                    ->afterStateUpdated(function (bool $state, callable $set) {
-                        // Si activo “es_orden_compra” desactivo “usar_cai”
-                        $set('usar_cai', ! $state);
-                    })
-                    ->columnSpanFull(),
+            Toggle::make('es_orden_compra')
+                ->label('Emitir Orden de Compra (sin CAI)')
+                ->default(false)           // <- seguimos en false
+                ->reactive()
+                ->afterStateUpdated(function (bool $state, callable $set) {
+                    // Si activo “es_orden_compra”, desactivo “usar_cai”
+                    $set('usar_cai', ! $state);
+                })
+                ->columnSpanFull(),
 
 
                 Forms\Components\Placeholder::make('total_a_pagar')
@@ -269,15 +294,59 @@ class RegistrarPago extends EditRecord
 
 
             Action::make('submit')
-                ->label('Registrar Pago')
-                ->action('registrarPago')
-                ->color('success')
-                ->requiresConfirmation()
-                ->extraAttributes(['class' => 'ml-4']),
+            ->label('Registrar Pago')
+            ->icon('heroicon-o-credit-card')
+            ->color('success')
+
+            // Solo muestra la modal si hay una opción elegida
+            ->requiresConfirmation(function () {
+                $s = $this->form->getState();
+                return (bool) (($s['usar_cai'] ?? false) || ($s['es_orden_compra'] ?? false));
+            })
+
+            // Texto de la modal
+            ->modalHeading('Confirmar registro de pago')
+            ->modalDescription(function () {
+                $f     = $this->getRecord();
+                $saldo = round($f->total - $f->pagos()->sum('monto'), 2);
+                return 'Se registrará el pago para este documento. Saldo a cubrir: L. ' . number_format($saldo, 2);
+            })
+
+            // Handler que valida otra vez y registra
+            ->action('onRegistrarPagoClicked'),
         ];
     }
 
-    
+    public function onRegistrarPagoClicked(): void
+    {
+        $state = $this->form->getState();
+
+        $usarCai   = (bool) ($state['usar_cai'] ?? false);
+        $esOrden   = (bool) ($state['es_orden_compra'] ?? false);
+
+        if (! $usarCai && ! $esOrden) {
+            Notification::make()
+                ->title('Selecciona el tipo de emisión')
+                ->body('Debes elegir “Emitir Factura (con CAI)” o “Emitir Orden de Compra (sin CAI)”.')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        // Seguridad extra: si por alguna razón ambos están activos, priorizamos el toggle recién marcado
+        if ($usarCai && $esOrden) {
+            Notification::make()
+                ->title('Configuración inválida')
+                ->body('Solo puedes seleccionar una opción: Factura con CAI o Orden de Compra.')
+                ->danger()
+                ->send();
+            return;
+        }
+
+        // Todo ok → ejecuta el registro real
+        $this->registrarPago();
+    }
+
 
     public function registrarPago(): void
     {

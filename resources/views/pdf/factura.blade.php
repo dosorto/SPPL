@@ -2,16 +2,17 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>Factura #{{ $factura->numero_factura }}</title>
+    @php
+        // Sin CAI => es Orden de Compra; con CAI => Factura
+        $esOrden = empty($factura->cai_id);
+        $rotulo  = $esOrden ? 'Orden de Compra' : 'Factura';
+    @endphp
+    <title>{{ $rotulo }} #{{ $factura->numero_factura }}</title>
     <script>
-        window.onload = function() {
-            window.print();
-        }
+        window.onload = function () { window.print(); };
     </script>
     <style>
-        @media print {
-            .no-print { display: none; }
-        }
+        @media print { .no-print { display: none; } }
     </style>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
@@ -23,12 +24,13 @@
             <p>{{ $factura->empresa->direccion }}</p>
             <p>R.T.N: {{ $factura->empresa->rtn }}</p>
             <p>Tel: {{ $factura->empresa->telefono }}</p>
+            <p class="mt-2 text-base font-semibold">{{ $rotulo }} #{{ $factura->numero_factura }}</p>
         </div>
 
-        <!-- Datos factura / cliente / categoría / vendedor -->
+        <!-- Datos documento / cliente / categoría / vendedor -->
         <div class="grid grid-cols-2 gap-4 text-sm mb-4">
             <div>
-                <p><strong>Factura:</strong> {{ $factura->numero_factura }}</p>
+                <p><strong>{{ $rotulo }}:</strong> {{ $factura->numero_factura }}</p>
                 <p><strong>Fecha:</strong> {{ $factura->fecha_factura->format('d/m/Y') }}</p>
                 <p><strong>Estado:</strong> {{ $factura->estado }}</p>
             </div>
@@ -39,58 +41,61 @@
             </div>
         </div>
 
-        <!-- CAI -->
-        <div class="border-t border-b py-2 text-xs mb-4 text-center">
-            <p><strong>CAI:</strong> {{ $factura->cai->cai ?? 'N/A' }}</p>
-            <p><strong>Fecha Límite:</strong> {{ $factura->cai?->fecha_limite_emision?->format('d/m/Y') ?? 'N/A' }}</p>
-        </div>
+        <!-- CAI: solo cuando es Factura -->
+        @if (!$esOrden && $factura->cai)
+            <div class="border-t border-b py-2 text-xs mb-4 text-center">
+                <p><strong>CAI:</strong> {{ $factura->cai->cai }}</p>
+                @if ($factura->cai?->fecha_limite_emision)
+                    <p><strong>Fecha Límite:</strong> {{ $factura->cai->fecha_limite_emision->format('d/m/Y') }}</p>
+                @endif
+            </div>
+        @endif
 
         <!-- Detalles de productos -->
         <table class="w-full border-collapse mb-4">
-    <thead class="bg-gray-100 text-xs">
-        <tr>
-            <th class="border px-2 py-1 text-left">Producto</th>
-            <th class="border px-2 py-1 text-left">Código de Barras</th>
-            <th class="border px-2 py-1 text-right">Cant</th>
-            <th class="border px-2 py-1 text-right">P/U</th>
-            <th class="border px-2 py-1 text-right">Desc (%)</th>
-            <th class="border px-2 py-1 text-right">ISV (%)</th>
-            <th class="border px-2 py-1 text-right">Subtotal</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach ($factura->detalles as $detalle)
-            <tr>
-                <td class="border px-2 py-1">
-                    {{ $detalle->producto->producto->nombre }}
-                </td>
-                <td class="border px-2 py-1 font-mono tracking-widest">
-                    {{-- Aquí cambiamos a 'codigo', que es el nombre real de la columna --}}
-                    {{ $detalle->producto->producto->codigo ?? 'N/A' }}
-                </td>
-                <td class="border px-2 py-1 text-right">
-                    {{ number_format($detalle->cantidad, 2) }}
-                </td>
-                <td class="border px-2 py-1 text-right">
-                    L. {{ number_format($detalle->precio_unitario, 2) }}
-                </td>
-                <td class="border px-2 py-1 text-right">
-                    {{ number_format($detalle->descuento_aplicado ?? 0, 2) }}
-                </td>
-                <td class="border px-2 py-1 text-right">
-                    {{ number_format($detalle->isv_aplicado ?? 0, 2) }}
-                </td>
-                <td class="border px-2 py-1 text-right">
-                    L. {{ number_format($detalle->sub_total, 2) }}
-                </td>
-            </tr>
-        @endforeach
-    </tbody>
-</table>
+            <thead class="bg-gray-100 text-xs">
+                <tr>
+                    <th class="border px-2 py-1 text-left">Producto</th>
+                    <th class="border px-2 py-1 text-left">Código de Barras</th>
+                    <th class="border px-2 py-1 text-right">Cant</th>
+                    <th class="border px-2 py-1 text-right">P/U</th>
+                    <th class="border px-2 py-1 text-right">Desc (%)</th>
+                    <th class="border px-2 py-1 text-right">ISV (%)</th>
+                    <th class="border px-2 py-1 text-right">Subtotal</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach ($factura->detalles as $detalle)
+                    <tr>
+                        <td class="border px-2 py-1">
+                            {{ $detalle->producto->producto->nombre }}
+                        </td>
+                        <td class="border px-2 py-1 font-mono tracking-widest">
+                            {{ $detalle->producto->producto->codigo ?? 'N/A' }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ number_format($detalle->cantidad, 2) }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            L. {{ number_format($detalle->precio_unitario, 2) }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ number_format($detalle->descuento_aplicado ?? 0, 2) }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            {{ number_format($detalle->isv_aplicado ?? 0, 2) }}
+                        </td>
+                        <td class="border px-2 py-1 text-right">
+                            L. {{ number_format($detalle->sub_total, 2) }}
+                        </td>
+                    </tr>
+                @endforeach
+            </tbody>
+        </table>
 
         <!-- Totales -->
-        <div class="flex justify-end space-y-1 text-sm mb-6">
-            <div class="w-1/2">
+        <div class="flex justify-end text-sm mb-6">
+            <div class="w-1/2 space-y-1">
                 <div class="flex justify-between">
                     <span>Subtotal:</span>
                     <span>L. {{ number_format($factura->subtotal, 2) }}</span>
@@ -135,7 +140,7 @@
 
         <!-- Footer -->
         <div class="text-center text-xs mt-6 border-t pt-2">
-            <p>Gracias por su compra</p>
+            <p>¡Gracias por su {{ $esOrden ? 'preferencia' : 'compra' }}!</p>
         </div>
     </div>
 </body>
