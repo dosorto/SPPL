@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPPL - Gestión Integral para Plantas Lácteas</title>
+    <title>JADEH - Gestión Integral para la Industria</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -37,7 +37,7 @@
         .section-nav-link.active {
             position: relative;
             font-weight: 700;
-            color: #1e40af; /* Color azul más oscuro para el activo */
+            color: #1e40af;
         }
         .section-nav-link.active::after {
             content: '';
@@ -62,29 +62,35 @@
     </style>
 </head>
 <body class="bg-gray-50 text-gray-800 font-sans">
-
+    
     {{-- Navbar --}}
     <nav id="navbar" class="fixed top-0 w-full z-50 flex justify-between items-center px-6 py-4 bg-white bg-opacity-70 backdrop-blur-sm transition-all duration-300 border-b border-gray-200">
         <div class="container mx-auto max-w-7xl flex justify-between items-center">
-            <a href="#inicio" class="flex items-center">
-                <img src="{{ asset('images/logo.png') }}" alt="SPPL Logo" class="mr-3 w-24">
-        
+            <a href="{{ route('welcome') }}" class="flex items-center">
+                <img src="{{ asset('images/logo.png') }}" alt="JADEH Logo" class="mr-3 w-24">
             </a>
             <div class="space-x-4 flex items-center">
                 <a href="#inicio" class="px-4 py-2 text-blue-700 hover:bg-blue-100 rounded-full transition font-semibold section-nav-link">Inicio</a>
                 <a href="#modulos" class="px-4 py-2 text-blue-700 hover:bg-blue-100 rounded-full transition font-semibold section-nav-link">Módulos</a>
                 <a href="#planes" class="px-4 py-2 text-blue-700 hover:bg-blue-100 rounded-full transition font-semibold section-nav-link">Planes</a>
+                <a href="{{ route('contacto') }}" class="px-4 py-2 text-blue-700 hover:bg-blue-100 rounded-full transition font-semibold">Contacto</a>
                 <a href="{{ url('/admin/login') }}" class="px-4 py-2 bg-blue-700 text-white rounded-full hover:bg-blue-600 transition font-semibold">Login</a>
             </div>
         </div>
     </nav>
+    
+    @if(session('success'))
+        <div class="fixed top-24 left-1/2 -translate-x-1/2 w-full max-w-md bg-green-500 text-white text-center p-4 rounded-lg shadow-xl z-50">
+            {{ session('success') }}
+        </div>
+    @endif
 
     {{-- Hero Section --}}
     <section id="inicio" class="hero pt-48 pb-32 px-6 text-center text-gray-800">
         <div class="container mx-auto scroll-reveal">
-            <h2 class="text-6xl font-extrabold mb-6 drop-shadow-lg text-blue-900 leading-tight">Gestión Inteligente que Impulsa tu Planta Láctea</h2>
-            <p class="text-xl mb-10 max-w-3xl mx-auto font-medium text-gray-700">SPPL es la plataforma integral diseñada para optimizar y controlar cada proceso de tu operación, desde la entrada de la leche cruda hasta la venta del producto final.</p>
-            <a href="{{ url('/admin/register') }}" class="px-10 py-4 bg-green-500 text-white font-semibold rounded-full hover:bg-green-600 transition-all shadow-lg text-lg">
+            <h2 class="text-6xl font-extrabold mb-6 drop-shadow-lg text-blue-900 leading-tight">Gestión Inteligente que Impulsa tu Empresa</h2>
+            <p class="text-xl mb-10 max-w-3xl mx-auto font-medium text-gray-700">JADEH es la plataforma integral diseñada para optimizar y controlar cada proceso de tu operación, desde la entrada de la materia prima hasta la venta del producto final.</p>
+            <a href="{{ route('membresia.avanzada') }}" class="px-10 py-4 bg-green-500 text-white font-semibold rounded-full hover:bg-green-600 transition-all shadow-lg text-lg">
                 ¡Empieza tu prueba gratuita!
             </a>
         </div>
@@ -94,7 +100,7 @@
     <section id="modulos" class="py-20 bg-gray-100">
         <div class="container mx-auto text-center scroll-reveal">
             <h3 class="text-4xl font-extrabold text-blue-800 mb-4">Soluciones diseñadas para tu industria</h3>
-            <p class="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">Nuestros módulos abarcan todas las áreas críticas de tu planta, proporcionando control y visibilidad total.</p>
+            <p class="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">Nuestros módulos abarcan todas las áreas críticas de tu empresa, proporcionando control y visibilidad total.</p>
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10 px-6 md:px-12">
                 {{-- Module 1: Ventas y Clientes --}}
                 <div class="bg-white p-8 rounded-xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition duration-300 scroll-reveal">
@@ -136,7 +142,7 @@
                     </div>
                     <h4 class="text-2xl font-bold text-blue-800 mb-2">Control de Inventario</h4>
                     <p class="text-gray-600">
-                        Supervisa tus productos lácteos, mantén un inventario preciso en tiempo real y evita desabastecimientos.
+                        Supervisa tus productos terminados, mantén un inventario preciso en tiempo real y evita desabastecimientos.
                     </p>
                 </div>
 
@@ -169,13 +175,13 @@
     <section id="planes" class="py-20 px-6 md:px-12 bg-gray-50">
         <div class="container mx-auto text-center scroll-reveal">
             <h2 class="text-4xl font-extrabold text-blue-800 mb-4">Planes de Membresía a tu medida</h2>
-            <p class="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">Escoge el plan que mejor se adapte al tamaño y las necesidades de tu planta láctea.</p>
+            <p class="text-lg text-gray-600 mb-12 max-w-2xl mx-auto">Escoge el plan que mejor se adapte al tamaño y las necesidades de tu empresa.</p>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
                 {{-- Card 1: Esencial --}}
                 <div class="pricing-card bg-white text-gray-800 p-8 rounded-xl shadow-lg flex flex-col justify-between border-t-4 border-green-500 scroll-reveal">
                     <div>
                         <h3 class="text-2xl font-bold mb-2 text-green-600">Esencial</h3>
-                        <p class="text-sm text-gray-500 mb-6">Ideal para plantas que inician la digitalización.</p>
+                        <p class="text-sm text-gray-500 mb-6">Ideal para empresas que inician la digitalización.</p>
                         <div class="text-5xl font-extrabold mb-4 text-gray-900">$49<span class="text-xl font-normal text-gray-500">/mes</span></div>
                         <ul class="text-left space-y-3 text-gray-700 mb-8">
                             <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-3"></i> Gestión básica de producción</li>
@@ -184,14 +190,14 @@
                             <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-3"></i> Soporte por correo electrónico</li>
                         </ul>
                     </div>
-                    <a href="{{ url('/admin/register') }}" class="block w-full text-center py-3 px-6 bg-green-500 text-white font-semibold rounded-full hover:bg-green-600 transition-all">Seleccionar Plan</a>
+                    <a href="{{ route('membresia.esencial') }}" class="block w-full text-center py-3 px-6 bg-green-500 text-white font-semibold rounded-full hover:bg-green-600 transition-all">Seleccionar Plan</a>
                 </div>
 
                 {{-- Card 2: Avanzado (Recomendado) --}}
                 <div class="pricing-card bg-green-600 text-white p-10 rounded-xl shadow-2xl flex flex-col justify-between transform scale-105 border-t-4 border-white scroll-reveal">
                     <div>
                         <h3 class="text-3xl font-bold mb-2 text-white">Avanzado</h3>
-                        <p class="text-sm text-green-100 mb-6">El más popular. Perfecto para plantas en crecimiento.</p>
+                        <p class="text-sm text-green-100 mb-6">El más popular. Perfecto para empresas en crecimiento.</p>
                         <div class="text-6xl font-extrabold mb-4 text-white">$99<span class="text-xl font-normal text-green-200">/mes</span></div>
                         <ul class="text-left space-y-3 text-green-100 mb-8">
                             <li class="flex items-center"><i class="fas fa-check-circle text-white mr-3"></i> Todas las funciones del plan Esencial</li>
@@ -201,7 +207,7 @@
                             <li class="flex items-center"><i class="fas fa-check-circle text-white mr-3"></i> Gestión de lotes y trazabilidad</li>
                         </ul>
                     </div>
-                    <a href="{{ url('/admin/register') }}" class="block w-full text-center py-3 px-6 bg-white text-green-600 font-bold rounded-full hover:bg-gray-200 transition-all">Seleccionar Plan</a>
+                    <a href="{{ route('membresia.avanzada') }}" class="block w-full text-center py-3 px-6 bg-white text-green-600 font-bold rounded-full hover:bg-gray-200 transition-all">Seleccionar Plan</a>
                 </div>
 
                 {{-- Card 3: Premium --}}
@@ -217,7 +223,7 @@
                             <li class="flex items-center"><i class="fas fa-check-circle text-green-500 mr-3"></i> Formación y consultoría especializada</li>
                         </ul>
                     </div>
-                    <a href="{{ url('/contact') }}" class="block w-full text-center py-3 px-6 bg-green-500 text-white font-semibold rounded-full hover:bg-green-600 transition-all">Contactar Ventas</a>
+                    <a href="{{ route('membresia.premium') }}" class="block w-full text-center py-3 px-6 bg-green-500 text-white font-semibold rounded-full hover:bg-green-600 transition-all">Contactar Ventas</a>
                 </div>
             </div>
         </div>
@@ -227,8 +233,8 @@
     <section class="py-20 bg-blue-700 text-white text-center">
         <div class="container mx-auto scroll-reveal">
             <h2 class="text-4xl font-extrabold mb-4">¿Listo para transformar tu gestión?</h2>
-            <p class="text-lg mb-10 max-w-2xl mx-auto">Únete a SPPL y experimenta una gestión empresarial más eficiente, precisa y rentable. Da el primer paso hoy mismo.</p>
-            <a href="{{ url('/admin/register') }}" class="px-10 py-4 bg-green-500 text-white font-semibold rounded-full hover:bg-green-600 transition-all shadow-lg text-lg">
+            <p class="text-lg mb-10 max-w-2xl mx-auto">Únete a JADEH y experimenta una gestión empresarial más eficiente, precisa y rentable. Da el primer paso hoy mismo.</p>
+            <a href="{{ route('membresia.avanzada') }}" class="px-10 py-4 bg-green-500 text-white font-semibold rounded-full hover:bg-green-600 transition-all shadow-lg text-lg">
                 Regístrate ahora y obtén una demo
             </a>
         </div>
@@ -237,7 +243,7 @@
     {{-- Footer --}}
     <footer class="bg-gray-900 text-gray-400 py-8 text-center text-sm">
         <div class="container mx-auto">
-            <p>&copy; {{ date('Y') }} SPPL. Todos los derechos reservados.</p>
+            <p>&copy; 2025 JADEH. Todos los derechos reservados.</p>
             <p class="mt-1">San Marcos de Colon, Choluteca Department, Honduras</p>
         </div>
     </footer>
@@ -295,7 +301,18 @@
         }, observerOptions);
 
         scrollRevealElements.forEach(el => observer.observe(el));
-    </script>
 
+        // Script para mostrar el mensaje de éxito y desaparecerlo automáticamente
+        const successMessage = document.querySelector('.bg-green-500');
+        if (successMessage) {
+            setTimeout(() => {
+                successMessage.style.transition = 'opacity 1s ease-out';
+                successMessage.style.opacity = '0';
+                setTimeout(() => {
+                    successMessage.remove();
+                }, 1000);
+            }, 5000);
+        }
+    </script>
 </body>
 </html>
