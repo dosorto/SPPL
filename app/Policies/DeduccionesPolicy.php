@@ -21,7 +21,7 @@ class DeduccionesPolicy
      */
     public function view(User $user, Deducciones $deducciones): bool
     {
-        return $user->can('view_deducciones');
+        return $user->can('nominas_ver');
     }
 
     /**
@@ -29,7 +29,7 @@ class DeduccionesPolicy
      */
     public function create(User $user): bool
     {
-        return $user->can('create_deducciones');
+        return $user->can('nominas_crear');
     }
 
     /**
@@ -37,7 +37,7 @@ class DeduccionesPolicy
      */
     public function update(User $user, Deducciones $deducciones): bool
     {
-        return $user->can('update_deducciones');
+        return $user->can('nominas_actualizar');
     }
 
     /**
@@ -45,7 +45,7 @@ class DeduccionesPolicy
      */
     public function delete(User $user, Deducciones $deducciones): bool
     {
-        return $user->can('delete_deducciones');
+        return $user->can('nominas_eliminar');
     }
 
     /**
@@ -53,7 +53,7 @@ class DeduccionesPolicy
      */
     public function restore(User $user, Deducciones $deducciones): bool
     {
-        return $user->can('restore_deducciones');
+        return $user->can('nominas_actualizar');
     }
 
     /**
@@ -61,6 +61,6 @@ class DeduccionesPolicy
      */
     public function forceDelete(User $user, Deducciones $deducciones): bool
     {
-        return $user->can('force_delete_deducciones');
+        return $user->can('nominas_eliminar');
     }
 }
