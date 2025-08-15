@@ -1,44 +1,55 @@
 <?php
-
+/*
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
-class OrdenProducciones extends Model
+class OrdenProduccion extends Model
 {
-    /** @use HasFactory<\Database\Factories\OrdenProduccionesFactory> */
-    use HasFactory, SoftDeletes;
+    use SoftDeletes;
 
-    protected $table = 'orden_producciones';
+    protected $table = 'ordenes_produccion';
 
     protected $fillable = [
-        'analisis_id',
+        'producto_id',
         'cantidad',
-        'cantidad_solicitada',
-        'unidades_id',
+        'unidad_de_medida_id',
+        'fecha_solicitud',
+        'fecha_entrega',
         'estado',
-        'precio',
-        'precio_total',
+        'observaciones',
+        'empresa_id',
         'created_by',
         'updated_by',
         'deleted_by',
     ];
 
-    public function analisisCalidad()
+    // Asegúrate de que exista App\Models\UnidadDeMedida o ajusta el nombre de clase real
+    public function unidadDeMedida()
     {
-        return $this->belongsTo(AnalisisCalidad::class, 'analisis_id');
+        return $this->belongsTo(\App\Models\UnidadDeMedida::class, 'unidad_de_medida_id');
     }
 
-    public function unidadMedida()
+    // Asegúrate de que exista App\Models\Producto (singular) o ajusta a la clase correcta
+    public function producto()
     {
-        return $this->belongsTo(UnidadMedida::class, 'unidades_id');
+        return $this->belongsTo(\App\Models\Producto::class, 'producto_id');
     }
 
-    public function rendimientos()
+    public function empresa()
     {
-        return $this->hasMany(Rendimiento::class, 'orden_produccion_id');
+        return $this->belongsTo(\App\Models\Empresa::class, 'empresa_id');
+    }
+
+    public function insumos()
+    {
+        return $this->hasMany(\App\Models\OrdenProduccionInsumo::class, 'orden_produccion_id');
+    }
+
+    public function rendimiento()
+    {
+        return $this->hasOne(\App\Models\Rendimiento::class, 'orden_produccion_id');
     }
 }
-
+    */

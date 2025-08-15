@@ -33,26 +33,12 @@ return new class extends Migration
             $table->foreignId('deleted_by')->nullable();
         });
 
-        Schema::create('orden_produccion_insumos', function (Blueprint $table) {
-            $table->id();
-
-            $table->foreignId('orden_produccion_id')
-                ->constrained('ordenes_produccion');
-
-            $table->foreignId('insumo_id')->constrained('productos');
-            $table->integer('cantidad_utilizada');
-
-            // 👇 si también quieres guardar UDM del insumo
-            $table->foreignId('unidad_de_medida_id')
-                ->constrained('unidad_de_medidas');
-
-            $table->timestamps();
-        });
+       
     }
 
     public function down(): void
     {
-        Schema::dropIfExists('orden_produccion_insumos');
+
         Schema::dropIfExists('ordenes_produccion');
     }
 };

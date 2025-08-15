@@ -11,17 +11,18 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('orden_producciones', function (Blueprint $table) {
+        Schema::create('producto_producciones', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('analisis_id')->constrained('analisis_calidad');
-            $table->decimal('cantidad', 10, 2);
-            $table->decimal('cantidad_solicitada', 10, 2);
+
+            $table->foreignId('rendimientos_id')->constrained('rendimientos');
+            $table->foreignId('producto_id')->constrained('productos');
             $table->foreignId('unidades_id')->constrained('unidad_de_medidas');
-            $table->string('estado', 20);
-            $table->decimal('precio', 10, 2);
-            $table->decimal('precio_total', 10, 2);
+
+            $table->string('estado');
+
             $table->timestamps();
             $table->softDeletes();
+
             $table->integer('created_by')->nullable();
             $table->integer('updated_by')->nullable();
             $table->integer('deleted_by')->nullable();
@@ -33,6 +34,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('orden_producciones');
+        Schema::dropIfExists('producto_producciones');
     }
 };
