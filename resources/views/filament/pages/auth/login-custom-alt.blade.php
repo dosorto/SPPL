@@ -82,8 +82,8 @@
             border: 2px solid #166534 !important;
             background: #fff !important;
             border-radius: 0.5rem !important;
-            color: #222 !important;
-            font-size: 1.125rem !important;
+            color: #166534 !important; /* verde oscuro */
+            font-size: 0.95rem !important; /* más pequeña que label */
             font-weight: 600 !important;
             box-shadow: none !important;
         }
