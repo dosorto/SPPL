@@ -3,10 +3,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Traits\TenantScoped;
 
 class OrdenProduccion extends Model
 {
-    use SoftDeletes;
+    use SoftDeletes, TenantScoped;
 
     protected $table = 'ordenes_produccion';
     protected $fillable = [
@@ -14,7 +15,7 @@ class OrdenProduccion extends Model
     ];
 
     public function unidadDeMedida()
-    {
+    {   
         return $this->belongsTo(\App\Models\UnidadDeMedidas::class, 'unidad_de_medida_id');
     }
 

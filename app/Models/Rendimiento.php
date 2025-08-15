@@ -5,11 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use App\Models\Traits\TenantScoped;
 
 class Rendimiento extends Model
 {
-    /** @use HasFactory<\Database\Factories\RendimientoFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, TenantScoped , SoftDeletes;
 
     protected $table = 'rendimientos';
 
@@ -26,15 +26,22 @@ class Rendimiento extends Model
         'enviado_a_inventario_por',
     ];
 
+    protected $casts = [
+        'enviado_a_inventario_at' => 'datetime',
+        'cantidad_mp' => 'decimal:2',
+        'precio_mp' => 'decimal:2',
+        'precio_otros_mp' => 'decimal:2',
+    ];
 
     public function ordenProduccion()
     {
-        return $this->belongsTo(OrdenProduccion::class, 'orden_produccion_id');
+        return $this->belongsTo(\App\Models\OrdenProduccion::class, 'orden_produccion_id');
     }
 
+    // En la migración la tabla producto_producciones tiene la columna `rendimientos_id`
+    // por eso indicamos explícitamente la FK:
     public function productosFinales()
     {
-        return $this->hasMany(RendimientoProducto::class, 'rendimiento_id');
+        return $this->hasMany(\App\Models\ProductoProducciones::class, 'rendimientos_id');
     }
-
 }
