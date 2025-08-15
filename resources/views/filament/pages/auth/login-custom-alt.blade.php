@@ -17,11 +17,7 @@
         <div class="max-w-md w-full z-10 glass-card mx-auto">
             <div class="flex justify-center mb-4">
                 <img src="https://jadehsystem.com/images/Logo.png" alt="JADEH" class="h-6 w-16 object-contain" />
-                <img src="https://jadehsystem.com/images/Logo.png" alt="JADEH" class="h-6 w-16 object-contain" />
-                <img src="https://jadehsystem.com/images/Logo.png" alt="JADEH" class="h-6 w-16 object-contain" />
-                <img src="https://jadehsystem.com/images/Logo.png" alt="JADEH" class="h-6 w-16 object-contain" />
-                <img src="https://jadehsystem.com/images/Logo.png" alt="JADEH" class="h-6 w-16 object-contain" />
-                <img src="https://jadehsystem.com/images/Logo.png" alt="JADEH" class="h-6 w-16 object-contain" />
+                
             </div>
             
             <div class="mb-4 text-center">
