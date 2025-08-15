@@ -32,32 +32,32 @@ class DatabaseSeeder extends Seeder
             PaisesSeeder::class,
             DepartamentoSeeder::class,
             MunicipioSeeder::class,
-            EmpresaSeeder::class,
-            TipoEmpleadoSeeder::class,
+           // EmpresaSeeder::class,
+            //TipoEmpleadoSeeder::class,
             RolesAndPermissionsSeeder::class,
-            TipoOrdenComprasSeeder::class,
+            //TipoOrdenComprasSeeder::class,
             CategoriaUnidadesSeeder::class,
             UnidadDeMedidasSeeder::class,
-            CategoriaClienteSeeder::class,  // Agregamos el seeder de categorías de clientes
-            PersonaSeeder::class, 
-            ClienteSeeder::class,
-            AsignarCategoriasClientesSeeder::class,  // Agregamos el seeder para asignar categorías
-            CategoriaClienteProductoSeeder::class,  // Agregamos el seeder para la relación entre categorías
-            ProductosSeeder::class,
-            OrdenComprasSeeder::class,
-            OrdenComprasDetalleSeeder::class,
-            DepartamentoEmpleadoSeeder::class,
-            EmpleadoSeeder::class,
-            DeduccionesSeeder::class,
-            PercepcionesSeeder::class,
-            CategoriaProductoSeeder::class,
-            SubcategoriaProductoSeeder::class,
+            //CategoriaClienteSeeder::class,  // Agregamos el seeder de categorías de clientes
+            //PersonaSeeder::class, 
+            //ClienteSeeder::class,
+            //AsignarCategoriasClientesSeeder::class,  // Agregamos el seeder para asignar categorías
+            //CategoriaClienteProductoSeeder::class,  // Agregamos el seeder para la relación entre categorías
+            //ProductosSeeder::class,
+            //OrdenComprasSeeder::class,
+            //OrdenComprasDetalleSeeder::class,
+            //DepartamentoEmpleadoSeeder::class,
+            //EmpleadoSeeder::class,
+            //DeduccionesSeeder::class,
+            //PercepcionesSeeder::class,
+            //CategoriaProductoSeeder::class,
+            //SubcategoriaProductoSeeder::class,
             MetodoPagoSeeder::class,
-            CaiSeeder::class,
-            OrdenComprasInsumosSeeder::class,
-            OrdenComprasInsumosDetalleSeeder::class,
-            InventarioInsumosSeeder::class,
-           // InventarioProductosSeeder::class,
+            //CaiSeeder::class,
+            //OrdenComprasInsumosSeeder::class,
+            //OrdenComprasInsumosDetalleSeeder::class,
+            //InventarioInsumosSeeder::class,
+           // InventarioProductosSeeder::class
         ]);
         
         $this->command->info('Configurando el usuario Root con su empleado base...');

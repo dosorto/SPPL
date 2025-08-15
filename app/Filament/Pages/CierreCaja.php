@@ -14,6 +14,7 @@ use Filament\Pages\Page;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\View;
 use PDF;
+use App\Filament\Resources\CajaAperturaResource;
 
 class CierreCaja extends Page implements HasForms
 {
@@ -144,7 +145,13 @@ class CierreCaja extends Page implements HasForms
                     Notification::make()->title('Caja cerrada exitosamente')->success()->send();
                     
                     
-                    return $this->generarReportePdfStream();
+                   // Generar el PDF
+                $pdfResponse = $this->generarReportePdfStream();
+                
+                // Redirigir al resource CajaApertura
+               $this->redirect(CajaAperturaResource::getUrl('index'));
+                
+                return $pdfResponse;
                 }),
         ];
     }
