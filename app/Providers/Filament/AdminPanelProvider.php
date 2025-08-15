@@ -56,7 +56,7 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->renderHook(
                 'panels::topbar.start',
-                fn (): string => view('filament.custom.empresa-selector')->render()
+                fn (): string => view('filament.custom.empresa-selector')->render() . view('filament.custom.resources-selector')->render()
             )
             ->middleware([
                 EncryptCookies::class,
