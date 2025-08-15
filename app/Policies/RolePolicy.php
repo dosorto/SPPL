@@ -84,5 +84,4 @@ class RolePolicy
         return $user->hasRole(['root']);
     }
 
-    
 }

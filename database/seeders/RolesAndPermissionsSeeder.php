@@ -41,36 +41,6 @@ class RolesAndPermissionsSeeder extends Seeder
                 Permission::firstOrCreate(['name' => "{$modulo}_{$accion}"]);
             }
         }
-        // Definir modelos con nombres estándar
-        $models = [
-            'users', //1
-            'roles', //2
-            'paises', //3
-            'departamentos', //4
-            'municipios', //5
-            'clientes', //6
-            'proveedores', //7
-            'departamento_empleados', //8
-            'empleados', //9
-            'categoria_unidades', //10
-            'orden_compras', //11
-            'productos', //13
-            'tipo_empleados', //14
-            'tipo_orden_compras', //15
-            'unidad_de_medidas', //16
-            'inventario_productos',
-            'facturas', //18
-            'cais',
-            'caja_aperturas',
-            'categoria_clientes', // NUEVO: para CategoriaCliente
-            'ordenes_produccion', // NUEVO: para OrdenProduccion
-        ];
-
-        // Definir modelos con convención especial para Filament (usando ::)
-        $specialModels = [
-            'categoria::producto' => 'categorias_productos', // Modelo CategoriaProducto
-            'subcategoria::producto' => 'subcategorias_productos', // Modelo SubcategoriaProducto
-        ];
         
         // Crear y asignar permisos al rol root
         $adminRole = Role::firstOrCreate(['name' => 'root', 'guard_name' => 'web']);
