@@ -11,6 +11,7 @@ use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\RecibirOrdenCompraInsumos;
+use App\Filament\Pages\CustomLogin;
 use App\Filament\Widgets\OrdersChart;
 use App\Filament\Widgets\InventoriesChart;
 use App\Filament\Widgets\StatsOverview;
@@ -32,14 +33,14 @@ class AdminPanelProvider extends PanelProvider
             ->default()
             ->id('admin')
             ->path('admin')
-            ->login()
-            ->darkMode() // 👈 Esto activa el soporte para modo oscuro
+            ->login(CustomLogin::class)
+            ->darkMode() 
             ->renderHook(
                 'panels::topbar.end',
                 fn () => view('components.theme-toggle'))
             
             ->colors([
-                'primary' => Color::Amber,
+                'success' => Color::Amber,
             ])
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
