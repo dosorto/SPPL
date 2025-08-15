@@ -14,7 +14,8 @@ return new class extends Migration
         Schema::create('rendimientos', function (Blueprint $table) {
             $table->id();
             // Clave foránea hacia orden_produccion
-            $table->foreignId('orden_produccion_id')->constrained('orden_producciones');
+                     $table->foreignId('orden_produccion_id')
+                ->constrained('ordenes_produccion');
             // Campos principales
             $table->decimal('cantidad_mp', 10, 2);
             $table->decimal('precio_mp', 10, 2);
