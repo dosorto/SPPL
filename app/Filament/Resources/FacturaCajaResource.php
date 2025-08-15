@@ -10,6 +10,11 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Filters\TernaryFilter;
+use Filament\Tables\Filters\Filter;
+use Illuminate\Support\Carbon;
+use Filament\Forms\Components\DatePicker;
 
 class FacturaCajaResource extends Resource
 {
@@ -88,9 +93,56 @@ class FacturaCajaResource extends Resource
                 Tables\Columns\TextColumn::make('total')->money('HNL')->sortable(),
                 Tables\Columns\TextColumn::make('fecha_factura')->date('d/m/Y')->sortable(),
             ])
+            ->filters([
+                // Estado (multi)
+                SelectFilter::make('estado')
+                    ->label('Estado')
+                    ->multiple()
+                    ->options([
+                        'Pendiente' => 'Pendiente',
+                        'Pagada'    => 'Pagada',
+                        'Anulada'   => 'Anulada',
+                        'Vencida'   => 'Vencida',
+                    ]),
+
+                // Con / sin CAI
+                TernaryFilter::make('con_cai')
+                    ->label('¿Con CAI?')
+                    ->placeholder('Todas')
+                    ->trueLabel('Con CAI')
+                    ->falseLabel('Sin CAI (Orden)')
+                    ->queries(
+                        true: fn (Builder $q) => $q->whereNotNull('cai_id'),
+                        false: fn (Builder $q) => $q->whereNull('cai_id'),
+                        blank: fn (Builder $q) => $q
+                    ),
+
+                // Rango de fechas
+                Filter::make('fecha_factura')
+                    ->label('Fecha')
+                    ->form([
+                        DatePicker::make('desde')->label('Desde'),
+                        DatePicker::make('hasta')->label('Hasta'),
+                    ])
+                    ->indicateUsing(function (array $data): array {
+                        $badges = [];
+                        if (!empty($data['desde'])) {
+                            $badges[] = 'Desde ' . Carbon::parse($data['desde'])->format('d/m/Y');
+                        }
+                        if (!empty($data['hasta'])) {
+                            $badges[] = 'Hasta ' . Carbon::parse($data['hasta'])->format('d/m/Y');
+                        }
+                        return $badges;
+                    })
+                    ->query(function (Builder $q, array $data) {
+                        return $q
+                            ->when($data['desde'] ?? null, fn ($qq, $d) => $qq->whereDate('fecha_factura', '>=', $d))
+                            ->when($data['hasta'] ?? null, fn ($qq, $h) => $qq->whereDate('fecha_factura', '<=', $h));
+                    }),
+            ])
+            ->persistFiltersInSession()
             ->actions([
                 Tables\Actions\ViewAction::make(),
-                // ¡CAMBIO IMPORTANTE! Se añade el botón de editar
                 Tables\Actions\EditAction::make(),
             ])
             ->defaultSort('id', 'desc');
